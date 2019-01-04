@@ -1,4 +1,7 @@
-SD 2-Clause License
+BSD 2-Clause License
+
+Author: Guilherme Amorim de Oliveira Alves <guilherme@brbyte.com>
+Author: Luiz Fernando Souza Softov <softov@brbyte.com>
 
 Copyright (c) 2019, BrByte
 All rights reserved.
