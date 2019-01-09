@@ -78,7 +78,7 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial)
 	// set up various pins
 	pinMode(rs485_sess->pinREDE, OUTPUT);
 
-	rs485_sess->timer_id = BrbBaseTimerAdd(rs485_sess->brb_base, 15500, 1, BrbRS485Session_TimerHandShakeCB, rs485_sess);
+	rs485_sess->timer_id = BrbTimerAdd(rs485_sess->brb_base, 15500, 1, BrbRS485Session_TimerHandShakeCB, rs485_sess);
 
 	/* Send hello to notify my new ID */
 	BrbRS485Session_SendHandShake(rs485_sess);

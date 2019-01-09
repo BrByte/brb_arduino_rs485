@@ -36,6 +36,7 @@
 
 /**********************************************************************************************************************/
 #include "Arduino.h"
+#include "Servo.h"
 #include "Boards.h"
 #include "BrbLogBase.h"
 
@@ -103,6 +104,7 @@ static const uint8_t glob_analog_pins[] = {
 
 #define MAX_TIMER 16
 #define MAX_SCRIPT 8
+#define MAX_SERVO 8
 
 #define MIN_ANA_PIN 0
 #define MAX_ANA_PIN NUM_ANALOG_INPUTS
@@ -128,6 +130,10 @@ typedef enum
     SCRIPT_OPCODE_JMP_LESSER,
     SCRIPT_OPCODE_JMP_LESSER_OR_EQUAL,
     SCRIPT_OPCODE_SET_DIGITAL,
+
+    // SCRIPT_OPCODE_SERVO_ATDT,
+    SCRIPT_OPCODE_SERVO_POS,
+    
     SCRIPT_OPCODE_LASTITEM
 } BrbMicroScriptOPCodeNum;
 /**********************************************************************************************************************/
@@ -176,6 +182,22 @@ typedef struct _BrbMicroScriptOPSetDig
     
 } BrbMicroScriptOPSetDig;
 
+// typedef struct _BrbMicroScriptOPStepperAtDt
+// {
+//     uint8_t pin;
+//     uint8_t index:3;
+//     uint8_t action:1;
+//     uint8_t pad0:4;
+    
+// } BrbMicroScriptOPStepperAtDt;
+
+typedef struct _BrbMicroScriptOPServoPos
+{
+    uint8_t pin;
+    uint8_t pos;
+    
+} BrbMicroScriptOPServoPos;
+
 typedef struct _BrbMicroScriptOPCmp
 {
     uint8_t pin;
@@ -207,7 +229,7 @@ typedef struct _BrbMicroCode
     uint8_t jmp_offt;
 
     /* grow only 4 in 4 */
-    BrbMicroScriptOP arr[54];
+    BrbMicroScriptOP arr[66];
 
 } BrbMicroCode;
 
@@ -216,8 +238,8 @@ typedef struct _BrbMicroScript
     uint8_t script_id;
 
     long delay_until_ms;
-    uint16_t cmp1;
-    uint16_t cmp2;
+    int cmp1;
+    int cmp2;
 
     BrbMicroCode code;
 
@@ -238,6 +260,23 @@ typedef struct _BrbBasePinData
 	uint8_t mode;
 
 } BrbBasePinData;
+/**********************************************************/
+typedef struct _BrbServo
+{
+    uint8_t pin;
+	uint8_t servo_id;
+
+	uint8_t pos_cur;
+
+    Servo *servo;
+    
+    struct
+    {
+    	uint16_t active:1;
+    	uint16_t attached:1;
+    } flags;
+    
+} BrbServo;
 /**********************************************************/
 typedef struct _BrbBase
 {
@@ -267,6 +306,12 @@ typedef struct _BrbBase
     struct
     {
         int count;
+        BrbServo arr[MAX_SERVO];
+    } servo;
+
+    struct
+    {
+        int count;
         BrbMicroScript arr[MAX_SCRIPT];
     } script; 
 } BrbBase;
@@ -275,6 +320,10 @@ typedef struct _BrbBase
 /**********************************************************/
 void BrbBaseInit(BrbBase *brb_base);
 void BrbBaseLoop(BrbBase *brb_base);
+/**********************************************************/
+/* BrbMicroScript */
+/**********************************************************/
+void BrbMicroScriptInit(BrbBase *brb_base);
 
 int BrbMicroScriptRunAll(BrbBase *brb_base);
 int BrbMicroScriptRunOnce(BrbBase *brb_base, BrbMicroScript *script);
@@ -282,17 +331,23 @@ int BrbMicroScriptRunOnce(BrbBase *brb_base, BrbMicroScript *script);
 BrbMicroScriptOPDelay *BrbMicroScriptOPAddDelay(BrbBase *brb_base, BrbMicroScript *script, uint16_t time);
 BrbMicroScriptOPCmp *BrbMicroScriptOPAddCmp(BrbBase *brb_base, BrbMicroScript *script, uint8_t pin, uint16_t value);
 BrbMicroScriptOPIf *BrbMicroScriptOPAddIf(BrbBase *brb_base, BrbMicroScript *script, uint8_t if_op, uint8_t else_offset, uint8_t end_offset);
-int BrbMicroScriptOPAddSetDig(BrbBase *brb_base, BrbMicroScript *script, uint8_t pin, uint8_t mode, uint8_t value);
+BrbMicroScriptOPSetDig *BrbMicroScriptOPAddSetDig(BrbBase *brb_base, BrbMicroScript *script, uint8_t pin, uint8_t mode, uint8_t value);
+BrbMicroScriptOPServoPos *BrbMicroScriptOPAddServoPos(BrbBase *brb_base, BrbMicroScript *script, uint8_t pin, uint8_t pos);
 
 BrbMicroScript *BrbMicroScriptGrabByID(BrbBase *brb_base, int script_id);
 BrbMicroScript *BrbMicroScriptGrabFree(BrbBase *brb_base);
 BrbMicroScript *BrbMicroScriptSetByID(BrbBase *brb_base, BrbMicroScript *script_new);
 
+/**********************************************************/
+/* BrbTimer */
+/**********************************************************/
+BrbTimer *BrbTimerGrabByID(BrbBase *brb_base, int timer_id);
+int BrbTimerAdd(BrbBase *brb_base, long delay_ms, int persist, BrbGenericCBH *cb_func, void *cb_data);
+void BrbTimerDispatch(BrbBase *brb_base);
 
-BrbTimer *BrbBaseTimerGrabByID(BrbBase *brb_base, int timer_id);
-int BrbBaseTimerAdd(BrbBase *brb_base, long delay_ms, int persist, BrbGenericCBH *cb_func, void *cb_data);
-void BrbBaseTimerDispatch(BrbBase *brb_base);
-
+/**********************************************************/
+/* BrbBase */
+/**********************************************************/
 void BrbBase_PinLoad(BrbBase *brb_base);
 void BrbBase_PinCheck(BrbBase *brb_base);
 void BrbBase_PinSet(BrbBase *brb_base, int pin_num, int pin_mode, int pin_value);
@@ -301,6 +356,16 @@ uint8_t BrbBase_PinGetMode(uint8_t pin);
 
 int BrbBase_EEPROMRead(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset);
 int BrbBase_EEPROMWrite(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset);
+
+/**********************************************************/
+/* BrbServo */
+/**********************************************************/
+BrbServo *BrbServoGrabByID(BrbBase *brb_base, int servo_id);
+BrbServo *BrbServoGrabFree(BrbBase *brb_base);
+BrbServo *BrbServoGrabByPin(BrbBase *brb_base, int pin);
+int BrbServoAttach(BrbBase *brb_base, BrbServo *servo, int pin);
+BrbServo *BrbServoSetPosByPin(BrbBase *brb_base, int pin, int pos_set);
+BrbServo *BrbServoSetPos(BrbBase *brb_base, BrbServo *servo, int pos_set);
 /**********************************************************************************************************************/
 /* SCRIPT FUNCTIONS */
 /**********************************************************/
@@ -313,6 +378,7 @@ BrbGenericCBH BrbMicroScriptJmpNotGreaterFunc;
 BrbGenericCBH BrbMicroScriptJmpLesserFunc;
 BrbGenericCBH BrbMicroScriptJmpNotLesserFunc;
 BrbGenericCBH BrbMicroScriptSetDigitalFunc;
+BrbGenericCBH BrbMicroScriptServoPosFunc;
 
 static const BrbMicroScriptOPRunTime glob_script_runtime_arr[] = 
 {
@@ -329,6 +395,7 @@ static const BrbMicroScriptOPRunTime glob_script_runtime_arr[] =
     {SCRIPT_OPCODE_JMP_LESSER_OR_EQUAL,     1, BrbMicroScriptJmpNotLesserFunc},
 
     {SCRIPT_OPCODE_SET_DIGITAL,             1, BrbMicroScriptSetDigitalFunc},
+    {SCRIPT_OPCODE_SERVO_POS,               1, BrbMicroScriptServoPosFunc},
 
     {SCRIPT_OPCODE_LASTITEM,    0, NULL}            /* NULL TERMINATOR */
 };
