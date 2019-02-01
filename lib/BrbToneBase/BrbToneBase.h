@@ -1,7 +1,7 @@
 /*
- * BrbTone.h
+ * BrbToneBase.h
  *
- *  Created on: 2018-10-01
+ *  Created on: 2018-02-01
  *      Author: Luiz Fernando Souza Softov <softov@brbyte.com>
  *      Author: Guilherme Amorim de Oliveira Alves <guilherme@brbyte.com>
  *
@@ -33,6 +33,8 @@
 
 #ifndef BRB_TONE_H_
 #define BRB_TONE_H_
+
+#include "BrbBase.h"
 
 /**********************************************************************************************************************/
 // Integer note frequencies for tone()
@@ -164,49 +166,15 @@
 #define NOTE_C9   8372
  
 #define NOTESIZE ((9*12)+1)
- 
-// int noteFrequencies[] = {
-//   NOTE_C0,  NOTE_Cs0, NOTE_D0,  NOTE_Ds0, NOTE_E0,  NOTE_F0,
-//   NOTE_Fs0, NOTE_G0,  NOTE_Gs0, NOTE_A0,  NOTE_As0, NOTE_B0,
- 
-//   NOTE_C1,  NOTE_Cs1, NOTE_D1,  NOTE_Ds1, NOTE_E1,  NOTE_F1,
-//   NOTE_Fs1, NOTE_G1,  NOTE_Gs1, NOTE_A1,  NOTE_As1, NOTE_B1,
- 
-//   NOTE_C2,  NOTE_Cs2, NOTE_D2,  NOTE_Ds2, NOTE_E2,  NOTE_F2,
-//   NOTE_Fs2, NOTE_G2,  NOTE_Gs2, NOTE_A2,  NOTE_As2, NOTE_B2,
- 
-//   NOTE_C3,  NOTE_Cs3, NOTE_D3,  NOTE_Ds3, NOTE_E3,  NOTE_F3,
-//   NOTE_Fs3, NOTE_G3,  NOTE_Gs3, NOTE_A3,  NOTE_As3, NOTE_B3,
- 
-//   NOTE_C4,  NOTE_Cs4, NOTE_D4,  NOTE_Ds4, NOTE_E4,  NOTE_F4,
-//   NOTE_Fs4, NOTE_G4,  NOTE_Gs4, NOTE_A4,  NOTE_As4, NOTE_B4,
- 
-//   NOTE_C5,  NOTE_Cs5, NOTE_D5,  NOTE_Ds5, NOTE_E5,  NOTE_F5,
-//   NOTE_Fs5, NOTE_G5,  NOTE_Gs5, NOTE_A5,  NOTE_As5, NOTE_B5,
- 
-//   NOTE_C6,  NOTE_Cs6, NOTE_D6,  NOTE_Ds6, NOTE_E6,  NOTE_F6,
-//   NOTE_Fs6, NOTE_G6,  NOTE_Gs6, NOTE_A6,  NOTE_As6, NOTE_B6,
- 
-//   NOTE_C7,  NOTE_Cs7, NOTE_D7,  NOTE_Ds7, NOTE_E7,  NOTE_F7,
-//   NOTE_Fs7, NOTE_G7,  NOTE_Gs7, NOTE_A7,  NOTE_As7, NOTE_B7,
- 
-//   NOTE_C8,  NOTE_Cs8, NOTE_D8,  NOTE_Ds8, NOTE_E8,  NOTE_F8,
-//   NOTE_Fs8, NOTE_G8,  NOTE_Gs8, NOTE_A8,  NOTE_As8, NOTE_B8,
- 
-//   NOTE_C9
-// };
-//
+
 // The program must define TEMPO before
 // including this file. TEMPO is specified
 // in beats per minute (BPM)
-
 // #define TONE_TEMPO      (60)
 #define TONE_TEMPO      (120)
 // #define TONE_BPM        (120)
-
 #define NOTE_REST     -1
-
-
+/**********************************************************************************************************************/
 // Convert TEMPO (BPM) to one millisecond ticks.
 #define TONE_TICKS   ((60.0 * 4.0 / TONE_TEMPO) * 1000)
 // #define TONE_TICKS   (1000 * (60 * 4 / TONE_TEMPO))
@@ -221,13 +189,29 @@
 #define TONE_DUR_WHOLE             (int)(TONE_TICKS * 4)
 
 #define TONE_DUR_TICK(t)           (int)(TONE_TICKS / t + 0.)
-
-typedef struct _BrbTone
+/**********************************************************************************************************************/
+typedef struct _BrbToneNote
 {
     int note;
     int duration;
 
-} BrbTone;
+} BrbToneNote;
 
+typedef struct _BrbToneBase
+{
+    BrbBase *brb_base;
+    BrbToneNote notes[32];
+
+    int index;
+    int size;
+    int duration;
+    int note;
+
+    int pin;
+
+} BrbToneBase;
+/**********************************************************************************************************************/
+int BrbToneBase_Init(BrbToneBase *tone_base);
+void BrbToneBase_Loop(BrbToneBase *tone_base);
 /**********************************************************************************************************************/
 #endif /* BRB_TONE_H_ */

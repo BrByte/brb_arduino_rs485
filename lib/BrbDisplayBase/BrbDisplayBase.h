@@ -106,7 +106,7 @@ typedef struct _BrbDisplayBase
 
 	struct {
 		unsigned int on_action:1;
-		// unsigned int on_select:1;
+		unsigned int on_select:1;
 	} flags;
 
 } BrbDisplayBase;

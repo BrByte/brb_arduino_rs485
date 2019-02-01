@@ -41,7 +41,7 @@ typedef enum
     BRB_BTN_SELECT,
     BRB_BTN_NEXT,
     BRB_BTN_PREV,
-    BRB_BTN_LAST_ITEM,
+    BRB_BTN_LAST_ITEM
 } BrbBtnCode;
 /**********************************************************************************************************************/
 typedef struct _BrbBtnData

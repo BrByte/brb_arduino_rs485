@@ -568,9 +568,9 @@ read_again:
 	{
 		// LOG_WARN(rs485_sess->log_base, "Read MORE sz %d - [%d / %d] c: %d \r\n", rs485_sess->pkt.in.sz, rs485_sess->buf.sz, read_avail, read_counter);
 
-		// #ifdef BRB_RS485_HARDWARE_SERIAL
-		// 	delayMicroseconds(175);
-		// #endif
+		#ifdef BRB_RS485_HARDWARE_SERIAL
+			delayMicroseconds(175);
+		#endif
 
 		goto read_again;
 	}

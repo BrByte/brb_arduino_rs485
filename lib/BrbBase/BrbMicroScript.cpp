@@ -53,9 +53,11 @@ void BrbMicroScriptInit(BrbBase *brb_base)
     // script->flags.persist   = 1;
     // script->flags.active    = 1;
 
-    // // BrbMicroScriptOPAddSetDig(brb_base, script, 2, OUTPUT, LOW);
-    // // BrbMicroScriptOPAddDelay(brb_base, script, 2000);
-    // // BrbMicroScriptOPAddServoPos(brb_base, script, 32, 180);
+    // BrbMicroScriptOPAddSetDig(brb_base, script, 5, OUTPUT, LOW);
+    // BrbMicroScriptOPAddDelay(brb_base, script, 2000);
+    // BrbMicroScriptOPAddSetDig(brb_base, script, 5, OUTPUT, HIGH);
+    // BrbMicroScriptOPAddDelay(brb_base, script, 2000);
+    // BrbMicroScriptOPAddServoPos(brb_base, script, 32, 180);
 
     // // BrbMicroScriptOPAddDelay(brb_base, script, 2000);
     // // BrbMicroScriptOPAddServoPos(brb_base, script, 32, 115);

@@ -38,7 +38,6 @@
 #include "Arduino.h"
 #include "Servo.h"
 #include "Boards.h"
-#include "BrbTone.h"
 #include "BrbLogBase.h"
 
 static const uint8_t glob_analog_pins[] = {
@@ -233,7 +232,7 @@ typedef struct _BrbMicroCode
     uint8_t jmp_offt;
 
     /* grow only 4 in 4 */
-    BrbMicroScriptOP arr[66];
+    BrbMicroScriptOP arr[64];
 
 } BrbMicroCode;
 
@@ -324,18 +323,6 @@ typedef struct _BrbBase
         int count;
         BrbServo arr[MAX_SERVO];
     } servo;
-
-    struct
-    {
-        BrbTone tones[32];
-        int index;
-        int size;
-        int duration;
-        int note;
-
-        int pin;
-
-    } buzzer;
 
     struct
     {

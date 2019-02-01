@@ -54,7 +54,7 @@ int BrbDisplayBase_Init(BrbDisplayBase *display_base)
 
 	return 0;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 int BrbDisplayBase_Loop(BrbDisplayBase *display_base)
 {
 
@@ -65,15 +65,30 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 {
 	int op_status;
 
+	display_base->action_code = action_code;
+
+	display_base->flags.on_select = 0;
+
+	if (!display_base->flags.on_action)
+	{
+		if (display_base->action_code == BRB_BTN_SELECT)
+			display_base->flags.on_select = 1;
+
+		/* Press direction */
+		else if (display_base->action_code == BRB_BTN_NEXT)
+			display_base->screen_cur++;
+
+		else if (display_base->action_code == BRB_BTN_PREV)
+			display_base->screen_cur--;
+	}
+
 	/* TODO, jump to correct interface */
 	if (display_base->screen_cur < DISPLAY_SCREEN_INFO)
 		display_base->screen_cur = DISPLAY_SCREEN_LASTITEM - 1;
 	else if (display_base->screen_cur >= DISPLAY_SCREEN_LASTITEM)
 		display_base->screen_cur = DISPLAY_SCREEN_INFO;
 
-	display_base->action_code = action_code;
-
-	if (display_base->flags.on_action)
+	if (display_base->flags.on_action || display_base->flags.on_select)
 	{
 		/* Ignore Action */
 		if (!display_base->cb_action[display_base->screen_cur].cb_func)
@@ -85,18 +100,6 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 
 		return op_status;
 	}
-	
-	/* Press direction */
-    if (action_code == BRB_BTN_NEXT)
-		display_base->screen_cur++;
-	else if (action_code == BRB_BTN_PREV)
-		display_base->screen_cur--;
-
-	/* Correct interface number */
-	if (display_base->screen_cur < DISPLAY_SCREEN_INFO)
-		display_base->screen_cur = DISPLAY_SCREEN_LASTITEM - 1;
-	else if (display_base->screen_cur >= DISPLAY_SCREEN_LASTITEM)
-		display_base->screen_cur = DISPLAY_SCREEN_INFO;
 
 	/* Ignore Screen */
 	if (!display_base->cb_show[display_base->screen_cur].cb_func)
@@ -105,10 +108,10 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 	op_status = display_base->cb_show[display_base->screen_cur].cb_func(display_base->brb_base, display_base);
 
 	display_base->screen_last = display_base->screen_cur;
-	
+
 	return op_status;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const __FlashStringHelper *title_str, int x, int y)
 {
 	display_base->tft->setFont(BRB_DISPLAY_FONT_TITLE);
@@ -123,7 +126,7 @@ int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const __FlashStringHel
 
 	return 0;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 int BrbDisplayBase_SetBg(BrbDisplayBase *display_base)
 {
 	display_base->tft->fillRect(0, 0, 320, 240, ILI9341_DIMGRAY);
@@ -153,7 +156,7 @@ int BrbDisplayBase_SetScreenActionCB(BrbDisplayBase *display_base, int screen_co
 
 	return 0;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 int BrbDisplayBase_Test(BrbDisplayBase *display_base)
 {
 	int pos_s = 15;
@@ -207,7 +210,7 @@ int BrbDisplayBase_Test(BrbDisplayBase *display_base)
 
 	return 1;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x, int y, int r, const __FlashStringHelper *units, int text_color)
 {
 	// Convert value to a string
@@ -255,7 +258,7 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 
 	return 0;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const __FlashStringHelper *units, byte scheme)
 {
 	// Minimum value of r is about 52 before value text intrudes on ring
@@ -411,7 +414,7 @@ int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin,
 	display_base->tft->drawLine(x0, y0, x1, y1, ILI9341_BLACK);
 
 	BrbDisplayBase_DrawArcText(display_base, value, x, y, r, units, text_color);
-	
+
 	display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
 	display_base->tft->setFont(BRB_DISPLAY_FONT_DEFAULT);
 	display_base->tft->setTextScale(1);
@@ -424,9 +427,9 @@ int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin,
 	// Calculate and return right hand side x coordinate
 	return x + r;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 /* Return a 16 bit rainbow color */
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 static unsigned int rainbow(byte value)
 {
 	// Value is expected to be in range 0-127
