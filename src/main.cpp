@@ -534,10 +534,12 @@ void setup()
     BrbGeradorBase *gerador_base = (BrbGeradorBase *)&glob_gerador_base;
 
     gerador_base->brb_base = &glob_brb_base;
-    gerador_base->pin_parada = GERADOR_PARTIDA_PIN;
-    gerador_base->pin_partida = GERADOR_PARADA_PIN;
+    gerador_base->pin_partida = GERADOR_PARTIDA_PIN;
+    gerador_base->pin_parada = GERADOR_PARADA_PIN;
+    gerador_base->pin_servo = GERADOR_SERVO_PIN;
 
     BrbGeradorBase_Init(gerador_base);
+    BrbGeradorBase_Partida(gerador_base);
 
     /**************************************/
     /* Clean up base */

@@ -36,7 +36,7 @@
 /**********************************************************************************************************************/
 #include <BrbBase.h>
 /****************************************************************************************************/
-
+#define BRB_GERADOR_PARTIDA_MS 6000
 /**********************************************************************************************************************/
 typedef struct _BrbGeradorBase
 {
@@ -44,6 +44,9 @@ typedef struct _BrbGeradorBase
 
 	long horisec;
 
+	// BrbServo servo_bb;
+
+	int pin_servo;
 	int pin_partida;
 	int pin_parada;
 
@@ -68,5 +71,6 @@ typedef struct _BrbGeradorBase
 /**********************************************************************************************************************/
 int BrbGeradorBase_Init(BrbGeradorBase *gerador_base);
 int BrbGeradorBase_Save(BrbGeradorBase *gerador_base);
+int BrbGeradorBase_Partida(BrbGeradorBase *gerador_base);
 /**********************************************************************************************************************/
 #endif /* BRB_GERADOR_BASE_H_ */

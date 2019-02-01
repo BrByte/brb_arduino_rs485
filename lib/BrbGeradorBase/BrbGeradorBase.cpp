@@ -40,8 +40,8 @@ int BrbGeradorBase_Init(BrbGeradorBase *gerador_base)
 	if (!gerador_base)
 		return -1;
 
-    /* Read EEPROM */
-    BrbBase_EEPROMRead(gerador_base->brb_base, (uint8_t *)&gerador_base->data, sizeof(gerador_base->data), BRB_PIN_DATA_OFFSET + 100 + (sizeof(BrbBasePinData) * TOTAL_PINS));
+	/* Read EEPROM */
+	BrbBase_EEPROMRead(gerador_base->brb_base, (uint8_t *)&gerador_base->data, sizeof(gerador_base->data), BRB_PIN_DATA_OFFSET + 100 + (sizeof(BrbBasePinData) * TOTAL_PINS));
 
 	pinMode(gerador_base->pin_partida, OUTPUT);
 	digitalWrite(gerador_base->pin_partida, LOW);
@@ -50,6 +50,7 @@ int BrbGeradorBase_Init(BrbGeradorBase *gerador_base)
 
 	pinMode(gerador_base->pin_parada, OUTPUT);
 	digitalWrite(gerador_base->pin_parada, LOW);
+
 	// delay(1000);
 	// digitalWrite(gerador_base->pin_parada, HIGH);
 
@@ -57,17 +58,70 @@ int BrbGeradorBase_Init(BrbGeradorBase *gerador_base)
 
 	return 0;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
 int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 {
 
 	return 0;
 }
- /**********************************************************************************************************************/
+/**********************************************************************************************************************/
+int BrbGeradorBase_Partida(BrbGeradorBase *gerador_base)
+{
+	BrbBase *brb_base = gerador_base->brb_base;
+	BrbMicroScript *script;
+	BrbMicroScriptOPIf *op_if;
+
+	if (gerador_base->pin_partida <= MIN_DIG_PIN || !gerador_base->brb_base)
+		return -1;
+
+	/* Put pins down */
+	digitalWrite(gerador_base->pin_partida, LOW);
+	digitalWrite(gerador_base->pin_parada, LOW);
+
+	script = BrbMicroScriptGrabFree(gerador_base->brb_base);
+	script->flags.persist = 1;
+	script->flags.active = 1;
+
+	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_partida, OUTPUT, LOW);
+	BrbMicroScriptOPAddDelay(brb_base, script, BRB_GERADOR_PARTIDA_MS);
+
+	script = BrbMicroScriptGrabFree(brb_base);
+	script->flags.persist = 1;
+	script->flags.active = 1;
+
+	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_partida, OUTPUT, LOW);
+	BrbMicroScriptOPAddServoPos(brb_base, script, gerador_base->pin_servo, 180);
+	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_partida, OUTPUT, HIGH);
+	BrbMicroScriptOPAddDelay(brb_base, script, BRB_GERADOR_PARTIDA_MS);
+	BrbMicroScriptOPAddServoPos(brb_base, script, gerador_base->pin_servo, 120);
+	BrbMicroScriptOPAddDelay(brb_base, script, 1000);
+
+	/* Compare Analog pin 0 */
+    BrbMicroScriptOPAddCmp(brb_base, script, 0, 0);
+
+	op_if   = BrbMicroScriptOPAddIf(brb_base, script, SCRIPT_OPCODE_JMP_LESSER_OR_EQUAL, 0, 0);
+
+	if (op_if)
+	{
+	    BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, LOW);
+
+	    op_if->else_offset      = script->code.size;
+
+	    BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, HIGH);
+
+	    op_if->end_offset       = script->code.size;
+	}
+
+	BrbMicroScriptOPAddDelay(brb_base, script, 2000);
+	BrbMicroScriptOPAddServoPos(brb_base, script, gerador_base->pin_servo, 115);
+
+	return 0;
+}
+/**********************************************************************************************************************/
 int BrbGeradorBase_Save(BrbGeradorBase *gerador_base)
 {
-    /* Read EEPROM */
-    BrbBase_EEPROMWrite(gerador_base->brb_base, (uint8_t *)&gerador_base->data, sizeof(gerador_base->data), BRB_PIN_DATA_OFFSET + 100 + (sizeof(BrbBasePinData) * TOTAL_PINS));
+	/* Read EEPROM */
+	BrbBase_EEPROMWrite(gerador_base->brb_base, (uint8_t *)&gerador_base->data, sizeof(gerador_base->data), BRB_PIN_DATA_OFFSET + 100 + (sizeof(BrbBasePinData) * TOTAL_PINS));
 
 	return 0;
 }
