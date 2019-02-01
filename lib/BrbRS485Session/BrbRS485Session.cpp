@@ -51,7 +51,11 @@ BrbRS485Session *BrbRS485Session_New(BrbBase *brb_base)
 	return rs485_sess;
 }
 /**********************************************************************************************************************/
+#ifdef BRB_RS485_HARDWARE_SERIAL
+int BrbRS485Session_Init(BrbRS485Session *rs485_sess, HardwareSerial *serial)
+#else
 int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial)
+#endif
 {
 	/* sanitize */
 	if (!rs485_sess || !serial)
@@ -63,22 +67,26 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial)
 	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->address, 1, 0, 0);
 	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->uuid, 4, 10, 0);
 
-	// receive pin, transmit pin
+	/* receive pin, transmit pin */
 	rs485_sess->serial = serial;
 
+#ifdef BRB_RS485_HARDWARE_SERIAL
+	/* No pin modifications */
+	/* Using Hardware Serial */
+#else
 	/* define pin modes for tx, rx: */
-	pinMode(rs485_sess->pinRO, INPUT);
 	pinMode(rs485_sess->pinDI, OUTPUT);
+	pinMode(rs485_sess->pinRO, INPUT);
+#endif
 
-	/* Initialize SoftwareSerial to RS485 */	
-	rs485_sess->serial->begin(9600);
-	// rs485_sess->serial->begin(19200);
-	// rs485_sess->serial->begin(115200);
+	/* Initialize SoftwareSerial to RS485 */
+	rs485_sess->serial->begin(BRB_RS485_BAUDRATE);
 
-	// set up various pins
+	/* set up various pins */
 	pinMode(rs485_sess->pinREDE, OUTPUT);
 
-	rs485_sess->timer_id = BrbTimerAdd(rs485_sess->brb_base, 15500, 1, BrbRS485Session_TimerHandShakeCB, rs485_sess);
+	/* Add timer to send HandShake */
+	rs485_sess->timer_id = BrbTimerAdd(rs485_sess->brb_base, BRB_RS485_HANDSHAKE_TIME, BRB_RS485_HANDSHAKE_REPEAT, BrbRS485Session_TimerHandShakeCB, rs485_sess);
 
 	/* Send hello to notify my new ID */
 	BrbRS485Session_SendHandShake(rs485_sess);
@@ -92,8 +100,6 @@ int BrbRS485Session_ReadAddr(BrbRS485Session *rs485_sess, uint8_t *addr_ptr, uin
 
 	if (!rs485_sess)
 		return -1;
-
-	// eeprom_read_block((void *)&rs485_sess->uuid, (void *)1, sizeof(rs485_sess->uuid));
 
 	for (int c = 0; c < addr_sz; c++)
 	{
@@ -210,10 +216,12 @@ int BrbRS485Session_SendComplemented(BrbRS485Session *rs485_sess, const byte p)
 	/* first nibble */
 	c = p >> 4;
 	rs485_sess->serial->write((c << 4) | (c ^ 0x0F));
+	// delayMicroseconds(50);
 
 	/* second nibble */
 	c = p & 0x0F;
 	rs485_sess->serial->write((c << 4) | (c ^ 0x0F));
+	// delayMicroseconds(50);
 
 	return 2;
 }
@@ -222,8 +230,11 @@ int BrbRS485Session_SendPacket(BrbRS485Session *rs485_sess, const byte *data_ptr
 {
 	int bytes_write = 0;
 
-	LOG_DEBUG(rs485_sess->log_base, "---> Send PKT: 0x%02x --> 0x%02x - SZ [%u]\r\n",
-			 ((BrbRS485PacketHdr *)data_ptr)->src, ((BrbRS485PacketHdr *)data_ptr)->dst, data_sz);
+	/* Calculate CRC */
+	byte crc8 	= BrbRS485Session_CalcCRC8(data_ptr, data_sz);
+
+	LOG_DEBUG(rs485_sess->log_base, "---> Send PKT: [0x%02x -> 0x%02x] - T [%d] - 8 [0x%02x] - SZ [%u]\r\n",
+			  ((BrbRS485PacketHdr *)data_ptr)->src, ((BrbRS485PacketHdr *)data_ptr)->dst, ((BrbRS485PacketHdr *)data_ptr)->type, crc8, data_sz);
 
 	/* sanitize */
 	if (!rs485_sess || !data_ptr || data_sz < 1)
@@ -232,46 +243,54 @@ int BrbRS485Session_SendPacket(BrbRS485Session *rs485_sess, const byte *data_ptr
 	if (rs485_sess->flags.has_begin && ((rs485_sess->buf.index + 1) < rs485_sess->buf.sz))
 	{
 		LOG_WARN(rs485_sess->log_base, "### Send PKT: b:%d - buf idx:%u - sz:%u\r\n",
-			 rs485_sess->flags.has_begin, rs485_sess->buf.index, rs485_sess->buf.sz);
-
+				 rs485_sess->flags.has_begin, rs485_sess->buf.index, rs485_sess->buf.sz);
 	}
 
 	/* enable sending */
 	digitalWrite(rs485_sess->pinREDE, RS485_TOGGLE_TRASMIT);
-	// delayMicroseconds(5);
+
+#ifdef BRB_RS485_HARDWARE_SERIAL
+	delayMicroseconds(5);
+#else
+
+#endif
 
 	/* Initializer Control Data */
 	bytes_write += rs485_sess->serial->write(BRB_RS485_BEGIN);
+	
+	delay(1000);
 
 	/* Write data */
 	for (byte i = 0; i < data_sz; i++)
-		bytes_write += BrbRS485Session_SendComplemented(rs485_sess, data_ptr[i]);
+	{
+		// if (rs485_sess->serial->availableForWrite() < 1 || (((i + 1) % 16) == 0))
+		if (((i + 1) % 16) == 0)
+		{
+			LOG_DEBUG(rs485_sess->log_base, "### Send PKT: [%d][%d] - avail [%d]\r\n", i, data_sz, rs485_sess->serial->availableForWrite());
 
-	// delayMicroseconds(1);
+			/* flush transmit buffer */
+			rs485_sess->serial->flush();
+		}
+
+		bytes_write += BrbRS485Session_SendComplemented(rs485_sess, data_ptr[i]);
+	}
 
 	/* Finish  Control Data */
 	bytes_write += rs485_sess->serial->write(BRB_RS485_END);
 
-	/* Calculate CRC */
-	byte crc8 = BrbRS485Session_CalcCRC8(data_ptr, data_sz);
-
+	/* Send CRC8 signature */
 	bytes_write += BrbRS485Session_SendComplemented(rs485_sess, crc8);
 
-	// // flush transmit buffer
-	// rs485_sess->serial->flush();
-
-	// delayMicroseconds(666); // inter character time out
-
-	// Between 1.0.0 and 1.0.3 it almost does it - need to compensate
-	// for the hardware buffer. Delay for 2 bytes worth of transmission.
-	// rs485_sess->serial->flush();
-	// delayMicroseconds((20000000UL/9600)+1);
-
+#ifdef BRB_RS485_HARDWARE_SERIAL
+	/* flush transmit buffer */
+	rs485_sess->serial->flush();
+#else
+	/* flush transmit buffer */
+	rs485_sess->serial->flush();
+#endif
 
 	/* disable sending */
 	digitalWrite(rs485_sess->pinREDE, RS485_TOGGLE_RECEIVE);
-
-	// rs485_sess->serial->flush();
 
 	return bytes_write;
 }
@@ -305,12 +324,12 @@ int BrbRS485Session_SendACK(BrbRS485Session *rs485_sess, BrbRS485PacketHdr *rs48
 {
 	BrbRS485PacketHdr *rs485_packet_ack = (BrbRS485PacketHdr *)&rs485_sess->pkt.out.data;
 
-	rs485_packet_ack->src 	= rs485_sess->address;
-	rs485_packet_ack->dst 	= rs485_packet->src;
+	rs485_packet_ack->src = rs485_sess->address;
+	rs485_packet_ack->dst = rs485_packet->src;
 	rs485_packet_ack->magic = BRB_RS485_MAGIC;
-	rs485_packet_ack->type 	= RS485_PKT_TYPE_ACK;
-	rs485_packet_ack->len 	= sizeof(BrbRS485PacketHdr);
-	rs485_packet_ack->id 	= rs485_packet->id;
+	rs485_packet_ack->type = RS485_PKT_TYPE_ACK;
+	rs485_packet_ack->len = sizeof(BrbRS485PacketHdr);
+	rs485_packet_ack->id = rs485_packet->id;
 
 	/* Send CRC */
 	return BrbRS485Session_SendPacket(rs485_sess, (byte *)rs485_packet_ack, sizeof(BrbRS485PacketHdr));
@@ -320,17 +339,17 @@ int BrbRS485Session_SendHandShake(BrbRS485Session *rs485_sess)
 {
 	BrbRS485PacketHandShake *rs485_pkt_hs = (BrbRS485PacketHandShake *)&rs485_sess->pkt.out.data;
 
-	rs485_pkt_hs->hdr.src 	= rs485_sess->address;
-	rs485_pkt_hs->hdr.dst 	= 0xFF;
-	rs485_pkt_hs->hdr.type 	= RS485_PKT_TYPE_HANDSHAKE;
-	rs485_pkt_hs->hdr.len 	= sizeof(BrbRS485PacketHandShake);
-	rs485_pkt_hs->hdr.id 	= 0;
+	rs485_pkt_hs->hdr.src = rs485_sess->address;
+	rs485_pkt_hs->hdr.dst = 0xFF;
+	rs485_pkt_hs->hdr.type = RS485_PKT_TYPE_HANDSHAKE;
+	rs485_pkt_hs->hdr.len = sizeof(BrbRS485PacketHandShake);
+	rs485_pkt_hs->hdr.id = 0;
 
 	memcpy(&rs485_pkt_hs->uuid, &rs485_sess->uuid, sizeof(rs485_pkt_hs->uuid));
 
-	LOG_INFO(rs485_sess->log_base, "Send handshake - b:%u sz:%u buf i:%u s:%u pkt:%u/%u\r\n", 
-		rs485_sess->flags.has_begin, rs485_sess->pkt.in.sz, rs485_sess->buf.index, rs485_sess->buf.sz, 
-		rs485_sess->stats.pkt.rx, rs485_sess->stats.pkt.tx);
+	LOG_INFO(rs485_sess->log_base, "Send handshake - b:%u sz:%u buf i:%u s:%u pkt:%u/%u\r\n",
+			 rs485_sess->flags.has_begin, rs485_sess->pkt.in.sz, rs485_sess->buf.index, rs485_sess->buf.sz,
+			 rs485_sess->stats.pkt.rx, rs485_sess->stats.pkt.tx);
 
 	/* Reading packet, do not send handshake */
 	if (rs485_sess->pkt.in.sz > 0 || rs485_sess->flags.has_begin)
@@ -508,11 +527,11 @@ read_again:
 	read_counter++;
 
 	/* Nothing to read */
-	if (read_avail <= 0)		
+	if (read_avail <= 0)
 		return 0;
 
 	/* Adjust buffer size */
-	if (read_avail > sizeof(rs485_sess->buf.data) )
+	if (read_avail > sizeof(rs485_sess->buf.data))
 		read_avail = sizeof(rs485_sess->buf.data);
 
 	/* Read data from UART */
@@ -526,13 +545,13 @@ read_again:
 
 	// if (read_avail > 60)
 	// {
-		LOG_INFO(rs485_sess->log_base, "Read [%d / %d] - [%u]\r\n", rs485_sess->buf.sz, read_avail, rs485_sess->pkt.in.sz);
+	LOG_INFO(rs485_sess->log_base, "Read [%d / %d] - [%u]\r\n", rs485_sess->buf.sz, read_avail, rs485_sess->pkt.in.sz);
 	// }
 
 	/* Update counters */
 	rs485_sess->stats.byte.rx += rs485_sess->buf.sz;
 
-// process_read:
+	// process_read:
 
 	/* Process byte array */
 	for (rs485_sess->buf.index = 0; rs485_sess->buf.index < rs485_sess->buf.sz; rs485_sess->buf.index++)
@@ -549,11 +568,9 @@ read_again:
 	{
 		// LOG_WARN(rs485_sess->log_base, "Read MORE sz %d - [%d / %d] c: %d \r\n", rs485_sess->pkt.in.sz, rs485_sess->buf.sz, read_avail, read_counter);
 
-		// delayMicroseconds(100);
-		/* flush transmit buffer */
-		// rs485_sess->serial->flush();
-
-		// delayMicroseconds(750); // inter character time out
+		// #ifdef BRB_RS485_HARDWARE_SERIAL
+		// 	delayMicroseconds(175);
+		// #endif
 
 		goto read_again;
 	}
@@ -740,7 +757,7 @@ static uint8_t BrbRS485Session_PktParser(BrbRS485Session *rs485_sess, BrbRS485Pa
 		return 0;
 	}
 
-	cb_ret 	= rs485_sess->cb[brb_pkt->type].cb_func(rs485_sess, brb_pkt->type, brb_pkt, pkt_sz, rs485_sess->cb[brb_pkt->type].cb_data);
+	cb_ret = rs485_sess->cb[brb_pkt->type].cb_func(rs485_sess, brb_pkt->type, brb_pkt, pkt_sz, rs485_sess->cb[brb_pkt->type].cb_data);
 
 	if (do_ack && (cb_ret == RS485_PKT_RETURN_ACK_SUCCESS || cb_ret == RS485_PKT_RETURN_ACK_FAIL))
 	{

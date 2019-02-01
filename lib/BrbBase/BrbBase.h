@@ -38,6 +38,7 @@
 #include "Arduino.h"
 #include "Servo.h"
 #include "Boards.h"
+#include "BrbTone.h"
 #include "BrbLogBase.h"
 
 static const uint8_t glob_analog_pins[] = {
@@ -109,10 +110,13 @@ static const uint8_t glob_analog_pins[] = {
 #define MIN_ANA_PIN 0
 #define MAX_ANA_PIN NUM_ANALOG_INPUTS
 
-#define MIN_DIG_PIN 5
+#define MIN_DIG_PIN 2
 
 // #define MAX_DIG_PIN NUM_DIGITAL_PINS
 #define MAX_DIG_PIN PIN_A0
+
+#define BRB_PIN_DATA_MAGIC 152
+#define BRB_PIN_DATA_OFFSET 100
 
 #define BRB_COMPARE_NUM(a, b) (a > b) - (a < b)
 /**********************************************************************************************************************/
@@ -259,6 +263,13 @@ typedef struct _BrbBasePinData
     uint8_t value;
 	uint8_t mode;
 
+    struct
+    {
+    	uint16_t persist:1;
+    	uint16_t active:1;
+    	uint16_t pad:14;
+    } flags;
+
 } BrbBasePinData;
 /**********************************************************/
 typedef struct _BrbServo
@@ -285,6 +296,11 @@ typedef struct _BrbBase
 
     struct
     {
+        int loop_cnt;
+    } stats;
+
+    struct
+    {
         long last;
         long cur;
         int delay;
@@ -308,6 +324,18 @@ typedef struct _BrbBase
         int count;
         BrbServo arr[MAX_SERVO];
     } servo;
+
+    struct
+    {
+        BrbTone tones[32];
+        int index;
+        int size;
+        int duration;
+        int note;
+
+        int pin;
+
+    } buzzer;
 
     struct
     {

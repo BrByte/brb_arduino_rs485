@@ -42,8 +42,101 @@ void BrbBaseInit(BrbBase *brb_base)
     /* Read pins from EEPROM */
     BrbBase_PinLoad(brb_base);
 
+    // if ((brb_base->buzzer.pin > 1) && brb_base->buzzer.pin < TOTAL_PINS)
+    // {
+    //     // brb_base->buzzer.tones[0].note = NOTE_As2;
+    //     // brb_base->buzzer.tones[0].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[1].note = NOTE_REST;
+    //     // brb_base->buzzer.tones[1].duration = TONE_DUR_SIXTEENTH;
+    //     // brb_base->buzzer.tones[2].note = NOTE_Gs3;
+    //     // brb_base->buzzer.tones[2].duration = TONE_DUR_SIXTEENTH;
+    //     // brb_base->buzzer.tones[3].note = NOTE_REST;
+    //     // brb_base->buzzer.tones[3].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[4].note = NOTE_As3;
+    //     // brb_base->buzzer.tones[4].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[5].note = NOTE_REST;
+    //     // brb_base->buzzer.tones[5].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[6].note = NOTE_C3;
+    //     // brb_base->buzzer.tones[6].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[7].note = NOTE_Cs3;
+    //     // brb_base->buzzer.tones[7].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[8].note = NOTE_D3;
+    //     // brb_base->buzzer.tones[8].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[9].note = NOTE_Ds3;
+    //     // brb_base->buzzer.tones[9].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[10].note = NOTE_REST;
+    //     // brb_base->buzzer.tones[10].duration = TONE_DUR_SIXTEENTH;
+    //     // brb_base->buzzer.tones[11].note = NOTE_As3;
+    //     // brb_base->buzzer.tones[11].duration = TONE_DUR_SIXTEENTH;
+    //     // brb_base->buzzer.tones[12].note = NOTE_REST;
+    //     // brb_base->buzzer.tones[12].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[13].note = NOTE_Cs4;
+    //     // brb_base->buzzer.tones[13].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[14].note = NOTE_REST;
+    //     // brb_base->buzzer.tones[14].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[15].note = NOTE_G2;
+    //     // brb_base->buzzer.tones[15].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[16].note = NOTE_Gs2;
+    //     // brb_base->buzzer.tones[16].duration = TONE_DUR_EIGHTH;
+    //     // brb_base->buzzer.tones[17].note = NOTE_A2;
+    //     // brb_base->buzzer.tones[17].duration = TONE_DUR_EIGHTH;
+
+    //     // brb_base->buzzer.size = 18;
+        
+    //     brb_base->buzzer.tones[0].note = NOTE_A4;
+    //     brb_base->buzzer.tones[0].duration = TONE_DUR_TICK(4);
+    //     brb_base->buzzer.tones[1].note = NOTE_A4; 
+    //     brb_base->buzzer.tones[1].duration = TONE_DUR_TICK(4);
+    //     brb_base->buzzer.tones[2].note = NOTE_A4; 
+    //     brb_base->buzzer.tones[2].duration = TONE_DUR_TICK(4);
+    //     brb_base->buzzer.tones[3].note = NOTE_F4; 
+    //     brb_base->buzzer.tones[3].duration = TONE_DUR_TICK(5);
+    //     brb_base->buzzer.tones[4].note = NOTE_C5; 
+    //     brb_base->buzzer.tones[4].duration = TONE_DUR_TICK(16);
+    //     brb_base->buzzer.tones[5].note = NOTE_A4; 
+    //     brb_base->buzzer.tones[5].duration = TONE_DUR_TICK(4);
+    //     brb_base->buzzer.tones[6].note = NOTE_F4; 
+    //     brb_base->buzzer.tones[6].duration = TONE_DUR_TICK(5);
+    //     brb_base->buzzer.tones[7].note = NOTE_C5; 
+    //     brb_base->buzzer.tones[7].duration = TONE_DUR_TICK(16);
+    //     brb_base->buzzer.tones[8].note = NOTE_A4; 
+    //     brb_base->buzzer.tones[8].duration = TONE_DUR_TICK(2);
+    //     brb_base->buzzer.tones[9].note = NOTE_E5; 
+    //     brb_base->buzzer.tones[9].duration = TONE_DUR_TICK(4);
+    //     brb_base->buzzer.tones[10].note = NOTE_E5; 
+    //     brb_base->buzzer.tones[10].duration = TONE_DUR_TICK(4);
+    //     brb_base->buzzer.tones[11].note = NOTE_E5; 
+    //     brb_base->buzzer.tones[11].duration = TONE_DUR_TICK(4);
+    //     brb_base->buzzer.tones[12].note = NOTE_F5; 
+    //     brb_base->buzzer.tones[12].duration = TONE_DUR_TICK(5);
+    //     brb_base->buzzer.tones[13].note = NOTE_C5; 
+    //     brb_base->buzzer.tones[13].duration = TONE_DUR_TICK(16);
+    //     brb_base->buzzer.tones[14].note = NOTE_A4; 
+    //     brb_base->buzzer.tones[14].duration = TONE_DUR_TICK(4);
+    //     brb_base->buzzer.tones[15].note = NOTE_F4; 
+    //     brb_base->buzzer.tones[15].duration = TONE_DUR_TICK(5);
+    //     brb_base->buzzer.tones[16].note = NOTE_C5;
+    //     brb_base->buzzer.tones[16].duration = TONE_DUR_TICK(16);
+    //     brb_base->buzzer.tones[17].note = NOTE_A4;
+    //     brb_base->buzzer.tones[17].duration = TONE_DUR_TICK(2);
+    //     brb_base->buzzer.tones[18].note = NOTE_REST;
+    //     brb_base->buzzer.tones[18].duration = TONE_DUR_TICK(4);
+
+    //     brb_base->buzzer.size = 19;
+
+    //     pinMode(brb_base->buzzer.pin, OUTPUT);
+
+    //     brb_base->buzzer.note = brb_base->buzzer.tones[brb_base->buzzer.index].note;
+    //     brb_base->buzzer.duration = brb_base->buzzer.tones[brb_base->buzzer.index].duration;
+
+    //     if (brb_base->buzzer.note != NOTE_REST)
+    //     {
+    //         tone(brb_base->buzzer.pin, brb_base->buzzer.note);
+    //     }
+    // }
+
     /* Check pins */
-    BrbBase_PinCheck(brb_base);
+    // BrbBase_PinCheck(brb_base);
 
     /* Initialize Scripts */
     BrbMicroScriptInit(brb_base);
@@ -53,6 +146,8 @@ void BrbBaseInit(BrbBase *brb_base)
 /**********************************************************************************************************************/
 void BrbBaseLoop(BrbBase *brb_base)
 {
+    brb_base->stats.loop_cnt++;
+
     /* Update timer counts */
     brb_base->ms.last = brb_base->ms.cur;
     brb_base->ms.cur = millis();
@@ -61,6 +156,35 @@ void BrbBaseLoop(BrbBase *brb_base)
     brb_base->us.last = brb_base->us.cur;
     brb_base->us.cur = micros();
     brb_base->us.delay = brb_base->us.cur - brb_base->us.last;
+
+    brb_base->buzzer.duration = (brb_base->buzzer.duration - brb_base->ms.delay);
+
+    /* Current note has expired */
+    // if (brb_base->buzzer.duration <= 0 && brb_base->buzzer.pin > 1)
+    // {
+    //     noTone(brb_base->buzzer.pin);
+
+    //     // Find the next note to be played
+    //     if (brb_base->buzzer.index >= brb_base->buzzer.size)
+    //     {
+    //         brb_base->buzzer.index = 0;
+    //     }
+    //     else
+    //     {
+    //         brb_base->buzzer.index++;
+    //     }
+
+    //     brb_base->buzzer.note = brb_base->buzzer.tones[brb_base->buzzer.index].note;
+    //     brb_base->buzzer.duration = brb_base->buzzer.tones[brb_base->buzzer.index].duration;
+
+    //     /* Start playing the next note */
+    //     if (brb_base->buzzer.note != NOTE_REST)
+    //     {
+    //         tone(brb_base->buzzer.pin, brb_base->buzzer.note, brb_base->buzzer.duration);
+    //     }
+
+    //     brb_base->buzzer.duration = brb_base->buzzer.duration * 1.2;
+    // }
 
     /* Dispatch timers and scripts */
     BrbTimerDispatch(brb_base);
@@ -72,7 +196,7 @@ void BrbBaseLoop(BrbBase *brb_base)
 void BrbBase_PinLoad(BrbBase *brb_base)
 {
     /* Read EEPROM */
-    BrbBase_EEPROMRead(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), 100);
+    BrbBase_EEPROMRead(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_PIN_DATA_OFFSET);
 
     return;
 }
@@ -89,6 +213,10 @@ void BrbBase_PinCheck(BrbBase *brb_base)
     {
         /* Grab pin data */
         pin_data        = (BrbBasePinData *)&brb_base->pin_data[i];
+
+        /* Not a persist one */
+        if (!pin_data->flags.persist)
+            continue;
 
         BrbBase_PinSet(brb_base, i, pin_data->mode, pin_data->value);
     }
@@ -165,12 +293,24 @@ uint8_t BrbBase_PinGetMode(uint8_t pin)
 /**********************************************************************************************************************/
 int BrbBase_EEPROMRead(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset)
 {
+    int byte_read;
+
     if (!brb_base || !data_ptr)
         return -1;
 
+    byte_read = EEPROM.read(eeprom_offset);
+
+    if (byte_read != BRB_PIN_DATA_MAGIC)
+    {
+        /* Reset info */
+        memset(data_ptr, 0, data_sz);
+
+        return 0;
+    }
+
     for (int i = 0; i < data_sz; i++)
     {
-        data_ptr[i] = EEPROM.read(eeprom_offset + i);
+        data_ptr[i] = EEPROM.read(eeprom_offset + i + 1);
     }
 
     return 0;
@@ -181,9 +321,11 @@ int BrbBase_EEPROMWrite(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, u
     if (!brb_base || !data_ptr)
         return -1;
 
+    EEPROM.write(eeprom_offset, BRB_PIN_DATA_MAGIC);
+
     for (int i = 0; i < data_sz; i++)
     {
-        EEPROM.write(eeprom_offset + i, data_ptr[i]);
+        EEPROM.write(eeprom_offset + i + 1, data_ptr[i]);
     }
 
     return 0;

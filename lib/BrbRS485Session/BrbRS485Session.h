@@ -33,12 +33,12 @@
 
 #ifndef BRB_RS485_SESSION_H_
 #define BRB_RS485_SESSION_H_
-/****************************************************************************************************/
+ /**********************************************************************************************************************/
 #include "Arduino.h"
 #include <SoftwareSerial.h>
 #include <BrbLogBase.h>
 #include <BrbBase.h>
-/****************************************************************************************************/
+ /**********************************************************************************************************************/
 #define TO_HEX(i) (i <= 9 ? ('0' + i) : ('A' - 10 + i))
 #define TO_NUM(a, b) (((a <= '9' ? a - '0' : a - 'A' + 10) << 4) | (b <= '9' ? b - '0' : b - 'A' + 10))
 
@@ -49,12 +49,20 @@
 #define BRB_RS485_END 	'\03'
 #define BRB_RS485_MAGIC '\05'
 
-#define BRB_RS485_MAX_PKT_SZ 128
+#define BRB_RS485_MAX_PKT_SZ 256
 
-/****************************************************************************************************/
+#define BRB_RS485_HANDSHAKE_REPEAT 1
+#define BRB_RS485_HANDSHAKE_TIME 15555
+
+// #define BRB_RS485_BAUDRATE 9600
+#define BRB_RS485_BAUDRATE 19200
+// #define BRB_RS485_BAUDRATE 115200
+#define BRB_RS485_HARDWARE_SERIAL 1
+
+ /**********************************************************************************************************************/
 typedef int BrbRS485SessionActionCBH(void *base_ptr, int action_code, const void *data_str, unsigned int data_sz, void *cb_data_ptr);
 
-/****************************************************************************************************/
+ /**********************************************************************************************************************/
 typedef struct _BrbRS485StatsData
 {
 	struct
@@ -229,8 +237,13 @@ typedef struct _BrbRS485Session
 {
 	BrbBase *brb_base;
 	BrbLogBase *log_base;
-	// HardwareSerial *serial;
+
+#ifdef BRB_RS485_HARDWARE_SERIAL	
+	HardwareSerial *serial;
+#else
 	SoftwareSerial *serial;
+#endif
+
 	long baudrate;
 
 	uint8_t address;
@@ -282,9 +295,15 @@ typedef struct _BrbRS485Session
 	} flags;
 
 } BrbRS485Session;
-/****************************************************************************************************/
+ /**********************************************************************************************************************/
 BrbRS485Session *BrbRS485Session_New(BrbBase *brb_base);
+
+#ifdef BRB_RS485_HARDWARE_SERIAL	
+int BrbRS485Session_Init(BrbRS485Session *rs485_sess, HardwareSerial *serial);
+#else
 int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial);
+#endif
+
 int BrbRS485Session_ReadAddr(BrbRS485Session *rs485_sess, uint8_t *addr_ptr, uint8_t addr_sz, uint8_t eeprom_offset, uint8_t reset);
 
 int BrbRS485Session_SetEventCB(BrbRS485Session *rs485_sess, int action_code, BrbRS485SessionActionCBH *cb_func, void *cb_data);
@@ -302,6 +321,6 @@ int BrbRS485Session_SendHandShake(BrbRS485Session *rs485_sess);
 int BrbRS485Session_ReadByte(BrbRS485Session *rs485_sess, uint8_t byte_read);
 int BrbRS485Session_ReadMessage(BrbRS485Session *rs485_sess);
 int BrbRS485Session_Reset(BrbRS485Session *rs485_sess);
-/****************************************************************************************************/
+ /**********************************************************************************************************************/
 #endif /* BRB_RS485_SESSION_H_ */
 
