@@ -304,22 +304,7 @@ int BrbMicroScriptCmpFunc(void *base_ptr, void *cb_data)
     // int op_status;
     // int pin_begin;
     // int pin_max;
-    int pin_value;
-
-    /* Adjust pin query */
-    if (op_cmp->pin < MIN_ANA_PIN || op_cmp->pin >= MAX_ANA_PIN)
-    {
-        // pin_begin               = MIN_ANA_PIN;
-        // pin_max                 = MAX_ANA_PIN;
-        pin_value               = 0;
-    }
-    else
-    {
-        // pin_begin               = pkt_recv->val;
-        // pin_max                 = pkt_recv->val + 1;
-        pin_value               = analogRead(glob_analog_pins[op_cmp->pin]);
-
-    }
+    int pin_value               = analogRead(op_cmp->pin);
 
     script->cmp1                = BRB_COMPARE_NUM(pin_value, op_cmp->value);
 

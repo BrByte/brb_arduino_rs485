@@ -45,15 +45,14 @@
 
 // #include <SystemFont5x7.h>
 #include <fonts/Arial14.h>
-#include <fonts/Tahoma24.h>
-#include <fonts/Ubuntu.h>
+#include <fonts/OpenSans36.h>
 /****************************************************************************************************/
 #define BRB_DISPLAY_FONT_DEFAULT Arial_14
 // #define BRB_DISPLAY_FONT_DEFAULT SystemFont5x7
 
 #define BRB_DISPLAY_FONT_TITLE Arial_14
 #define BRB_DISPLAY_FONT_SUB Arial_14
-#define BRB_DISPLAY_FONT_VALUE Tahoma24
+#define BRB_DISPLAY_FONT_VALUE OpenSans36
 
 #define BRB_DISPLAY_ROTATION_DEFAULT iliRotation270
 
@@ -64,11 +63,19 @@
 #define ARC_SCHEME_GREEN2RED 4
 #define ARC_SCHEME_RED2GREEN 5
 
+#define ARC_SEG 3
+#define ARC_INC 5
+
+// #define BRB_DISPLAY_COLOR_BASE_R 31
+// #define BRB_DISPLAY_COLOR_BASE_G 63
+// #define BRB_DISPLAY_COLOR_BASE_B 3
+
 typedef enum
 {
 	DISPLAY_SCREEN_INFO,
 	DISPLAY_SCREEN_CONTROL,
-	DISPLAY_SCREEN_HOUR_METER,
+	DISPLAY_SCREEN_TEMP,
+	DISPLAY_SCREEN_CONSUME,
 	DISPLAY_SCREEN_LASTITEM
 } BrbDisplayScreen;
 
@@ -94,15 +101,16 @@ typedef struct _BrbDisplayBase
 	
 	int user_int;
 
-	// uint8_t pin_dc;
-	// uint8_t pin_rst;
-	// uint8_t pin_cs;
-	// uint8_t pin_miso;
-	// uint8_t pin_mosi;
-	// uint8_t pin_clk;
+	uint8_t pin_led;
+	uint8_t pin_dc;
+	uint8_t pin_rst;
+	uint8_t pin_cs;
+	uint8_t pin_miso;
+	uint8_t pin_mosi;
+	uint8_t pin_clk;
 
 	BrbDisplayScreenEvents cb_show[DISPLAY_SCREEN_LASTITEM];
-	BrbDisplayScreenEvents cb_action[BRB_BTN_LAST_ITEM];
+	BrbDisplayScreenEvents cb_action[DISPLAY_SCREEN_LASTITEM];
 
 	struct {
 		unsigned int on_action:1;
@@ -113,8 +121,11 @@ typedef struct _BrbDisplayBase
 /**********************************************************************************************************************/
 int BrbDisplayBase_Init(BrbDisplayBase *display_base);
 
+int BrbDisplayBase_DrawBtn(BrbDisplayBase *display_base, int btn_x, int btn_y, int btn_w, int btn_h, const __FlashStringHelper *text_ptr, int btn_color, int txt_color);
+
 // int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, int value, int vmin, int vmax, int x, int y, int r, __FlashStringHelper *units, byte scheme);
 int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const __FlashStringHelper *units, byte scheme);
+int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const __FlashStringHelper *units, byte scheme, int tick, int seg, int inc);
 
 int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const __FlashStringHelper *title_str, int x, int y);
 int BrbDisplayBase_SetBg(BrbDisplayBase *display_base);

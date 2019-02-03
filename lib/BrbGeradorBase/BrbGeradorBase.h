@@ -41,6 +41,7 @@
 typedef struct _BrbGeradorBase
 {
 	BrbBase *brb_base;
+	BrbMicroScript *script;
 
 	long horisec;
 
@@ -49,6 +50,9 @@ typedef struct _BrbGeradorBase
 	int pin_servo;
 	int pin_partida;
 	int pin_parada;
+
+	int pin_sensor_ac;
+	int pin_sensor_dc;
 
 	struct {
 		long horimeter;
@@ -64,12 +68,13 @@ typedef struct _BrbGeradorBase
 	} data;
 
 	struct {
-		unsigned int foo:1;
+		unsigned int partida:1;
 	} flags;
 
 } BrbGeradorBase;
 /**********************************************************************************************************************/
 int BrbGeradorBase_Init(BrbGeradorBase *gerador_base);
+int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base);
 int BrbGeradorBase_Save(BrbGeradorBase *gerador_base);
 int BrbGeradorBase_Partida(BrbGeradorBase *gerador_base);
 /**********************************************************************************************************************/

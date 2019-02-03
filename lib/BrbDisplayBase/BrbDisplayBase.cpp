@@ -33,6 +33,7 @@
 
 #include "BrbDisplayBase.h"
 
+static unsigned int color_lt(unsigned int color, float pct);
 static unsigned int rainbow(byte value);
 
 /**********************************************************************************************************************/
@@ -42,15 +43,26 @@ int BrbDisplayBase_Init(BrbDisplayBase *display_base)
 	if (!display_base)
 		return -1;
 
+	// display_base->tft = (ILI9341_due *)&tft;
+	if (!display_base->tft)
+	{
+		display_base->tft = new ILI9341_due(display_base->pin_cs, display_base->pin_dc, display_base->pin_rst);
+	}
+
 	display_base->tft->begin();
 	// display_base->tft->reset();
 	display_base->tft->setRotation(BRB_DISPLAY_ROTATION_DEFAULT);
 	display_base->tft->setFont(BRB_DISPLAY_FONT_DEFAULT);
 
-	display_base->screen_cur = DISPLAY_SCREEN_INFO;
 	display_base->screen_last = -1;
-	display_base->action_code = 0;
+	display_base->action_code = -1;
 	display_base->flags.on_action = 0;
+
+	if (display_base->pin_led > MIN_DIG_PIN)
+	{
+		pinMode(display_base->pin_led, OUTPUT);
+		digitalWrite(display_base->pin_led, HIGH);
+	}
 
 	return 0;
 }
@@ -72,7 +84,10 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 	if (!display_base->flags.on_action)
 	{
 		if (display_base->action_code == BRB_BTN_SELECT)
+		{
 			display_base->flags.on_select = 1;
+			display_base->action_code = -1;
+		}
 
 		/* Press direction */
 		else if (display_base->action_code == BRB_BTN_NEXT)
@@ -228,46 +243,79 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 
 	display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
 
-	// Print value, if the meter is large then use big font 6, othewise use 4
-	if (r > 84)
+	/* Check size and spacing */
+	if (r > 130)
 	{
-		display_base->tft->setTextScale(3);
-		display_base->tft->printAtPivoted(buf, x, y - 25, gTextPivotMiddleCenter); // Value in middle
+		display_base->tft->setTextScale(2);
+		display_base->tft->printAtPivoted(buf, x, y - 25, gTextPivotMiddleCenter);
+	}
+	else if (r > 84)
+	{
+		display_base->tft->setTextScale(1);
+		display_base->tft->printAtPivoted(buf, x, y - 25, gTextPivotMiddleCenter);
+	}
+	else if (r > 50)
+	{
+		display_base->tft->setTextScale(1);
+		display_base->tft->printAtPivoted(buf, x, y - 15, gTextPivotMiddleCenter);
 	}
 	else
 	{
-		display_base->tft->setTextScale(2);
-		display_base->tft->printAtPivoted(buf, x, y, gTextPivotMiddleCenter); // Value in middle
+		display_base->tft->setFont(BRB_DISPLAY_FONT_TITLE);
+		display_base->tft->setTextScale(3);
+		display_base->tft->printAtPivoted(buf, x, y - 20, gTextPivotMiddleCenter);
 	}
 
 	if (units)
 	{
 		display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
 
-		if (r > 84)
+		if (r > 130)
+		{
+			display_base->tft->setTextScale(3);
+			display_base->tft->printAtPivoted(units, x, y + 15, gTextPivotMiddleCenter);
+		}
+		else if (r > 84)
 		{
 			display_base->tft->setTextScale(2);
-			display_base->tft->printAtPivoted(units, x, y + 15, gTextPivotMiddleCenter); // Units display
+			display_base->tft->printAtPivoted(units, x, y + 15, gTextPivotMiddleCenter);
+		}
+		else if (r > 50)
+		{
+			display_base->tft->setTextScale(1);
+			display_base->tft->printAtPivoted(units, x, y + 15, gTextPivotMiddleCenter);
 		}
 		else
 		{
 			display_base->tft->setTextScale(1);
-			display_base->tft->printAtPivoted(units, x, y + 20, gTextPivotMiddleCenter); // Units display
+			display_base->tft->printAtPivoted(units, x, y + 20, gTextPivotMiddleCenter);
 		}
 	}
 
 	return 0;
 }
 /**********************************************************************************************************************/
+int BrbDisplayBase_DrawBtn(BrbDisplayBase *display_base, int btn_x, int btn_y, int btn_w, int btn_h, const __FlashStringHelper *text_ptr, int btn_color, int txt_color)
+{
+	display_base->tft->fillRect(btn_x, btn_y, btn_w, btn_h, btn_color);
+	display_base->tft->setTextColor(txt_color, btn_color);
+	display_base->tft->printAtPivoted(text_ptr, (btn_w / 2) + btn_x, (btn_h / 2) + btn_y, gTextPivotMiddleCenter);
+
+	return 0;
+}
+/**********************************************************************************************************************/
 int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const __FlashStringHelper *units, byte scheme)
 {
-	// Minimum value of r is about 52 before value text intrudes on ring
-	// drawing the text first is an option
-
+	return BrbDisplayBase_DrawArcSeg(display_base, value, vmin, vmax, x, y, r, units, scheme, 0, ARC_SEG, ARC_INC);
+}
+/**********************************************************************************************************************/
+int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const __FlashStringHelper *units, byte scheme, int tick, int seg, int inc)
+{
+	/* Calculate coords of centre of ring */
 	x += r;
-	y += r; // Calculate coords of centre of ring
+	y += r;
 
-	// Width of outer ring is 1/x of radius
+	/* Width of outer ring is 1/x of radius */
 	int w = r / 6;
 
 	int angle = 95; // Half the sweep angle of meter (300 degrees)
@@ -275,9 +323,6 @@ int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin,
 	int text_color = ILI9341_BLACK; // To hold the text color
 
 	int v = map(value, vmin, vmax, -angle, angle); // Map the value to an angle v
-
-	byte seg = 5; // Segments are 5 degrees wide = 60 segments for 300 degrees
-	byte inc = 5; // Draw segments every 5 degrees, increase to 10 for segmented ring
 
 	int tl;
 	int i;
@@ -294,7 +339,7 @@ int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin,
 	int x3;
 	int y3;
 
-	display_base->tft->fillRect(x - r, y - r, r * 2, (r * 1.5), ILI9341_WHITE);
+	display_base->tft->fillRect(x - r, y - r, r * 2, (r * 1), ILI9341_WHITE);
 
 	// Draw color blocks every inc degrees
 	for (i = -angle; i < angle; i += inc)
@@ -317,9 +362,11 @@ int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin,
 			break; // Full spectrum blue to red
 		case ARC_SCHEME_GREEN2RED:
 			color_cur = rainbow(map(i, -angle, angle, 63, 127));
+			color_cur = color_lt(color_cur, 0.9);
 			break; // Green to red (high temperature etc)
 		case ARC_SCHEME_RED2GREEN:
 			color_cur = rainbow(map(i, -angle, angle, 127, 63));
+			color_cur = color_lt(color_cur, 0.9);
 			break; // Red to green (low battery etc)
 		default:
 			color_cur = ILI9341_BLUE;
@@ -352,24 +399,27 @@ int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin,
 		}
 		else // Fill in blank segments
 		{
-			display_base->tft->fillTriangle(x0, y0, x1, y1, x2, y2, ILI9341_GRAY);
-			display_base->tft->fillTriangle(x1, y1, x2, y2, x3, y3, ILI9341_GRAY);
+			display_base->tft->fillTriangle(x0, y0, x1, y1, x2, y2, ILI9341_LIGHTGREY);
+			display_base->tft->fillTriangle(x1, y1, x2, y2, x3, y3, ILI9341_LIGHTGREY);
 		}
 
-		// Short scale tick length
-		if (i % 25 != 0)
-			tl = 6;
-		else
-			tl = 13;
+		if (tick > 0)
+		{
+			/* Short scale tick length */
+			if (i % 25 != 0)
+				tl = tick;
+			else
+				tl = tick + 3;
 
-		// Recalculate coords incase tick lenght changed
-		x0 = sx * (r + tl) + x;
-		y0 = sy * (r + tl) + y;
-		x1 = sx * (r + 2) + x;
-		y1 = sy * (r + 2) + y;
+			// Recalculate coords incase tick lenght changed
+			x0 = sx * (r + tl) + x;
+			y0 = sy * (r + tl) + y;
+			x1 = sx * (r + 2) + x;
+			y1 = sy * (r + 2) + y;
 
-		// Draw tick
-		display_base->tft->drawLine(x0, y0, x1, y1, ILI9341_BLACK);
+			// Draw tick
+			display_base->tft->drawLine(x0, y0, x1, y1, ILI9341_BLACK);
+		}
 
 		// // Check if labels should be drawn, with position tweaks
 		// if (i % 25 == 0)
@@ -397,77 +447,93 @@ int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin,
 		// 		break;
 		// 	}
 		// }
-
-		// if (i == angle - inc)
-		// {
-		// }
 	}
 
-	// Draw scale arc, don't draw the last part
-	sx = cos((i - 90) * 0.0174532925);
-	sy = sin((i - 90) * 0.0174532925);
-	x0 = sx * (r + tl) + x;
-	y0 = sy * (r + tl) + y;
-	x1 = sx * (r + 2) + x;
-	y1 = sy * (r + 2) + y;
+	if (tick > 0)
+	{
+		// Draw scale arc, don't draw the last part
+		sx = cos((i - 90) * 0.0174532925);
+		sy = sin((i - 90) * 0.0174532925);
+		x0 = sx * (r + tl) + x;
+		y0 = sy * (r + tl) + y;
+		x1 = sx * (r + 2) + x;
+		y1 = sy * (r + 2) + y;
 
-	display_base->tft->drawLine(x0, y0, x1, y1, ILI9341_BLACK);
+		display_base->tft->drawLine(x0, y0, x1, y1, ILI9341_BLACK);
+	}
 
 	BrbDisplayBase_DrawArcText(display_base, value, x, y, r, units, text_color);
 
 	display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
 	display_base->tft->setFont(BRB_DISPLAY_FONT_DEFAULT);
 	display_base->tft->setTextScale(1);
-	display_base->tft->cursorToXY(x - r - 5, y + 10);
+	display_base->tft->cursorToXY(x - r, y + 10);
 	display_base->tft->println(vmin);
 
-	display_base->tft->cursorToXY(x + r - 15, y + 10);
+	display_base->tft->cursorToXY(x + r - (vmax > 99 ? 20 : 15), y + 10);
 	display_base->tft->println(vmax);
 
 	// Calculate and return right hand side x coordinate
 	return x + r;
 }
 /**********************************************************************************************************************/
+static unsigned int color_lt(unsigned int color, float pct)
+{
+	byte r = (color >> 8) & 0x00F8;
+	byte g = (color >> 3) & 0x00FC;
+	byte b = (color << 3) & 0x00F8;
+
+	r = min(max(0, r * pct), 255);
+	g = min(max(0, g * pct), 255);
+	b = min(max(0, b * pct), 255);
+
+	return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+	// return (r << 11) + (g << 5) + b;
+}
+/**********************************************************************************************************************/
 /* Return a 16 bit rainbow color */
 /**********************************************************************************************************************/
 static unsigned int rainbow(byte value)
 {
-	// Value is expected to be in range 0-127
-	// The value is converted to a spectrum color from 0 = blue through to 127 = red
+	/* Value is expected to be in range 0-127 */
 
-	// Red is the top 5 bits of a 16 bit color value
-	byte red = 0;
-	// Green is the middle 6 bits
-	byte green = 0;
-	// Blue is the bottom 5 bits
-	byte blue = 0;
+	/* The value is converted to a spectrum color from 0 = blue through to 127 = red */
 
-	byte quadrant = value / 32;
+	/* RRRRRGGGGGGBBBBB */
 
-	if (quadrant == 0)
+	/* Red is the top 5 bits of a 16 bit color value */
+	byte r = 0;
+	/* Green is the middle 6 bits */
+	byte g = 0;
+	/* Blue is the bottom 5 bits */
+	byte b = 0;
+
+	byte q = value / 32;
+
+	if (q == 0)
 	{
-		blue = 31;
-		green = 2 * (value % 32);
-		red = 0;
+		b = 31;
+		g = 2 * (value % 32);
+		r = 0;
 	}
-	if (quadrant == 1)
+	else if (q == 1)
 	{
-		blue = 31 - (value % 32);
-		green = 63;
-		red = 0;
+		b = 31 - (value % 32);
+		g = 63;
+		r = 0;
 	}
-	if (quadrant == 2)
+	else if (q == 2)
 	{
-		blue = 0;
-		green = 63;
-		red = value % 32;
+		b = 0;
+		g = 63;
+		r = value % 32;
 	}
-	if (quadrant == 3)
+	else if (q == 3)
 	{
-		blue = 0;
-		green = 63 - 2 * (value % 32);
-		red = 31;
+		b = 0;
+		g = 63 - 2 * (value % 32);
+		r = 31;
 	}
-	return (red << 11) + (green << 5) + blue;
+	return (r << 11) + (g << 5) + b;
 }
 /**********************************************************************************************************************/

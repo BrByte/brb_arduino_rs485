@@ -61,6 +61,60 @@ int BrbGeradorBase_Init(BrbGeradorBase *gerador_base)
 /**********************************************************************************************************************/
 int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 {
+    gerador_base->data.battery = ((analogRead(gerador_base->pin_sensor_dc) * 5.0) / 1024) * 1.732;
+    // gerador_base->data.battery = random(100, 125) / 10.0;
+    // gerador_base->data.battery = (analogRead(A1) * 10) / 10;
+    
+	gerador_base->data.load = random(250, 300) / 10.0;
+    gerador_base->data.power = analogRead(gerador_base->pin_sensor_ac);
+    gerador_base->data.gas = random(750, 1000) / 10.0;
+
+	return 0;
+}
+/**********************************************************************************************************************/
+int BrbGeradorBase_Parada(BrbGeradorBase *gerador_base)
+{
+	BrbBase *brb_base = gerador_base->brb_base;
+	BrbMicroScript *script;
+	BrbMicroScriptOPIf *op_if;
+
+	if (!gerador_base->flags.partida || !gerador_base->brb_base)
+		return -1;
+
+	/* Put pins down */
+	digitalWrite(gerador_base->pin_partida, LOW);
+	digitalWrite(gerador_base->pin_parada, LOW);
+
+	/* Disable script, this do fine to stop */
+	gerador_base->script->flags.active = 0;
+
+	script = BrbMicroScriptGrabFree(gerador_base->brb_base);
+	gerador_base->script = script;
+	script->flags.persist = 0;
+	script->flags.active = 1;
+
+	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_partida, OUTPUT, LOW);
+	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, LOW);
+	BrbMicroScriptOPAddDelay(brb_base, script, 1000);
+	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, HIGH);
+	
+	/* Compare Analog pin 0 */
+	BrbMicroScriptOPAddCmp(brb_base, script, gerador_base->pin_sensor_ac, 0);
+
+	op_if = BrbMicroScriptOPAddIf(brb_base, script, SCRIPT_OPCODE_JMP_GREATER, 0, 0);
+
+	if (op_if)
+	{
+		BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, HIGH);
+
+		op_if->else_offset = script->code.size;
+
+
+		/* Jump to start and do the script again */
+		op_if->else_offset = 0;
+	}
+
+	gerador_base->flags.partida = 1;
 
 	return 0;
 }
@@ -71,7 +125,7 @@ int BrbGeradorBase_Partida(BrbGeradorBase *gerador_base)
 	BrbMicroScript *script;
 	BrbMicroScriptOPIf *op_if;
 
-	if (gerador_base->pin_partida <= MIN_DIG_PIN || !gerador_base->brb_base)
+	if (gerador_base->pin_partida <= MIN_DIG_PIN || !gerador_base->brb_base || gerador_base->flags.partida)
 		return -1;
 
 	/* Put pins down */
@@ -79,41 +133,40 @@ int BrbGeradorBase_Partida(BrbGeradorBase *gerador_base)
 	digitalWrite(gerador_base->pin_parada, LOW);
 
 	script = BrbMicroScriptGrabFree(gerador_base->brb_base);
-	script->flags.persist = 1;
+	gerador_base->script = script;
+	script->flags.persist = 0;
 	script->flags.active = 1;
 
-	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_partida, OUTPUT, LOW);
-	BrbMicroScriptOPAddDelay(brb_base, script, BRB_GERADOR_PARTIDA_MS);
-
-	script = BrbMicroScriptGrabFree(brb_base);
-	script->flags.persist = 1;
-	script->flags.active = 1;
-
+	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, LOW);
 	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_partida, OUTPUT, LOW);
 	BrbMicroScriptOPAddServoPos(brb_base, script, gerador_base->pin_servo, 180);
+	
 	BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_partida, OUTPUT, HIGH);
 	BrbMicroScriptOPAddDelay(brb_base, script, BRB_GERADOR_PARTIDA_MS);
+
+	BrbMicroScriptOPAddServoPos(brb_base, script, gerador_base->pin_servo, 140);
+	BrbMicroScriptOPAddDelay(brb_base, script, 1000);
 	BrbMicroScriptOPAddServoPos(brb_base, script, gerador_base->pin_servo, 120);
 	BrbMicroScriptOPAddDelay(brb_base, script, 1000);
 
 	/* Compare Analog pin 0 */
-    BrbMicroScriptOPAddCmp(brb_base, script, 0, 0);
+	BrbMicroScriptOPAddCmp(brb_base, script, gerador_base->pin_sensor_ac, 0);
 
-	op_if   = BrbMicroScriptOPAddIf(brb_base, script, SCRIPT_OPCODE_JMP_LESSER_OR_EQUAL, 0, 0);
+	op_if = BrbMicroScriptOPAddIf(brb_base, script, SCRIPT_OPCODE_JMP_LESSER_OR_EQUAL, 0, 0);
 
 	if (op_if)
 	{
-	    BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, LOW);
+		BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, LOW);
 
-	    op_if->else_offset      = script->code.size;
+		op_if->else_offset = script->code.size;
 
-	    BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, HIGH);
+		BrbMicroScriptOPAddSetDig(brb_base, script, gerador_base->pin_parada, OUTPUT, HIGH);
 
-	    op_if->end_offset       = script->code.size;
+		/* Jump to start and do the script again */
+		op_if->end_offset = 0;
 	}
 
-	BrbMicroScriptOPAddDelay(brb_base, script, 2000);
-	BrbMicroScriptOPAddServoPos(brb_base, script, gerador_base->pin_servo, 115);
+	gerador_base->flags.partida = 1;
 
 	return 0;
 }
