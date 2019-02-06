@@ -35,15 +35,41 @@
 #define BRB_GERADOR_BASE_H_
 /**********************************************************************************************************************/
 #include <BrbBase.h>
+#include <BrbToneBase.h>
 /****************************************************************************************************/
-#define BRB_GERADOR_PARTIDA_MS 6000
+#define BRB_GERADOR_PARTIDA_MS 5000
+
+#define BRB_GERADOR_SERVO_BB_POS_OPEN 180
+#define BRB_GERADOR_SERVO_BB_POS_CLOSE 120
+
+#define GERADOR_POWER_REVERSE 1
+
+#ifdef GERADOR_POWER_REVERSE
+#define GERADOR_POWER_ON LOW
+#define GERADOR_POWER_OFF HIGH
+#else
+#define GERADOR_POWER_ON HIGH
+#define GERADOR_POWER_OFF LOW
+#endif
+
+typedef enum 
+{
+	GERADOR_STATE_NONE,
+	GERADOR_STATE_STARTING,
+	GERADOR_STATE_RUNNING,
+	GERADOR_STATE_STOPPING,
+
+} BrbGeradorStateCode;
 /**********************************************************************************************************************/
 typedef struct _BrbGeradorBase
 {
 	BrbBase *brb_base;
+	BrbToneBase *tone_base;
 	BrbMicroScript *script;
 
-	long horisec;
+	BrbGeradorStateCode state;
+	
+	long delay;
 
 	// BrbServo servo_bb;
 
@@ -55,20 +81,31 @@ typedef struct _BrbGeradorBase
 	int pin_sensor_dc;
 
 	struct {
-		long horimeter;
-
-		int step_pos;
-
+		
 		double battery;
 		double gas;
-
 		double power;
 		double load;
+
+		long hourmeter_ms;
+		long hourmeter_sec;
+
+	} info;
+
+	/* data is persistent */
+	struct {
+
+		long hourmeter_time;
+		long hourmeter_reset;
+
+		long reserved1;
+		long reserved2;
+		long reserved3;
 
 	} data;
 
 	struct {
-		unsigned int partida:1;
+		unsigned int foo:1;
 	} flags;
 
 } BrbGeradorBase;
@@ -76,6 +113,9 @@ typedef struct _BrbGeradorBase
 int BrbGeradorBase_Init(BrbGeradorBase *gerador_base);
 int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base);
 int BrbGeradorBase_Save(BrbGeradorBase *gerador_base);
-int BrbGeradorBase_Partida(BrbGeradorBase *gerador_base);
+int BrbGeradorBase_HourmeterReset(BrbGeradorBase *gerador_base);
+
+int BrbGeradorBase_Start(BrbGeradorBase *gerador_base);
+int BrbGeradorBase_Stop(BrbGeradorBase *gerador_base);
 /**********************************************************************************************************************/
 #endif /* BRB_GERADOR_BASE_H_ */

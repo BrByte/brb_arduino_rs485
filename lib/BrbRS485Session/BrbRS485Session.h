@@ -175,7 +175,8 @@ typedef struct _BrbRS485PacketSetPin
 	uint16_t pin:6; 	/* 0 - 63 pins 000000-111111 */
 	uint16_t type:1; 	/* 0 Analog 1 Digital */
 	uint16_t mode:2; 	/* 0 INPUT, 1 OUTPUT, 2 INPUT_PULLUP */
-	uint16_t pad0:7;
+	uint16_t persist:1;
+	uint16_t pad0:6;
 
 	uint16_t value; 	/* 1/0 in digital, other values in Analog */
 
@@ -187,7 +188,8 @@ typedef struct _BrbRS485PacketPinData
 	uint16_t pin:6; 	/* 0 - 63 pins 000000-111111 */
 	uint16_t type:1; 	/* 0 Analog 1 Digital */
 	uint16_t mode:2; 	/* 0 INPUT, 1 OUTPUT, 2 INPUT_PULLUP */
-	uint16_t pad0:7;
+	uint16_t persist:1;
+	uint16_t pad0:6;
 
 	uint16_t value; 	/* 1/0 in digital, other values in Analog */
 

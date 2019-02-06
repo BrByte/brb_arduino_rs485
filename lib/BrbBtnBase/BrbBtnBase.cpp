@@ -43,10 +43,8 @@ int BrbBtnBase_Init(BrbBtnBase *btn_base)
     if (!btn_base)
         return -1;
 
-    /* Read EEPROM */
-    // BrbBase_EEPROMRead(btn_base->brb_base, (uint8_t *)&btn_base->data, sizeof(btn_base->data), BRB_PIN_DATA_OFFSET + 100 + (sizeof(BrbBasePinData) * TOTAL_PINS));
-
-    for (int i = 0; i <= BRB_BTN_LAST_ITEM; i++)
+    /* Initialize all buttons */
+    for (int i = 0; i < BRB_BTN_LAST_ITEM; i++)
     {
         BrbBtnBase_DataInit(btn_base, (BrbBtnData *)&btn_base->buttons[i]);
 
@@ -58,7 +56,8 @@ int BrbBtnBase_Init(BrbBtnBase *btn_base)
 /**********************************************************************************************************************/
 void BrbBtnBase_Loop(BrbBtnBase *btn_base)
 {
-    for (int i = 0; i <= BRB_BTN_LAST_ITEM; i++)
+    /* Process each button */
+    for (int i = 0; i < BRB_BTN_LAST_ITEM; i++)
     {
         BrbBtnBase_DataCheck(btn_base, (BrbBtnData *)&btn_base->buttons[i]);
 

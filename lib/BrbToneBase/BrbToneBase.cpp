@@ -33,6 +33,8 @@
 
 #include "BrbToneBase.h"
 
+int BrbToneBase_PlayStarWars(BrbToneBase *tone_base);
+
 /**********************************************************************************************************************/
 int BrbToneBase_Init(BrbToneBase *tone_base)
 {
@@ -46,44 +48,179 @@ int BrbToneBase_Init(BrbToneBase *tone_base)
     if (tone_base->duration > 0 || tone_base->pin < MIN_DIG_PIN || tone_base->pin > TOTAL_PINS)
         return -1;
 
-    // tone_base->notes[0].note = NOTE_As2;
-    // tone_base->notes[0].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[1].note = NOTE_REST;
-    // tone_base->notes[1].duration = TONE_DUR_SIXTEENTH;
-    // tone_base->notes[2].note = NOTE_Gs3;
-    // tone_base->notes[2].duration = TONE_DUR_SIXTEENTH;
-    // tone_base->notes[3].note = NOTE_REST;
-    // tone_base->notes[3].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[4].note = NOTE_As3;
-    // tone_base->notes[4].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[5].note = NOTE_REST;
-    // tone_base->notes[5].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[6].note = NOTE_C3;
-    // tone_base->notes[6].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[7].note = NOTE_Cs3;
-    // tone_base->notes[7].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[8].note = NOTE_D3;
-    // tone_base->notes[8].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[9].note = NOTE_Ds3;
-    // tone_base->notes[9].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[10].note = NOTE_REST;
-    // tone_base->notes[10].duration = TONE_DUR_SIXTEENTH;
-    // tone_base->notes[11].note = NOTE_As3;
-    // tone_base->notes[11].duration = TONE_DUR_SIXTEENTH;
-    // tone_base->notes[12].note = NOTE_REST;
-    // tone_base->notes[12].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[13].note = NOTE_Cs4;
-    // tone_base->notes[13].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[14].note = NOTE_REST;
-    // tone_base->notes[14].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[15].note = NOTE_G2;
-    // tone_base->notes[15].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[16].note = NOTE_Gs2;
-    // tone_base->notes[16].duration = TONE_DUR_EIGHTH;
-    // tone_base->notes[17].note = NOTE_A2;
-    // tone_base->notes[17].duration = TONE_DUR_EIGHTH;
+    /* Enable pin */
+    pinMode(tone_base->pin, OUTPUT);
 
-    // tone_base->size = 18;
+    BrbToneBase_PlayStart(tone_base);
+
+    /* Do the first loop, if it has items */
+    // BrbToneBase_Loop(tone_base);
+
+    return 0;
+}
+/**********************************************************************************************************************/
+void BrbToneBase_Loop(BrbToneBase *tone_base)
+{
+    /* Tone is disabled */
+    if (!tone_base->flags.enabled || tone_base->pin < MIN_DIG_PIN)
+        return;
+
+    if (tone_base->index >= 0)
+    {
+        /* Update last duration */
+        tone_base->duration = (tone_base->duration - tone_base->brb_base->ms.delay);
+
+        /* Current note has expired */
+        if (tone_base->duration > 0)
+            return;
+
+        noTone(tone_base->pin);
+    }
+
+    /* Find the next index for note to be played */
+    if (tone_base->index >= tone_base->size)
+    {
+        tone_base->index = 0;
+
+        /* We have finished, increase loop count */
+        tone_base->loop_cnt++;
+
+        if ((tone_base->loop_max > 0 && tone_base->loop_cnt >= tone_base->loop_max) || tone_base->note == NOTE_FINISH)
+        {
+            tone_base->flags.enabled = 0;
+            tone_base->loop_cnt = 0;
+
+            return;
+        }
+    }
+    else
+    {
+        tone_base->index++;
+    }
+
+    tone_base->note = tone_base->notes[tone_base->index].note;
+    tone_base->duration = tone_base->notes[tone_base->index].duration;
+
+    /* Start playing the next note */
+    if (tone_base->note != NOTE_REST)
+    {
+        tone(tone_base->pin, tone_base->note, tone_base->duration);
+    }
+
+    tone_base->duration = tone_base->duration * 1.2;
+
+    return;
+}
+/**********************************************************************************************************************/
+int BrbToneBase_PlayStart(BrbToneBase *tone_base)
+{
+    /* Sanitize */
+    if (!tone_base)
+        return -1;
+
+    tone_base->notes[0].note = NOTE_C4;
+    tone_base->notes[0].duration = TONE_DUR_TICK(8);
+    tone_base->notes[1].note = NOTE_REST;
+    tone_base->notes[1].duration = TONE_DUR_TICK(6);
+    tone_base->notes[2].note = NOTE_D4;
+    tone_base->notes[2].duration = TONE_DUR_TICK(8);
+    tone_base->notes[3].note = NOTE_REST;
+    tone_base->notes[3].duration = TONE_DUR_TICK(6);
+    tone_base->notes[4].note = NOTE_C4;
+    tone_base->notes[4].duration = TONE_DUR_TICK(8);
+    tone_base->notes[5].note = NOTE_REST;
+    tone_base->notes[5].duration = TONE_DUR_TICK(2);
+
+    tone_base->size = 6;
+    tone_base->loop_max = 1;
+    tone_base->index = -1;
+    tone_base->flags.enabled = 1;
+
+    return 0;
+}
+// /**********************************************************************************************************************/
+int BrbToneBase_PlayAlarm(BrbToneBase *tone_base)
+{
+    /* Sanitize */
+    if (!tone_base)
+        return -1;
+
+    tone_base->notes[0].note = NOTE_F7;
+    tone_base->notes[0].duration = TONE_DUR_TICK(8);
+    tone_base->notes[1].note = NOTE_REST;
+    tone_base->notes[1].duration = TONE_DUR_TICK(8);
+    tone_base->notes[2].note = NOTE_F7;
+    tone_base->notes[2].duration = TONE_DUR_TICK(8);
+    tone_base->notes[3].note = NOTE_REST;
+    tone_base->notes[3].duration = TONE_DUR_TICK(8);
+    tone_base->notes[4].note = NOTE_F7;
+    tone_base->notes[4].duration = TONE_DUR_TICK(8);
+    tone_base->notes[5].note = NOTE_REST;
+    tone_base->notes[5].duration = TONE_DUR_TICK(8);
+
+    tone_base->size = 6;
+    tone_base->loop_max = 1;
+    tone_base->index = -1;
+    tone_base->flags.enabled = 1;
+
+    return 0;
+}
+/**********************************************************************************************************************/
+int BrbToneBase_PlayAlarm2(BrbToneBase *tone_base)
+{
+    /* Sanitize */
+    if (!tone_base)
+        return -1;
+
+    tone_base->notes[0].note = NOTE_Fs7;
+    tone_base->notes[0].duration = TONE_DUR_TICK(8);
+    tone_base->notes[1].note = NOTE_REST;
+    tone_base->notes[1].duration = TONE_DUR_TICK(6);
+    tone_base->notes[2].note = NOTE_Fs7;
+    tone_base->notes[2].duration = TONE_DUR_TICK(4);
+    tone_base->notes[3].note = NOTE_REST;
+    tone_base->notes[3].duration = TONE_DUR_TICK(6);
+    tone_base->notes[4].note = NOTE_Fs7;
+    tone_base->notes[4].duration = TONE_DUR_TICK(4);
+    tone_base->notes[5].note = NOTE_REST;
+    tone_base->notes[5].duration = TONE_DUR_TICK(2);
+
+    tone_base->size = 6;
+    tone_base->loop_max = 1;
+    tone_base->index = -1;
+    tone_base->flags.enabled = 1;
+
+    return 0;
+}
+/**********************************************************************************************************************/
+int BrbToneBase_PlayAlarm3(BrbToneBase *tone_base)
+{
+    /* Sanitize */
+    if (!tone_base)
+        return -1;
+
+    tone_base->notes[0].note = NOTE_Cs4;
+    tone_base->notes[0].duration = TONE_DUR_TICK(6);
+    tone_base->notes[1].note = NOTE_REST;
+    tone_base->notes[1].duration = TONE_DUR_TICK(6);
+    tone_base->notes[2].note = NOTE_Cs4;
+    tone_base->notes[2].duration = TONE_DUR_TICK(6);
+    tone_base->notes[3].note = NOTE_REST;
+    tone_base->notes[3].duration = TONE_DUR_TICK(2);
+
+    tone_base->size = 4;
+    tone_base->loop_max = 1;
+    tone_base->index = -1;
+    tone_base->flags.enabled = 1;
+
+    return 0;
+}
+/**********************************************************************************************************************/
+int BrbToneBase_PlayStarWars(BrbToneBase *tone_base)
+{
+    /* Sanitize */
+    if (!tone_base)
+        return -1;
 
     tone_base->notes[0].note = NOTE_A4;
     tone_base->notes[0].duration = TONE_DUR_TICK(4);
@@ -125,52 +262,10 @@ int BrbToneBase_Init(BrbToneBase *tone_base)
     tone_base->notes[18].duration = TONE_DUR_TICK(4);
 
     tone_base->size = 19;
-
-    pinMode(tone_base->pin, OUTPUT);
-
-    tone_base->note = tone_base->notes[tone_base->index].note;
-    tone_base->duration = tone_base->notes[tone_base->index].duration;
-
-    if (tone_base->note != NOTE_REST)
-    {
-        tone(tone_base->pin, tone_base->note);
-    }
+    tone_base->loop_max = 1;
+    tone_base->index = -1;
+    tone_base->flags.enabled = 1;
 
     return 0;
-}
-/**********************************************************************************************************************/
-void BrbToneBase_Loop(BrbToneBase *tone_base)
-{
-    /* Update last duration */
-    tone_base->duration = (tone_base->duration - tone_base->brb_base->ms.delay);
-
-    /* Current note has expired */
-    if (tone_base->duration > 0 || tone_base->pin < MIN_DIG_PIN)
-        return;
-
-    noTone(tone_base->pin);
-
-    // Find the next note to be played
-    if (tone_base->index >= tone_base->size)
-    {
-        tone_base->index = 0;
-    }
-    else
-    {
-        tone_base->index++;
-    }
-
-    tone_base->note = tone_base->notes[tone_base->index].note;
-    tone_base->duration = tone_base->notes[tone_base->index].duration;
-
-    /* Start playing the next note */
-    if (tone_base->note != NOTE_REST)
-    {
-        tone(tone_base->pin, tone_base->note, tone_base->duration);
-    }
-
-    tone_base->duration = tone_base->duration * 1.2;
-
-    return;
 }
 /**********************************************************************************************************************/

@@ -54,10 +54,10 @@
 // #define RESERVED    3 /* INT5 - PWM */
 #define GERADOR_PARTIDA_PIN 4 /* PWM */
 #define GERADOR_PARADA_PIN 5  /* PWM */
-#define DHT_SENSOR_PIN 6      /* PWM */
+#define GERADOR_EXTRA_PIN 6   /* PWM */
 #define BUZZER_PIN 7          /* PWM */
-#define GERADOR_SERVO_PIN 8   /* PWM */
-// #define RESERVED    9 /* PWM */
+#define DHT_SENSOR_PIN 8      /* PWM */
+#define GERADOR_SERVO_PIN 9   /* PWM */
 // #define RESERVED    10 /* PCINT 4 */
 // #define RESERVED    11 /* PCINT 5 */
 // #define RESERVED    12 /* PCINT 6 */
@@ -243,7 +243,7 @@ int BrbRS485SessionActionSetAnalogCB(void *base_ptr, int action_code, const void
 
     glob_brb_base.pin_data[MAX_DIG_PIN + pkt_recv_set->pin].value = pkt_recv_set->value;
     glob_brb_base.pin_data[MAX_DIG_PIN + pkt_recv_set->pin].mode = pkt_recv_set->mode;
-    glob_brb_base.pin_data[MAX_DIG_PIN + pkt_recv_set->pin].flags.persist = 0;
+    glob_brb_base.pin_data[MAX_DIG_PIN + pkt_recv_set->pin].persist = 0;
 
     BrbBase_PinSave(&glob_brb_base);
 
@@ -277,7 +277,8 @@ int BrbRS485SessionActionSetAnalogBMPCB(void *base_ptr, int action_code, const v
 
         glob_brb_base.pin_data[MAX_DIG_PIN + i].value = pkt_recv_set->map[i].value;
         glob_brb_base.pin_data[MAX_DIG_PIN + i].mode = pkt_recv_set->map[i].mode;
-        glob_brb_base.pin_data[MAX_DIG_PIN + i].flags.persist = 0;
+        // glob_brb_base.pin_data[MAX_DIG_PIN + i].persist = pkt_recv_set->map[i].persist;
+        glob_brb_base.pin_data[MAX_DIG_PIN + i].persist = 0;
     }
 
     BrbBase_PinSave(&glob_brb_base);
@@ -359,7 +360,8 @@ int BrbRS485SessionActionSetDigitalCB(void *base_ptr, int action_code, const voi
 
     glob_brb_base.pin_data[pkt_recv_set->pin].value = (pkt_recv_set->value == HIGH) ? HIGH : LOW;
     glob_brb_base.pin_data[pkt_recv_set->pin].mode = pkt_recv_set->mode;
-    glob_brb_base.pin_data[pkt_recv_set->pin].flags.persist = 0;
+    // glob_brb_base.pin_data[pkt_recv_set->pin].persist = pkt_recv_set->persist;
+    glob_brb_base.pin_data[pkt_recv_set->pin].persist = 0;
 
     BrbBase_PinSave(&glob_brb_base);
 
@@ -389,7 +391,8 @@ int BrbRS485SessionActionSetDigitalBMPCB(void *base_ptr, int action_code, const 
 
         glob_brb_base.pin_data[i].value = (pkt_recv_set->map[i].value == HIGH) ? HIGH : LOW;
         glob_brb_base.pin_data[i].mode = pkt_recv_set->map[i].mode;
-        glob_brb_base.pin_data[i].flags.persist = pkt_recv_set->map[i].persist;
+        // glob_brb_base.pin_data[i].persist = pkt_recv_set->map[i].persist;
+        glob_brb_base.pin_data[i].persist = 0;
     }
 
     BrbBase_PinSave(&glob_brb_base);
@@ -404,7 +407,6 @@ int BrbRS485SessionActionSetScriptCB(void *base_ptr, int action_code, const void
     BrbMicroScript *script;
 
     LOG_WARN(glob_log_base, "SCRIPT SET [%p] [%p] [%d]\r\n", &glob_brb_base, brb_base, pkt_recv_set->script_id);
-
 
     script = BrbMicroScriptGrabFree(brb_base);
 
@@ -531,7 +533,8 @@ void setup()
     memset(&glob_gerador_base, 0, sizeof(BrbGeradorBase));
     BrbGeradorBase *gerador_base = (BrbGeradorBase *)&glob_gerador_base;
 
-    gerador_base->brb_base = &glob_brb_base;
+    gerador_base->brb_base = (BrbBase *)&glob_brb_base;
+    gerador_base->tone_base = (BrbToneBase *)&glob_tone_base;
     gerador_base->pin_partida = GERADOR_PARTIDA_PIN;
     gerador_base->pin_parada = GERADOR_PARADA_PIN;
     gerador_base->pin_servo = GERADOR_SERVO_PIN;
@@ -610,16 +613,6 @@ int BrbDisplayBase_Timer(void *base_ptr, void *cb_data_ptr)
 
     BrbDisplayBase_ScreenAction(display_base, -1);
 
-    gerador_base->horisec = gerador_base->horisec + 5;
-
-    if (gerador_base->horisec > 60)
-    {
-        gerador_base->data.horimeter++;
-        gerador_base->horisec = 0;
-    }
-
-    BrbGeradorBase_Save(gerador_base);
-
     // display_base->screen_cur++;
 
     return 0;
@@ -657,7 +650,7 @@ int BrbDisplayBase_ShowInfo(void *brb_base_ptr, void *display_base_ptr)
     display_base->tft->setTextColor(ILI9341_DARKGREEN, ILI9341_WHITE);
     display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
     display_base->tft->setTextScale(1);
-    dtostrf(gerador_base->data.battery, len, 1, buf);
+    dtostrf(gerador_base->info.battery, len, 1, buf);
     display_base->tft->printAlignedPivotedOffseted(buf, gTextAlignTopLeft, gTextPivotTopLeft, pos_x, pos_y + 20, 0, 60);
 
     display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, display_base->tft->getCursorY());
@@ -679,7 +672,7 @@ int BrbDisplayBase_ShowInfo(void *brb_base_ptr, void *display_base_ptr)
     display_base->tft->setTextColor(ILI9341_DARKRED, ILI9341_WHITE);
     display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
     display_base->tft->setTextScale(1);
-    dtostrf(gerador_base->data.power, len, 1, buf);
+    dtostrf(gerador_base->info.power, len, 1, buf);
     display_base->tft->printAlignedPivotedOffseted(buf, gTextAlignTopLeft, gTextPivotTopLeft, pos_x, pos_y + 20, 0, 60);
 
     display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, display_base->tft->getCursorY());
@@ -690,11 +683,11 @@ int BrbDisplayBase_ShowInfo(void *brb_base_ptr, void *display_base_ptr)
     pos_x = 10;
     pos_y = pos_y + 65;
 
-    BrbDisplayBase_DrawArc(display_base, gerador_base->data.gas, 0, 100, pos_x, pos_y, 65, F("Tanque"), ARC_SCHEME_RED2GREEN);
+    BrbDisplayBase_DrawArc(display_base, gerador_base->info.gas, 0, 100, pos_x, pos_y, 65, F("Tanque"), ARC_SCHEME_RED2GREEN);
 
     pos_x = pos_x + 160;
 
-    BrbDisplayBase_DrawArc(display_base, gerador_base->data.load, 0, 30, pos_x, pos_y, 65, F("Amp"), ARC_SCHEME_GREEN2RED);
+    BrbDisplayBase_DrawArc(display_base, gerador_base->info.load, 0, 30, pos_x, pos_y, 65, F("Amp"), ARC_SCHEME_GREEN2RED);
 
     return 0;
 }
@@ -794,6 +787,7 @@ int BrbDisplayBase_ShowControl(void *brb_base_ptr, void *display_base_ptr)
 {
     BrbDisplayBase *display_base = (BrbDisplayBase *)display_base_ptr;
     BrbGeradorBase *gerador_base = (BrbGeradorBase *)&glob_gerador_base;
+    BrbServo *servo_bb;
 
     if (display_base->screen_cur != display_base->screen_last)
     {
@@ -810,24 +804,62 @@ int BrbDisplayBase_ShowControl(void *brb_base_ptr, void *display_base_ptr)
     int btn_y = 100;
     int btn_x = 10;
 
-    if (gerador_base->flags.partida)
-    {
-        if (gerador_base->data.power > 0)
-        {
-            display_base->tft->printAtPivoted(F("Running"), 160, 50, gTextPivotTopCenter);
-        }
-        else
-        {
-            display_base->tft->printAtPivoted(F("Starting"), 160, 50, gTextPivotTopCenter);
-        }
+    servo_bb = BrbServoGrabByPin(&glob_brb_base, gerador_base->pin_servo);
 
+    display_base->tft->fillRect(20, 50, 280, 40, ILI9341_WHITE);
+
+    switch (gerador_base->state)
+    {
+    case GERADOR_STATE_STARTING:
+    {
+        display_base->tft->printAtPivoted(F("Starting"), 160, 50, gTextPivotTopCenter);
         BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("STOP"), ILI9341_DARKRED, ILI9341_WHITE);
+        break;
     }
-    else
+    case GERADOR_STATE_RUNNING:
+    {
+        display_base->tft->printAtPivoted(F("Running"), 160, 50, gTextPivotTopCenter);
+        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("STOP"), ILI9341_DARKRED, ILI9341_WHITE);
+        break;
+    }
+    case GERADOR_STATE_STOPPING:
+    {
+        display_base->tft->printAtPivoted(F("Stopping"), 160, 50, gTextPivotTopCenter);
+        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("START"), ILI9341_DARKGREEN, ILI9341_WHITE);
+        break;
+    }
+    default:
     {
         display_base->tft->printAtPivoted(F("Stopped"), 160, 50, gTextPivotTopCenter);
+        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("START"), ILI9341_DARKGREEN, ILI9341_WHITE);
+        break;
+    }
+    }
 
-        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("Start"), ILI9341_DARKGREEN, ILI9341_WHITE);
+    if (servo_bb)
+    {
+        display_base->tft->fillRect(10, 210, 140, 20, ILI9341_WHITE);
+
+        display_base->tft->cursorToXY(10, 210);
+        display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+        display_base->tft->setTextScale(1);
+        display_base->tft->print("BB: ");
+        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 210);
+        display_base->tft->print(servo_bb->pos_cur);
+    }
+
+    display_base->tft->fillRect(170, 210, 140, 20, ILI9341_WHITE);
+
+    if (gerador_base->script && gerador_base->script->flags.active)
+    {
+        display_base->tft->cursorToXY(170, 210);
+        display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+        display_base->tft->setTextScale(1);
+        display_base->tft->print("RETRY");
+        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 210);
+        display_base->tft->print(gerador_base->script->loop.cnt);
     }
 
     return 0;
@@ -862,7 +894,7 @@ int BrbDisplayBase_ShowConsume(void *brb_base_ptr, void *display_base_ptr)
     pos_x = 10;
     pos_y = 50;
 
-    double value_dec = ((double)(gerador_base->data.horimeter) / 60.0);
+    double value_dec = ((double)(gerador_base->data.hourmeter_time) / 60.0);
 
     BrbDisplayBase_DrawArcSeg(display_base, value_dec, 0, 1300, pos_x, pos_y, 100, F("Hours"), ARC_SCHEME_GREEN2RED, 0, 3, 5);
 
@@ -905,24 +937,24 @@ int BrbDisplayBase_ShowConsume(void *brb_base_ptr, void *display_base_ptr)
     display_base->tft->setTextScale(1);
     display_base->tft->print("Lts");
 
-    // pos_y = pos_y + sz_h + 30;
-    // pos_x = sz_w;
+    pos_y = pos_y + 50;
+    pos_x = sz_w;
 
-    // if (display_base->screen_cur != display_base->screen_last)
-    // {
-    //     display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-    //     display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
-    //     display_base->tft->setTextScale(1);
-    //     display_base->tft->cursorToXY(pos_x, pos_y);
-    //     display_base->tft->println("REMAIN");
-    // }
+    if (display_base->screen_cur != display_base->screen_last)
+    {
+        display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+        display_base->tft->setTextScale(1);
+        display_base->tft->cursorToXY(pos_x, pos_y);
+        display_base->tft->println("RESET");
+    }
 
-    // display_base->tft->setTextColor(ILI9341_DARKBLUE, ILI9341_WHITE);
-    // display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
-    // display_base->tft->setTextScale(1);
-
-    // dtostrf((1300 - value_dec), len, 1, buf);
-    // display_base->tft->printAlignedPivotedOffseted(buf, gTextAlignTopLeft, gTextPivotTopLeft, pos_x, pos_y + 20, 0, 25);
+    display_base->tft->setTextColor(ILI9341_DARKBLUE, ILI9341_WHITE);
+    display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
+    display_base->tft->setTextScale(1);
+    display_base->tft->print(1);
+    display_base->tft->cursorToXY(pos_x, pos_y + 20);
+    display_base->tft->print(gerador_base->data.hourmeter_reset);
 
     return 0;
 }
@@ -948,13 +980,21 @@ int BrbDisplayBase_ActionControl(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
         display_base->tft->setTextScale(1);
 
-        if (!gerador_base->flags.partida)
+        switch (gerador_base->state)
+        {
+        case GERADOR_STATE_NONE:
+        case GERADOR_STATE_STOPPING:
         {
             display_base->tft->printAtPivoted(F("Start  Power?"), 160, 70, gTextPivotTopCenter);
+            break;
         }
-        else
+        case GERADOR_STATE_STARTING:
+        case GERADOR_STATE_RUNNING:
+        default:
         {
             display_base->tft->printAtPivoted(F("Stop  Power?"), 160, 70, gTextPivotTopCenter);
+            break;
+        }
         }
 
         display_base->flags.on_action = 1;
@@ -963,13 +1003,21 @@ int BrbDisplayBase_ActionControl(void *brb_base_ptr, void *display_base_ptr)
     {
         if (display_base->user_int == 1)
         {
-            if (!gerador_base->flags.partida)
+            switch (gerador_base->state)
             {
-                BrbGeradorBase_Partida(gerador_base);
+            case GERADOR_STATE_NONE:
+            case GERADOR_STATE_STOPPING:
+            {
+                BrbGeradorBase_Start(gerador_base);
+                break;
             }
-            else
+            case GERADOR_STATE_STARTING:
+            case GERADOR_STATE_RUNNING:
+            default:
             {
-                BrbGeradorBase_Partida(gerador_base);
+                BrbGeradorBase_Stop(gerador_base);
+                break;
+            }
             }
         }
 
@@ -1015,9 +1063,7 @@ int BrbDisplayBase_ActionConsume(void *brb_base_ptr, void *display_base_ptr)
     {
         if (display_base->user_int == 1)
         {
-            gerador_base->data.horimeter = 0;
-
-            BrbGeradorBase_Save(gerador_base);
+            BrbGeradorBase_HourmeterReset(gerador_base);
         }
 
         display_base->flags.on_action = 0;

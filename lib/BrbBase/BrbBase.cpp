@@ -93,7 +93,7 @@ void BrbBase_PinCheck(BrbBase *brb_base)
         pin_data        = (BrbBasePinData *)&brb_base->pin_data[i];
 
         /* Not a persist one */
-        if (!pin_data->flags.persist)
+        if (!pin_data->persist || (pin_data->mask != BRB_PIN_DATA_MASK))
             continue;
 
         BrbBase_PinSet(brb_base, i, pin_data->mode, pin_data->value);
@@ -134,7 +134,7 @@ void BrbBase_PinSet(BrbBase *brb_base, int pin_num, int pin_mode, int pin_value)
 void BrbBase_PinSave(BrbBase *brb_base)
 {
     /* Read EEPROM */
-    BrbBase_EEPROMWrite(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), 100);
+    BrbBase_EEPROMWrite(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_PIN_DATA_OFFSET);
 
     return;
 }

@@ -114,8 +114,9 @@ static const uint8_t glob_analog_pins[] = {
 // #define MAX_DIG_PIN NUM_DIGITAL_PINS
 #define MAX_DIG_PIN PIN_A0
 
-#define BRB_PIN_DATA_MAGIC 152
-#define BRB_PIN_DATA_OFFSET 100
+#define BRB_PIN_DATA_MAGIC 157
+#define BRB_PIN_DATA_MASK 137
+#define BRB_PIN_DATA_OFFSET 64
 
 #define BRB_COMPARE_NUM(a, b) (a > b) - (a < b)
 /**********************************************************************************************************************/
@@ -129,9 +130,9 @@ typedef enum
     SCRIPT_OPCODE_JMP_EQUAL,
     SCRIPT_OPCODE_JMP_NOT_EQUAL,
     SCRIPT_OPCODE_JMP_GREATER,
-    SCRIPT_OPCODE_JMP_GREATER_OR_EQUAL,
+    SCRIPT_OPCODE_JMP_NOT_GREATER,
     SCRIPT_OPCODE_JMP_LESSER,
-    SCRIPT_OPCODE_JMP_LESSER_OR_EQUAL,
+    SCRIPT_OPCODE_JMP_NOT_LESSER,
     SCRIPT_OPCODE_SET_DIGITAL,
 
     // SCRIPT_OPCODE_SERVO_ATDT,
@@ -247,6 +248,12 @@ typedef struct _BrbMicroScript
     BrbMicroCode code;
 
     struct
+    {   
+        int cnt;
+        int max;
+    } loop;
+
+    struct
     {
     	uint16_t persist:1;
     	uint16_t active:1;
@@ -262,12 +269,9 @@ typedef struct _BrbBasePinData
     uint8_t value;
 	uint8_t mode;
 
-    struct
-    {
-    	uint16_t persist:1;
-    	uint16_t active:1;
-    	uint16_t pad:14;
-    } flags;
+    uint8_t mask;
+    uint8_t persist:1;
+    uint8_t pad:7;
 
 } BrbBasePinData;
 /**********************************************************/
@@ -405,9 +409,9 @@ static const BrbMicroScriptOPRunTime glob_script_runtime_arr[] =
     {SCRIPT_OPCODE_JMP_EQUAL,               1, BrbMicroScriptJmpEqualFunc},
     {SCRIPT_OPCODE_JMP_NOT_EQUAL,           1, BrbMicroScriptJmpNotEqualFunc},
     {SCRIPT_OPCODE_JMP_GREATER,             1, BrbMicroScriptJmpGreaterFunc},
-    {SCRIPT_OPCODE_JMP_GREATER_OR_EQUAL,    1, BrbMicroScriptJmpNotGreaterFunc},
+    {SCRIPT_OPCODE_JMP_NOT_GREATER,         1, BrbMicroScriptJmpNotGreaterFunc},
     {SCRIPT_OPCODE_JMP_LESSER,              1, BrbMicroScriptJmpLesserFunc},
-    {SCRIPT_OPCODE_JMP_LESSER_OR_EQUAL,     1, BrbMicroScriptJmpNotLesserFunc},
+    {SCRIPT_OPCODE_JMP_NOT_LESSER,          1, BrbMicroScriptJmpNotLesserFunc},
 
     {SCRIPT_OPCODE_SET_DIGITAL,             1, BrbMicroScriptSetDigitalFunc},
     {SCRIPT_OPCODE_SERVO_POS,               1, BrbMicroScriptServoPosFunc},

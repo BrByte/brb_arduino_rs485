@@ -167,13 +167,10 @@
  
 #define NOTESIZE ((9*12)+1)
 
-// The program must define TEMPO before
-// including this file. TEMPO is specified
-// in beats per minute (BPM)
-// #define TONE_TEMPO      (60)
+/* The program must define TEMPO before including this file. TEMPO is specified in beats per minute (BPM) */
 #define TONE_TEMPO      (120)
-// #define TONE_BPM        (120)
-#define NOTE_REST     -1
+#define NOTE_REST       0
+#define NOTE_FINISH    -1
 /**********************************************************************************************************************/
 // Convert TEMPO (BPM) to one millisecond ticks.
 #define TONE_TICKS   ((60.0 * 4.0 / TONE_TEMPO) * 1000)
@@ -188,7 +185,7 @@
 #define TONE_DUR_DOTTED_HALF       (int)(TONE_TICKS * 3)
 #define TONE_DUR_WHOLE             (int)(TONE_TICKS * 4)
 
-#define TONE_DUR_TICK(t)           (int)(TONE_TICKS / t + 0.)
+#define TONE_DUR_TICK(t)           (int)(TONE_TICKS / t + 0.1)
 /**********************************************************************************************************************/
 typedef struct _BrbToneNote
 {
@@ -207,11 +204,23 @@ typedef struct _BrbToneBase
     int duration;
     int note;
 
+    int loop_max;
+    int loop_cnt;
+
     int pin;
+
+    struct {
+        unsigned int enabled:1;
+    } flags;
 
 } BrbToneBase;
 /**********************************************************************************************************************/
 int BrbToneBase_Init(BrbToneBase *tone_base);
 void BrbToneBase_Loop(BrbToneBase *tone_base);
+
+int BrbToneBase_PlayStart(BrbToneBase *tone_base);
+int BrbToneBase_PlayAlarm(BrbToneBase *tone_base);
+int BrbToneBase_PlayAlarm2(BrbToneBase *tone_base);
+int BrbToneBase_PlayAlarm3(BrbToneBase *tone_base);
 /**********************************************************************************************************************/
 #endif /* BRB_TONE_H_ */

@@ -44,12 +44,12 @@ void BrbMicroScriptInit(BrbBase *brb_base)
     LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPCmp [%d]\r\n", sizeof(BrbMicroScriptOPCmp));
     LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPIf [%d]\r\n", sizeof(BrbMicroScriptOPIf));
     // LOG_WARN(brb_base->log_base, "BrbMicroScriptGrabByID [%p]\r\n", BrbMicroScriptGrabByID(brb_base, 1));
-    
+
     // BrbMicroScript *script;
     // BrbMicroScriptOPIf *op_if;
     // BrbMicroScriptOPIf *op_if_gerando;
 
-    // script      = BrbMicroScriptGrabFree(brb_base);    
+    // script      = BrbMicroScriptGrabFree(brb_base);
     // script->flags.persist   = 1;
     // script->flags.active    = 1;
 
@@ -70,7 +70,7 @@ void BrbMicroScriptInit(BrbBase *brb_base)
     // // BrbMicroScriptOPAddDelay(brb_base, script, 1000);
 
     // // BrbMicroScriptOPAddDelay(brb_base, script, 500);
-    
+
     // // op_if   = BrbMicroScriptOPAddIf(brb_base, script, SCRIPT_OPCODE_JMP_LESSER, 0, 0);
 
     // // if (op_if)
@@ -78,12 +78,12 @@ void BrbMicroScriptInit(BrbBase *brb_base)
     // //     BrbMicroScriptOPAddSetDig(brb_base, script, 2, OUTPUT, LOW);
 
     // //     op_if->else_offset      = script->code.size;
-        
+
     // //     BrbMicroScriptOPAddSetDig(brb_base, script, 2, OUTPUT, HIGH);
 
     // //     op_if->end_offset       = script->code.size;
     // // }
-    
+
     // int ger_partida_pin = 2;
     // int ger_break_pin = 3;
 
@@ -93,7 +93,7 @@ void BrbMicroScriptInit(BrbBase *brb_base)
     // BrbMicroScriptOPAddCmp(brb_base, script, 0, 0);
     // BrbMicroScriptOPAddServoPos(brb_base, script, 32, 180);
     // // BrbMicroScriptOPAddSetDig(brb_base, script, ger_partida_pin, OUTPUT, HIGH);
-    // // BrbMicroScriptOPAddSetDig(brb_base, script, ger_break_pin, OUTPUT, HIGH);    
+    // // BrbMicroScriptOPAddSetDig(brb_base, script, ger_break_pin, OUTPUT, HIGH);
     // // BrbMicroScriptOPAddSetDig(brb_base, script, ger_carga_pin, OUTPUT, HIGH);
     // // BrbMicroScriptOPAddSetDig(brb_base, script, ene_carga_pin, OUTPUT, HIGH);
 
@@ -106,7 +106,7 @@ void BrbMicroScriptInit(BrbBase *brb_base)
     //     BrbMicroScriptOPAddDelay(brb_base, script, 5000);
     //     BrbMicroScriptOPAddSetDig(brb_base, script, ger_partida_pin, OUTPUT, HIGH);
     //     BrbMicroScriptOPAddServoPos(brb_base, script, 32, 180);
-        
+
     //     /* CHECK HERE */
     //     BrbMicroScriptOPAddSetDig(brb_base, script, ger_carga_pin, OUTPUT, HIGH);
 
@@ -117,7 +117,7 @@ void BrbMicroScriptInit(BrbBase *brb_base)
 
     //     op_if->end_offset       = script->code.size;
     // }
-    
+
     // BrbMicroScriptOPAddCmp(brb_base, script, 1, 0);
 
     // op_if   = BrbMicroScriptOPAddIf(brb_base, script, SCRIPT_OPCODE_JMP_EQUAL, 0, 0);
@@ -148,21 +148,21 @@ BrbMicroScriptOPDelay *BrbMicroScriptOPAddDelay(BrbBase *brb_base, BrbMicroScrip
 {
     BrbMicroScriptOP *op_hdr;
     BrbMicroScriptOPDelay *op_delay;
-    
+
     if (!script || (script->code.size + 1 + sizeof(BrbMicroScriptOPDelay)) > sizeof(script->code.arr))
     {
-        LOG_WARN(brb_base->log_base, "No delay avail [%d] [%d]\r\n",  (script->code.size + 1 + sizeof(BrbMicroScriptOPDelay)), sizeof(script->code.arr));
+        LOG_WARN(brb_base->log_base, "No delay avail [%d] [%d]\r\n", (script->code.size + 1 + sizeof(BrbMicroScriptOPDelay)), sizeof(script->code.arr));
 
         return NULL;
     }
 
-    op_hdr              = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
-    op_hdr->opcode      = SCRIPT_OPCODE_DELAY;
-    op_hdr->param_sz    = sizeof(BrbMicroScriptOPDelay);
+    op_hdr = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
+    op_hdr->opcode = SCRIPT_OPCODE_DELAY;
+    op_hdr->param_sz = sizeof(BrbMicroScriptOPDelay);
 
-    op_delay            = (BrbMicroScriptOPDelay *)&script->code.arr[script->code.size];
-    script->code.size   += op_hdr->param_sz;    
-    op_delay->time      = time;
+    op_delay = (BrbMicroScriptOPDelay *)&script->code.arr[script->code.size];
+    script->code.size += op_hdr->param_sz;
+    op_delay->time = time;
 
     return op_delay;
 };
@@ -171,23 +171,23 @@ BrbMicroScriptOPCmp *BrbMicroScriptOPAddCmp(BrbBase *brb_base, BrbMicroScript *s
 {
     BrbMicroScriptOP *op_hdr;
     BrbMicroScriptOPCmp *op_cmp;
-    
+
     if (!script || (script->code.size + 1 + sizeof(BrbMicroScriptOPCmp)) > sizeof(script->code.arr))
     {
-        LOG_WARN(brb_base->log_base, "No CMP sz avail [%d] [%d]\r\n",  (script->code.size + 1 + sizeof(BrbMicroScriptOPCmp)), sizeof(script->code.arr));
+        LOG_WARN(brb_base->log_base, "No CMP sz avail [%d] [%d]\r\n", (script->code.size + 1 + sizeof(BrbMicroScriptOPCmp)), sizeof(script->code.arr));
 
         return NULL;
     }
 
-    op_hdr              = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
-    op_hdr->opcode      = SCRIPT_OPCODE_CMP;
-    op_hdr->param_sz    = sizeof(BrbMicroScriptOPCmp);
+    op_hdr = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
+    op_hdr->opcode = SCRIPT_OPCODE_CMP;
+    op_hdr->param_sz = sizeof(BrbMicroScriptOPCmp);
 
-    op_cmp              = (BrbMicroScriptOPCmp *)&script->code.arr[script->code.size];
-    script->code.size   += op_hdr->param_sz;
+    op_cmp = (BrbMicroScriptOPCmp *)&script->code.arr[script->code.size];
+    script->code.size += op_hdr->param_sz;
 
-    op_cmp->pin         = pin;
-    op_cmp->value       = value;
+    op_cmp->pin = pin;
+    op_cmp->value = value;
 
     return op_cmp;
 };
@@ -196,28 +196,28 @@ BrbMicroScriptOPIf *BrbMicroScriptOPAddIf(BrbBase *brb_base, BrbMicroScript *scr
 {
     BrbMicroScriptOP *op_hdr;
     BrbMicroScriptOPIf *op_if;
-    
+
     if (!script || (script->code.size + 1 + sizeof(BrbMicroScriptOPIf)) > sizeof(script->code.arr))
     {
-        LOG_WARN(brb_base->log_base, "No IF sz avail [%d] [%d]\r\n",  (script->code.size + 1 + sizeof(BrbMicroScriptOPIf)), sizeof(script->code.arr));
+        LOG_WARN(brb_base->log_base, "No IF sz avail [%d] [%d]\r\n", (script->code.size + 1 + sizeof(BrbMicroScriptOPIf)), sizeof(script->code.arr));
 
         return NULL;
     }
 
-    if (if_op < SCRIPT_OPCODE_JMP_EQUAL || if_op > SCRIPT_OPCODE_JMP_LESSER_OR_EQUAL)
+    if (if_op < SCRIPT_OPCODE_JMP_EQUAL || if_op > SCRIPT_OPCODE_JMP_NOT_LESSER)
     {
-        if_op           = SCRIPT_OPCODE_JMP_EQUAL;
+        if_op = SCRIPT_OPCODE_JMP_EQUAL;
     }
 
-    op_hdr              = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
-    op_hdr->opcode      = if_op;
-    op_hdr->param_sz    = sizeof(BrbMicroScriptOPIf);
+    op_hdr = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
+    op_hdr->opcode = if_op;
+    op_hdr->param_sz = sizeof(BrbMicroScriptOPIf);
 
-    op_if               = (BrbMicroScriptOPIf *)&script->code.arr[script->code.size];
-    script->code.size   += op_hdr->param_sz;
+    op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.size];
+    script->code.size += op_hdr->param_sz;
 
-    op_if->else_offset  = else_offset;
-    op_if->end_offset   = end_offset;
+    op_if->else_offset = else_offset;
+    op_if->end_offset = end_offset;
 
     return op_if;
 };
@@ -226,24 +226,24 @@ BrbMicroScriptOPSetDig *BrbMicroScriptOPAddSetDig(BrbBase *brb_base, BrbMicroScr
 {
     BrbMicroScriptOP *op_hdr;
     BrbMicroScriptOPSetDig *op_set_dig;
-    
+
     if (!script || (script->code.size + 1 + sizeof(BrbMicroScriptOPSetDig)) > sizeof(script->code.arr))
     {
-        LOG_WARN(brb_base->log_base, "No SD sz avail [%d] [%d]\r\n",  (script->code.size + 1 + sizeof(BrbMicroScriptOPSetDig)), sizeof(script->code.arr));
+        LOG_WARN(brb_base->log_base, "No SD sz avail [%d] [%d]\r\n", (script->code.size + 1 + sizeof(BrbMicroScriptOPSetDig)), sizeof(script->code.arr));
 
         return NULL;
     }
 
-    op_hdr              = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
-    op_hdr->opcode      = SCRIPT_OPCODE_SET_DIGITAL;
-    op_hdr->param_sz    = sizeof(BrbMicroScriptOPSetDig);
+    op_hdr = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
+    op_hdr->opcode = SCRIPT_OPCODE_SET_DIGITAL;
+    op_hdr->param_sz = sizeof(BrbMicroScriptOPSetDig);
 
-    op_set_dig          = (BrbMicroScriptOPSetDig *)&script->code.arr[script->code.size];
-    script->code.size   += op_hdr->param_sz;
+    op_set_dig = (BrbMicroScriptOPSetDig *)&script->code.arr[script->code.size];
+    script->code.size += op_hdr->param_sz;
 
-    op_set_dig->pin     = pin;
-    op_set_dig->mode    = mode;
-    op_set_dig->value   = value;
+    op_set_dig->pin = pin;
+    op_set_dig->mode = mode;
+    op_set_dig->value = value;
 
     return op_set_dig;
 };
@@ -252,7 +252,7 @@ BrbMicroScriptOPSetDig *BrbMicroScriptOPAddSetDig(BrbBase *brb_base, BrbMicroScr
 // {
 //     BrbMicroScriptOP *op_hdr;
 //     BrbMicroScriptOPStepperAtDt *op_atdt;
-    
+
 //     if (!script || (script->code.size + 1 + sizeof(BrbMicroScriptOPStepperAtDt)) > sizeof(script->code.arr))
 //         return -1;
 
@@ -274,52 +274,56 @@ BrbMicroScriptOPServoPos *BrbMicroScriptOPAddServoPos(BrbBase *brb_base, BrbMicr
 {
     BrbMicroScriptOP *op_hdr;
     BrbMicroScriptOPServoPos *op_stepper_pos;
-    
+
     if (!script || (script->code.size + 1 + sizeof(BrbMicroScriptOPServoPos)) > sizeof(script->code.arr))
     {
-        LOG_WARN(brb_base->log_base, "No size avail [%d] [%d]\r\n",  (script->code.size + 1 + sizeof(BrbMicroScriptOPServoPos)), sizeof(script->code.arr));
+        LOG_WARN(brb_base->log_base, "No size avail [%d] [%d]\r\n", (script->code.size + 1 + sizeof(BrbMicroScriptOPServoPos)), sizeof(script->code.arr));
 
         return NULL;
     }
 
-    op_hdr              = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
-    op_hdr->opcode      = SCRIPT_OPCODE_SERVO_POS;
-    op_hdr->param_sz    = sizeof(BrbMicroScriptOPServoPos);
+    op_hdr = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
+    op_hdr->opcode = SCRIPT_OPCODE_SERVO_POS;
+    op_hdr->param_sz = sizeof(BrbMicroScriptOPServoPos);
 
-    op_stepper_pos      = (BrbMicroScriptOPServoPos *)&script->code.arr[script->code.size];
-    script->code.size   += op_hdr->param_sz;
+    op_stepper_pos = (BrbMicroScriptOPServoPos *)&script->code.arr[script->code.size];
+    script->code.size += op_hdr->param_sz;
 
-    op_stepper_pos->pin  = pin;
-    op_stepper_pos->pos  = pos;
+    op_stepper_pos->pin = pin;
+    op_stepper_pos->pos = pos;
 
     return op_stepper_pos;
 };
 /**********************************************************************************************************************/
 int BrbMicroScriptCmpFunc(void *base_ptr, void *cb_data)
 {
-    // BrbBase *brb_base            = (BrbBase*)base_ptr;
-    BrbMicroScript *script       = (BrbMicroScript*)cb_data;
-    BrbMicroScriptOPCmp *op_cmp  = (BrbMicroScriptOPCmp *)&script->code.arr[script->code.offt + 1];
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
+    BrbMicroScriptOPCmp *op_cmp = (BrbMicroScriptOPCmp *)&script->code.arr[script->code.offt + 1];
 
     // int op_status;
     // int pin_begin;
     // int pin_max;
-    int pin_value               = analogRead(op_cmp->pin);
+    int pin_value = analogRead(op_cmp->pin);
+    int cmp_value = op_cmp->value;
 
-    script->cmp1                = BRB_COMPARE_NUM(pin_value, op_cmp->value);
+    script->cmp1 = BRB_COMPARE_NUM(pin_value, cmp_value);
 
-    // LOG_DEBUG(brb_base->log_base, "CMP [%d] - [%d] [%d]\r\n", script->cmp1, pin_value, op_cmp->value);
+    LOG_DEBUG(brb_base->log_base, "CMP [%d] [%d] - [%d] [%d]\r\n", op_cmp->pin, script->cmp1, pin_value, cmp_value);
 
     return 0;
 }
 /**********************************************************************************************************************/
 int BrbMicroScriptSetDigitalFunc(void *base_ptr, void *cb_data)
 {
-    BrbBase *brb_base                   = (BrbBase*)base_ptr;
-    BrbMicroScript *script              = (BrbMicroScript*)cb_data;
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
     // BrbMicroScriptOP *op_hdr            = (BrbMicroScriptOP *)&script->code.arr[script->code.offt];
-    BrbMicroScriptOPSetDig *op_set_dig  = (BrbMicroScriptOPSetDig *)&script->code.arr[script->code.offt + 1];
-    
+    BrbMicroScriptOPSetDig *op_set_dig = (BrbMicroScriptOPSetDig *)&script->code.arr[script->code.offt + 1];
+
+    // 1024 = 390
+    // 333 = 127
+
     /* Copy param */
     // memcpy(&param, &script->code.arr[script->code.offt + 1], sizeof(uint8_t));
 
@@ -330,11 +334,11 @@ int BrbMicroScriptSetDigitalFunc(void *base_ptr, void *cb_data)
 /**********************************************************************************************************************/
 int BrbMicroScriptServoPosFunc(void *base_ptr, void *cb_data)
 {
-    BrbBase *brb_base                           = (BrbBase*)base_ptr;
-    BrbMicroScript *script                      = (BrbMicroScript*)cb_data;
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
     // BrbMicroScriptOP *op_hdr                 = (BrbMicroScriptOP *)&script->code.arr[script->code.offt];
-    BrbMicroScriptOPServoPos *op_servo_pos  = (BrbMicroScriptOPServoPos *)&script->code.arr[script->code.offt + 1];
-    
+    BrbMicroScriptOPServoPos *op_servo_pos = (BrbMicroScriptOPServoPos *)&script->code.arr[script->code.offt + 1];
+
     /* Copy param */
     // memcpy(&param, &script->code.arr[script->code.offt + 1], sizeof(uint8_t));
 
@@ -345,10 +349,10 @@ int BrbMicroScriptServoPosFunc(void *base_ptr, void *cb_data)
 /**********************************************************************************************************************/
 int BrbMicroScriptJmpEqualFunc(void *base_ptr, void *cb_data)
 {
-    BrbBase *brb_base               = (BrbBase*)base_ptr;
-    BrbMicroScript *script          = (BrbMicroScript*)cb_data;
-    BrbMicroScriptOPIf *op_if       = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
-    
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
+    BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
+
     // LOG_DEBUG(brb_base->log_base, "EQ [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
 
     /* check param [1 great] [0 equal] [-1 less] */
@@ -356,158 +360,158 @@ int BrbMicroScriptJmpEqualFunc(void *base_ptr, void *cb_data)
     {
         if (op_if->else_offset > 0)
         {
-            script->code.max_offt    = op_if->else_offset;
-            script->code.jmp_offt    = op_if->end_offset;
-        }   
-    
+            script->code.max_offt = op_if->else_offset;
+            script->code.jmp_offt = op_if->end_offset;
+        }
+
         return 0;
     }
-        
+
     if (op_if->else_offset > 0)
-        script->code.offt           = op_if->else_offset;
+        script->code.offt = op_if->else_offset;
     else
-        script->code.offt           = op_if->end_offset;
-    
+        script->code.offt = op_if->end_offset;
+
     return 1;
 }
 /**********************************************************************************************************************/
 int BrbMicroScriptJmpNotEqualFunc(void *base_ptr, void *cb_data)
 {
-    BrbBase *brb_base               = (BrbBase*)base_ptr;
-    BrbMicroScript *script          = (BrbMicroScript*)cb_data;
-    BrbMicroScriptOPIf *op_if       = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
-    
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
+    BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
+
     LOG_DEBUG(brb_base->log_base, "NEQ [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
-    
+
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 != 0)
     {
         if (op_if->else_offset > 0)
         {
-            script->code.max_offt       = op_if->else_offset;
-            script->code.jmp_offt       = op_if->end_offset;
-        }   
-    
+            script->code.max_offt = op_if->else_offset;
+            script->code.jmp_offt = op_if->end_offset;
+        }
+
         return 0;
     }
-        
+
     if (op_if->else_offset > 0)
-        script->code.offt           = op_if->else_offset;
+        script->code.offt = op_if->else_offset;
     else
-        script->code.offt           = op_if->end_offset;
-    
+        script->code.offt = op_if->end_offset;
+
     return 1;
 }
 /**********************************************************************************************************************/
 int BrbMicroScriptJmpGreaterFunc(void *base_ptr, void *cb_data)
 {
-    BrbBase *brb_base               = (BrbBase*)base_ptr;
-    BrbMicroScript *script          = (BrbMicroScript*)cb_data;
-    BrbMicroScriptOPIf *op_if       = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
-    
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
+    BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
+
     LOG_DEBUG(brb_base->log_base, "GE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
-    
+
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 > 0)
     {
         if (op_if->else_offset > 0)
         {
-            script->code.max_offt       = op_if->else_offset;
-            script->code.jmp_offt       = op_if->end_offset;
-        }   
-    
+            script->code.max_offt = op_if->else_offset;
+            script->code.jmp_offt = op_if->end_offset;
+        }
+
         return 0;
     }
-        
+
     if (op_if->else_offset > 0)
-        script->code.offt           = op_if->else_offset;
+        script->code.offt = op_if->else_offset;
     else
-        script->code.offt           = op_if->end_offset;
-    
+        script->code.offt = op_if->end_offset;
+
     return 1;
 }
 /**********************************************************************************************************************/
 int BrbMicroScriptJmpNotGreaterFunc(void *base_ptr, void *cb_data)
 {
-    BrbBase *brb_base               = (BrbBase*)base_ptr;
-    BrbMicroScript *script          = (BrbMicroScript*)cb_data;
-    BrbMicroScriptOPIf *op_if       = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
-    
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
+    BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
+
     LOG_DEBUG(brb_base->log_base, "NGE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
-    
+
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 <= 0)
     {
         if (op_if->else_offset > 0)
         {
-            script->code.max_offt       = op_if->else_offset;
-            script->code.jmp_offt       = op_if->end_offset;
-        }   
-    
+            script->code.max_offt = op_if->else_offset;
+            script->code.jmp_offt = op_if->end_offset;
+        }
+
         return 0;
     }
-        
+
     if (op_if->else_offset > 0)
-        script->code.offt           = op_if->else_offset;
+        script->code.offt = op_if->else_offset;
     else
-        script->code.offt           = op_if->end_offset;
-    
+        script->code.offt = op_if->end_offset;
+
     return 1;
 }
 /**********************************************************************************************************************/
 int BrbMicroScriptJmpLesserFunc(void *base_ptr, void *cb_data)
 {
-    BrbBase *brb_base               = (BrbBase*)base_ptr;
-    BrbMicroScript *script          = (BrbMicroScript*)cb_data;
-    BrbMicroScriptOPIf *op_if       = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
-    
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
+    BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
+
     LOG_DEBUG(brb_base->log_base, "LE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
-    
+
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 < 0)
     {
         if (op_if->else_offset > 0)
         {
-            script->code.max_offt       = op_if->else_offset;
-            script->code.jmp_offt       = op_if->end_offset;
-        }   
-    
+            script->code.max_offt = op_if->else_offset;
+            script->code.jmp_offt = op_if->end_offset;
+        }
+
         return 0;
     }
-        
+
     if (op_if->else_offset > 0)
-        script->code.offt           = op_if->else_offset;
+        script->code.offt = op_if->else_offset;
     else
-        script->code.offt           = op_if->end_offset;
-    
+        script->code.offt = op_if->end_offset;
+
     return 1;
 }
 /**********************************************************************************************************************/
 int BrbMicroScriptJmpNotLesserFunc(void *base_ptr, void *cb_data)
 {
-    BrbBase *brb_base               = (BrbBase*)base_ptr;
-    BrbMicroScript *script          = (BrbMicroScript*)cb_data;
-    BrbMicroScriptOPIf *op_if       = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
-    
+    BrbBase *brb_base = (BrbBase *)base_ptr;
+    BrbMicroScript *script = (BrbMicroScript *)cb_data;
+    BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
+
     LOG_DEBUG(brb_base->log_base, "NLE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
-    
+
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 >= 0)
     {
         if (op_if->else_offset > 0)
         {
-            script->code.max_offt       = op_if->else_offset;
-            script->code.jmp_offt       = op_if->end_offset;
-        }   
-    
+            script->code.max_offt = op_if->else_offset;
+            script->code.jmp_offt = op_if->end_offset;
+        }
+
         return 0;
     }
-        
+
     if (op_if->else_offset > 0)
-        script->code.offt           = op_if->else_offset;
+        script->code.offt = op_if->else_offset;
     else
-        script->code.offt           = op_if->end_offset;
-    
+        script->code.offt = op_if->end_offset;
+
     return 1;
 }
 /**********************************************************************************************************************/
@@ -519,8 +523,8 @@ int BrbMicroScriptRunOnce(BrbBase *brb_base, BrbMicroScript *script)
     BrbMicroScriptOPDelay *op_delay;
     uint8_t ret_code;
     // uint16_t param;
-    
-    // LOG_NOTICE(brb_base->log_base, "RUN script [%u] - Persist [%u] Delay [%u:%ld/%ld] - code [%u:%u]\r\n", 
+
+    // LOG_NOTICE(brb_base->log_base, "RUN script [%u] - Persist [%u] Delay [%u:%ld/%ld] - code [%u:%u]\r\n",
     // script->script_id, script->flags.persist, script->flags.delaying, script->delay_until_ms, brb_base->ms.cur, script->code.offt, script->code.size);
 
     // brb_base->log_base->serial->flush();
@@ -537,16 +541,30 @@ int BrbMicroScriptRunOnce(BrbBase *brb_base, BrbMicroScript *script)
     /* Run the binary opcodes */
     while (script->code.offt < script->code.size)
     {
+        if (script->code.offt <= 0)
+        {
+            script->code.offt = 0;            
+            script->loop.cnt++;
+
+            if (script->loop.max > 0 && script->loop.cnt > script->loop.max)
+            {
+                script->flags.finished = 1;
+                
+                return 0;
+            }
+
+        }
+
         // LOG_NOTICE(brb_base->log_base, "RUN script [%u] - code [%u:%u]\r\n", script->script_id, script->code.offt, script->code.size);
 
         // brb_base->log_base->serial->flush();
 
         /* Grab current opcode */
-        opcode      = (BrbMicroScriptOP *)&script->code.arr[script->code.offt]; 
-   
-        // LOG_NOTICE(brb_base->log_base, "RUN script [%u] - code [%u:%u] - op:%u sz :%u\r\n", 
+        opcode = (BrbMicroScriptOP *)&script->code.arr[script->code.offt];
+
+        // LOG_NOTICE(brb_base->log_base, "RUN script [%u] - code [%u:%u] - op:%u sz :%u\r\n",
         //     script->script_id, script->code.offt, script->code.size, opcode->opcode, opcode->param_sz);
-        
+
         // brb_base->log_base->serial->flush();
 
         /* Sanity check */
@@ -557,42 +575,42 @@ int BrbMicroScriptRunOnce(BrbBase *brb_base, BrbMicroScript *script)
         }
 
         /* Prepare to run CB_FUNC */
-        opcode_run  = (BrbMicroScriptOPRunTime *)&glob_script_runtime_arr[opcode->opcode];
-        cb_func     = opcode_run->cb_func;
+        opcode_run = (BrbMicroScriptOPRunTime *)&glob_script_runtime_arr[opcode->opcode];
+        cb_func = opcode_run->cb_func;
 
         /* Some opcodes need special code path */
         switch (opcode->opcode)
         {
-            /* Leave execution if we find a delay */
-            case SCRIPT_OPCODE_DELAY:
-                
-                // BrbMicroScriptOP *op_hdr;
-                op_delay                = (BrbMicroScriptOPDelay *)&script->code.arr[script->code.offt + 1];
+        /* Leave execution if we find a delay */
+        case SCRIPT_OPCODE_DELAY:
 
-                /* Copy param */
-                // memcpy(&param, &script->code.arr[script->code.offt + 1], sizeof(uint16_t));
+            // BrbMicroScriptOP *op_hdr;
+            op_delay = (BrbMicroScriptOPDelay *)&script->code.arr[script->code.offt + 1];
 
-                // LOG_NOTICE(brb_base->log_base, "RUN DELAY [%u] - tm [%u] sz [%u]\r\n", script->script_id, op_delay->time, opcode->param_sz);
+            /* Copy param */
+            // memcpy(&param, &script->code.arr[script->code.offt + 1], sizeof(uint16_t));
 
-                /* Set when to delay */
-                script->delay_until_ms  = brb_base->ms.cur + op_delay->time;
+            // LOG_NOTICE(brb_base->log_base, "RUN DELAY [%u] - tm [%u] sz [%u]\r\n", script->script_id, op_delay->time, opcode->param_sz);
 
-                /* Set flags we are delaying and point to next PARAM */
-                script->flags.delaying  = 1;
-                script->code.offt       += 1 + opcode->param_sz;
-                    
-                return script->code.offt;
+            /* Set when to delay */
+            script->delay_until_ms = brb_base->ms.cur + op_delay->time;
 
-            /* Default action */
-            default:
-            
-                break;
+            /* Set flags we are delaying and point to next PARAM */
+            script->flags.delaying = 1;
+            script->code.offt += 1 + opcode->param_sz;
+
+            return script->code.offt;
+
+        /* Default action */
+        default:
+
+            break;
         }
 
         /* Invoke opcode */
         if (cb_func)
         {
-            ret_code    = cb_func(brb_base, script);
+            ret_code = cb_func(brb_base, script);
 
             // LOG_NOTICE(brb_base->log_base, "OP CODE [%u] - ret [%u]\r\n", opcode->opcode, ret_code);
 
@@ -602,15 +620,15 @@ int BrbMicroScriptRunOnce(BrbBase *brb_base, BrbMicroScript *script)
         }
 
         /* Walk to next opcode */
-        //next_opcode:       
+        //next_opcode:
         script->code.offt += 1 + opcode->param_sz;
 
         if (script->code.max_offt > 0 && script->code.offt >= script->code.max_offt)
         {
-            script->code.offt       = script->code.jmp_offt;
+            script->code.offt = script->code.jmp_offt;
 
-            script->code.max_offt   = 0;
-            script->code.jmp_offt   = 0;
+            script->code.max_offt = 0;
+            script->code.jmp_offt = 0;
         }
 
         // LOG_NOTICE(brb_base->log_base, "LOOP offt [%u] - size [%u]\r\n", script->code.offt, script->code.size);
@@ -640,7 +658,7 @@ int BrbMicroScriptRunAll(BrbBase *brb_base)
         /* Not active, ignore */
         if (!brb_base->script.arr[i].flags.active)
             continue;
-  
+
         /* Grab script and run once */
         script = (BrbMicroScript *)&brb_base->script.arr[i];
         BrbMicroScriptRunOnce(brb_base, script);
@@ -684,10 +702,13 @@ BrbMicroScript *BrbMicroScriptGrabFree(BrbBase *brb_base)
     {
         if (brb_base->script.arr[i].flags.active)
             continue;
-            
+
         /* Fill up script data */
-        script              = (BrbMicroScript *)&brb_base->script.arr[i];
-        script->script_id   = i;
+        script = (BrbMicroScript *)&brb_base->script.arr[i];
+
+        memset(script, 0, sizeof(BrbMicroScript));
+        script->script_id = i;
+
         break;
     }
 
@@ -704,19 +725,19 @@ BrbMicroScript *BrbMicroScriptGrabFree(BrbBase *brb_base)
 BrbMicroScript *BrbMicroScriptSetByID(BrbBase *brb_base, BrbMicroScript *script_new)
 {
     BrbMicroScript *script;
-    
+
     // LOG_NOTICE(brb_base->log_base, "[%p] - SET SCRIPT [%d] - [%d]\r\n", brb_base, script_new->script_id, MAX_TIMER);
 
     /* Sanity check */
     if (script_new->script_id > MAX_TIMER)
         return NULL;
 
-    script      = &brb_base->script.arr[script_new->script_id];
+    script = &brb_base->script.arr[script_new->script_id];
 
-    // LOG_NOTICE(brb_base->log_base, "[%p] - Set Script [%d] - [%d] [%d] - sz [%d]\r\n", brb_base, 
+    // LOG_NOTICE(brb_base->log_base, "[%p] - Set Script [%d] - [%d] [%d] - sz [%d]\r\n", brb_base,
     //     script->script_id, script->flags.active, script->flags.finished, sizeof(BrbMicroScript));
 
-    // LOG_WARN(brb_base->log_base, "[%p] - Set Script [%d] - [%d] [%d] - sz [%d]\r\n", brb_base, 
+    // LOG_WARN(brb_base->log_base, "[%p] - Set Script [%d] - [%d] [%d] - sz [%d]\r\n", brb_base,
     //     script_new->script_id, script_new->flags.active, script_new->flags.finished, sizeof(BrbMicroScript));
 
     memcpy(script, script_new, sizeof(BrbMicroScript));
