@@ -449,8 +449,8 @@ void BrbSetupDisplay(void)
     BrbDisplayBase *display_base = (BrbDisplayBase *)&glob_display_base;
 
     display_base->brb_base = &glob_brb_base;
-    display_base->screen_cur = DISPLAY_SCREEN_INFO;
-    // display_base->screen_cur = DISPLAY_SCREEN_CONTROL;
+    // display_base->screen_cur = DISPLAY_SCREEN_INFO;
+    display_base->screen_cur = DISPLAY_SCREEN_CONTROL;
     // display_base->screen_cur = DISPLAY_SCREEN_TEMP;
     // display_base->screen_cur = DISPLAY_SCREEN_CONSUME;
 
@@ -477,7 +477,7 @@ void BrbSetupDisplay(void)
     BrbDisplayBase_Init(display_base);
     BrbDisplayBase_ScreenAction(display_base, -1);
 
-    BrbTimerAdd(&glob_brb_base, 5000, 1, BrbDisplayBase_Timer, display_base);
+    BrbTimerAdd(&glob_brb_base, 5000, 0, BrbDisplayBase_Timer, display_base);
 }
 /**********************************************************************************************************************/
 void BrbSetup485(void)
@@ -614,6 +614,36 @@ int BrbDisplayBase_Timer(void *base_ptr, void *cb_data_ptr)
     BrbDisplayBase_ScreenAction(display_base, -1);
 
     // display_base->screen_cur++;
+
+    int delay = 5000;
+
+    switch (gerador_base->state.code)
+    {
+    case GERADOR_STATE_START_INIT:
+    case GERADOR_STATE_START_DELAY:
+    case GERADOR_STATE_START_CHECK:
+    case GERADOR_STATE_STOP_INIT:
+    case GERADOR_STATE_STOP_DELAY:
+    case GERADOR_STATE_STOP_CHECK:
+    {
+        delay = 2000;
+        break;
+    }
+    case GERADOR_STATE_FAILURE:
+    {
+        delay = 3000;
+        break;
+    }
+    case GERADOR_STATE_RUNNING:
+    case GERADOR_STATE_NONE:
+    default:
+    {
+        delay = 5000;
+        break;
+    }
+    }
+
+    BrbTimerAdd(&glob_brb_base, delay, 0, BrbDisplayBase_Timer, display_base);
 
     return 0;
 }
@@ -799,68 +829,91 @@ int BrbDisplayBase_ShowControl(void *brb_base_ptr, void *display_base_ptr)
     display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
     display_base->tft->setTextScale(1);
 
-    int btn_h = 75;
+    int btn_h = 65;
     int btn_w = 300;
-    int btn_y = 100;
+    int btn_y = 120;
     int btn_x = 10;
 
     servo_bb = BrbServoGrabByPin(&glob_brb_base, gerador_base->pin_servo);
 
-    display_base->tft->fillRect(20, 50, 280, 40, ILI9341_WHITE);
+    display_base->tft->fillRect(10, 50, 300, 40, ILI9341_WHITESMOKE);
 
-    switch (gerador_base->state)
+    const __FlashStringHelper *text_ptr;
+
+    text_ptr = BrbGeradorBase_GetState(gerador_base);
+
+    display_base->tft->cursorToXY(10, 50);
+    display_base->tft->print("STATUS: ");
+    display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 50);
+    display_base->tft->print(text_ptr);
+
+    switch (gerador_base->state.code)
     {
-    case GERADOR_STATE_STARTING:
-    {
-        display_base->tft->printAtPivoted(F("Starting"), 160, 50, gTextPivotTopCenter);
-        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("STOP"), ILI9341_DARKRED, ILI9341_WHITE);
-        break;
-    }
+    case GERADOR_STATE_START_INIT:
+    case GERADOR_STATE_START_DELAY:
+    case GERADOR_STATE_START_CHECK:
     case GERADOR_STATE_RUNNING:
     {
-        display_base->tft->printAtPivoted(F("Running"), 160, 50, gTextPivotTopCenter);
         BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("STOP"), ILI9341_DARKRED, ILI9341_WHITE);
         break;
     }
-    case GERADOR_STATE_STOPPING:
+    case GERADOR_STATE_FAILURE:
     {
-        display_base->tft->printAtPivoted(F("Stopping"), 160, 50, gTextPivotTopCenter);
-        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("START"), ILI9341_DARKGREEN, ILI9341_WHITE);
+
+        text_ptr = BrbGeradorBase_GetState(gerador_base);
+
+        display_base->tft->cursorToXY(10, 90);
+        display_base->tft->print("FAIL: ");
+        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 90);
+        display_base->tft->print(text_ptr);
+
+        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("IGNORE"), ILI9341_DARKRED, ILI9341_WHITE);
+        break;
+    }
+    case GERADOR_STATE_STOP_INIT:
+    case GERADOR_STATE_STOP_DELAY:
+    case GERADOR_STATE_STOP_CHECK:
+    case GERADOR_STATE_NONE:
+    {
+        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("START"), ILI9341_DARKRED, ILI9341_WHITE);
         break;
     }
     default:
     {
-        display_base->tft->printAtPivoted(F("Stopped"), 160, 50, gTextPivotTopCenter);
-        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("START"), ILI9341_DARKGREEN, ILI9341_WHITE);
-        break;
+        /**/
     }
     }
+
+    display_base->tft->fillRect(10, 200, 140, 35, ILI9341_WHITESMOKE);
 
     if (servo_bb)
     {
-        display_base->tft->fillRect(10, 210, 140, 20, ILI9341_WHITE);
-
-        display_base->tft->cursorToXY(10, 210);
+        display_base->tft->cursorToXY(10, 200);
         display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
         display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
         display_base->tft->setTextScale(1);
         display_base->tft->print("BB: ");
-        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 210);
+        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 200);
         display_base->tft->print(servo_bb->pos_cur);
     }
 
-    display_base->tft->fillRect(170, 210, 140, 20, ILI9341_WHITE);
+    display_base->tft->fillRect(170, 200, 140, 35, ILI9341_WHITE);
 
-    if (gerador_base->script && gerador_base->script->flags.active)
-    {
-        display_base->tft->cursorToXY(170, 210);
-        display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
-        display_base->tft->setTextScale(1);
-        display_base->tft->print("RETRY");
-        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 210);
-        display_base->tft->print(gerador_base->script->loop.cnt);
-    }
+    display_base->tft->cursorToXY(170, 200);
+    display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+    display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+    display_base->tft->setTextScale(1);
+    display_base->tft->print("RETRY: ");
+    display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 200);
+    display_base->tft->print(gerador_base->state.retry, DEC);
+
+    display_base->tft->cursorToXY(170, 215);
+    display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+    display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+    display_base->tft->setTextScale(1);
+    display_base->tft->print("DELTA: ");
+    display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 215);
+    display_base->tft->print(gerador_base->state.delta, DEC);
 
     return 0;
 }
@@ -980,22 +1033,11 @@ int BrbDisplayBase_ActionControl(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
         display_base->tft->setTextScale(1);
 
-        switch (gerador_base->state)
-        {
-        case GERADOR_STATE_NONE:
-        case GERADOR_STATE_STOPPING:
-        {
-            display_base->tft->printAtPivoted(F("Start  Power?"), 160, 70, gTextPivotTopCenter);
-            break;
-        }
-        case GERADOR_STATE_STARTING:
-        case GERADOR_STATE_RUNNING:
-        default:
-        {
-            display_base->tft->printAtPivoted(F("Stop  Power?"), 160, 70, gTextPivotTopCenter);
-            break;
-        }
-        }
+        const __FlashStringHelper *text_ptr;
+
+        text_ptr = BrbGeradorBase_GetStateAction(gerador_base);
+
+        display_base->tft->printAtPivoted(text_ptr, 160, 70, gTextPivotTopCenter);
 
         display_base->flags.on_action = 1;
     }
@@ -1003,19 +1045,31 @@ int BrbDisplayBase_ActionControl(void *brb_base_ptr, void *display_base_ptr)
     {
         if (display_base->user_int == 1)
         {
-            switch (gerador_base->state)
+            switch (gerador_base->state.code)
             {
             case GERADOR_STATE_NONE:
-            case GERADOR_STATE_STOPPING:
+            case GERADOR_STATE_STOP_INIT:
+            case GERADOR_STATE_STOP_DELAY:
+            case GERADOR_STATE_STOP_CHECK:
             {
                 BrbGeradorBase_Start(gerador_base);
                 break;
             }
-            case GERADOR_STATE_STARTING:
+            case GERADOR_STATE_START_INIT:
+            case GERADOR_STATE_START_DELAY:
+            case GERADOR_STATE_START_CHECK:
             case GERADOR_STATE_RUNNING:
-            default:
             {
                 BrbGeradorBase_Stop(gerador_base);
+                break;
+            }
+            case GERADOR_STATE_FAILURE:
+            {
+                BrbGeradorBase_FailureConfirm(gerador_base);
+                break;
+            }
+            default:
+            {
                 break;
             }
             }

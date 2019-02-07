@@ -37,10 +37,20 @@
 #include <BrbBase.h>
 #include <BrbToneBase.h>
 /****************************************************************************************************/
-#define BRB_GERADOR_PARTIDA_MS 5000
+#define GERADOR_TIMER_MIN_POWER 3 /* Minimal power to be considered online */
 
-#define BRB_GERADOR_SERVO_BB_POS_OPEN 180
-#define BRB_GERADOR_SERVO_BB_POS_CLOSE 120
+#define GERADOR_TIMER_FAIL_ALARM_MS 5000
+
+#define GERADOR_TIMER_START_MS 5000
+#define GERADOR_TIMER_START_RETRY_MAX 3
+
+#define GERADOR_TIMER_STOP_MS 5000
+#define GERADOR_TIMER_STOP_RETRY_MAX 3
+
+#define GERADOR_TIMER_CHECK_MS 5000
+
+#define GERADOR_SERVO_BB_POS_OPEN 180
+#define GERADOR_SERVO_BB_POS_CLOSE 120
 
 #define GERADOR_POWER_REVERSE 1
 
@@ -52,12 +62,31 @@
 #define GERADOR_POWER_OFF LOW
 #endif
 
-typedef enum 
+typedef enum
+{
+	GERADOR_FAILURE_NONE,
+	GERADOR_FAILURE_RUNNING_WITHOUT_START,
+	GERADOR_FAILURE_DOWN_WITHOUT_STOP,
+
+	GERADOR_FAILURE_START_RETRY_LIMIT,
+
+	GERADOR_FAILURE_STOP_RETRY_LIMIT,
+
+} BrbGeradorFailureCode;
+
+typedef enum
 {
 	GERADOR_STATE_NONE,
-	GERADOR_STATE_STARTING,
+	GERADOR_STATE_START_INIT,
+	GERADOR_STATE_START_DELAY,
+	GERADOR_STATE_START_CHECK,
+
 	GERADOR_STATE_RUNNING,
-	GERADOR_STATE_STOPPING,
+	GERADOR_STATE_FAILURE,
+
+	GERADOR_STATE_STOP_INIT,
+	GERADOR_STATE_STOP_DELAY,
+	GERADOR_STATE_STOP_CHECK,
 
 } BrbGeradorStateCode;
 /**********************************************************************************************************************/
@@ -65,10 +94,8 @@ typedef struct _BrbGeradorBase
 {
 	BrbBase *brb_base;
 	BrbToneBase *tone_base;
-	BrbMicroScript *script;
+	// BrbMicroScript *script;
 
-	BrbGeradorStateCode state;
-	
 	long delay;
 
 	// BrbServo servo_bb;
@@ -80,8 +107,29 @@ typedef struct _BrbGeradorBase
 	int pin_sensor_ac;
 	int pin_sensor_dc;
 
-	struct {
+	struct
+	{
+		long cur;
+		long last;
+		long delay;
+
+	} ms;
+
+	struct
+	{
+		BrbGeradorStateCode code;		
+		BrbGeradorFailureCode fail;
+
+		long time;
+		long delta;
 		
+		int retry;
+
+	} state;
+
+	struct
+	{
+
 		double battery;
 		double gas;
 		double power;
@@ -93,7 +141,8 @@ typedef struct _BrbGeradorBase
 	} info;
 
 	/* data is persistent */
-	struct {
+	struct
+	{
 
 		long hourmeter_time;
 		long hourmeter_reset;
@@ -104,8 +153,9 @@ typedef struct _BrbGeradorBase
 
 	} data;
 
-	struct {
-		unsigned int foo:1;
+	struct
+	{
+		unsigned int foo : 1;
 	} flags;
 
 } BrbGeradorBase;
@@ -117,5 +167,10 @@ int BrbGeradorBase_HourmeterReset(BrbGeradorBase *gerador_base);
 
 int BrbGeradorBase_Start(BrbGeradorBase *gerador_base);
 int BrbGeradorBase_Stop(BrbGeradorBase *gerador_base);
+
+int BrbGeradorBase_FailureConfirm(BrbGeradorBase *gerador_base);
+
+const __FlashStringHelper *BrbGeradorBase_GetState(BrbGeradorBase *gerador_base);
+const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador_base);
 /**********************************************************************************************************************/
 #endif /* BRB_GERADOR_BASE_H_ */
