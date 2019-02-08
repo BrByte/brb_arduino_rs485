@@ -37,14 +37,21 @@
 #include <BrbBase.h>
 #include <BrbToneBase.h>
 /****************************************************************************************************/
-#define GERADOR_TIMER_MIN_POWER 3 /* Minimal power to be considered online */
+ /* Minimal power to be considered online */
+#define GERADOR_TIMER_MIN_POWER 5.0
 
 #define GERADOR_TIMER_FAIL_ALARM_MS 5000
 
-#define GERADOR_TIMER_START_MS 5000
+#define GERADOR_TIMER_ZERO_WAIT_MS 2000
+
+#define GERADOR_TIMER_START_WAIT_MS 15000
+
+#define GERADOR_TIMER_START_DELAY_MS 5000
+#define GERADOR_TIMER_START_CHECK_MS 15000
 #define GERADOR_TIMER_START_RETRY_MAX 3
 
-#define GERADOR_TIMER_STOP_MS 5000
+#define GERADOR_TIMER_STOP_DELAY_MS 10000
+#define GERADOR_TIMER_STOP_CHECK_MS 30000
 #define GERADOR_TIMER_STOP_RETRY_MAX 3
 
 #define GERADOR_TIMER_CHECK_MS 5000
@@ -104,6 +111,9 @@ typedef struct _BrbGeradorBase
 	int pin_partida;
 	int pin_parada;
 
+	int pin_extra;
+	int pin_zerocross;
+
 	int pin_sensor_ac;
 	int pin_sensor_dc;
 
@@ -132,7 +142,14 @@ typedef struct _BrbGeradorBase
 
 		double battery;
 		double gas;
-		double power;
+
+		double power_ac;
+
+		double zero_value;
+		int zero_counter;
+		int zero_delta;
+		int zero_last;
+
 		double load;
 
 		long hourmeter_ms;
@@ -172,5 +189,6 @@ int BrbGeradorBase_FailureConfirm(BrbGeradorBase *gerador_base);
 
 const __FlashStringHelper *BrbGeradorBase_GetState(BrbGeradorBase *gerador_base);
 const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador_base);
+const __FlashStringHelper *BrbGeradorBase_GetFailure(BrbGeradorBase *gerador_base);
 /**********************************************************************************************************************/
 #endif /* BRB_GERADOR_BASE_H_ */

@@ -218,7 +218,13 @@ typedef struct _BrbToneBase
 int BrbToneBase_Init(BrbToneBase *tone_base);
 void BrbToneBase_Loop(BrbToneBase *tone_base);
 
+int BrbToneBase_PlayAction(BrbToneBase *tone_base);
+
+int BrbToneBase_PlayArrive(BrbToneBase *tone_base);
+int BrbToneBase_PlayLeave(BrbToneBase *tone_base);
+
 int BrbToneBase_PlayStart(BrbToneBase *tone_base);
+
 int BrbToneBase_PlayAlarm(BrbToneBase *tone_base);
 int BrbToneBase_PlayAlarm2(BrbToneBase *tone_base);
 int BrbToneBase_PlayAlarm3(BrbToneBase *tone_base);

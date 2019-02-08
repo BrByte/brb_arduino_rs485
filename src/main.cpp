@@ -50,7 +50,7 @@
 
 // #define RESERVED    0 /* RX0 */
 // #define RESERVED    1 /* TX0 */
-// #define RESERVED    2 /* INT4 - PWM */
+#define GERADOR_ZEROCROSS_PIN 2 /* INT4 - PWM */
 // #define RESERVED    3 /* INT5 - PWM */
 #define GERADOR_PARTIDA_PIN 4 /* PWM */
 #define GERADOR_PARADA_PIN 5  /* PWM */
@@ -509,6 +509,11 @@ void BrbSetup485(void)
     return;
 }
 /**********************************************************************************************************************/
+void BrbGeradorBase_ZeroCross()
+{
+    glob_gerador_base.info.zero_counter++;
+}
+/**********************************************************************************************************************/
 void setup()
 {
     randomSeed(((analogRead(0) + analogRead(1)) / 2));
@@ -538,13 +543,15 @@ void setup()
     gerador_base->pin_partida = GERADOR_PARTIDA_PIN;
     gerador_base->pin_parada = GERADOR_PARADA_PIN;
     gerador_base->pin_servo = GERADOR_SERVO_PIN;
+    gerador_base->pin_extra = GERADOR_EXTRA_PIN;
+    gerador_base->pin_zerocross = GERADOR_ZEROCROSS_PIN;
 
     gerador_base->pin_sensor_ac = SENSOR_VOLTAGE_AC_PIN;
     gerador_base->pin_sensor_dc = SENSOR_VOLTAGE_DC_PIN;
 
     BrbGeradorBase_Init(gerador_base);
-    // BrbGeradorBase_Partida(gerador_base);
 
+    attachInterrupt(digitalPinToInterrupt(gerador_base->pin_zerocross), BrbGeradorBase_ZeroCross, RISING);
     /**************************************/
     /* Clean up base */
     memset(&glob_btn_base, 0, sizeof(BrbBtnBase));
@@ -626,12 +633,12 @@ int BrbDisplayBase_Timer(void *base_ptr, void *cb_data_ptr)
     case GERADOR_STATE_STOP_DELAY:
     case GERADOR_STATE_STOP_CHECK:
     {
-        delay = 2000;
+        delay = 1500;
         break;
     }
     case GERADOR_STATE_FAILURE:
     {
-        delay = 3000;
+        delay = 2500;
         break;
     }
     case GERADOR_STATE_RUNNING:
@@ -662,7 +669,7 @@ int BrbDisplayBase_ShowInfo(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("General Info"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, F("Geral"), 10, 10);
     }
 
     pos_x = 10;
@@ -674,10 +681,10 @@ int BrbDisplayBase_ShowInfo(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
         display_base->tft->setTextScale(1);
         display_base->tft->cursorToXY(pos_x, pos_y);
-        display_base->tft->println("Battery");
+        display_base->tft->println("Bateria");
     }
 
-    display_base->tft->setTextColor(ILI9341_DARKGREEN, ILI9341_WHITE);
+    display_base->tft->setTextColor(ILI9341_SEAGREEN, ILI9341_WHITE);
     display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
     display_base->tft->setTextScale(1);
     dtostrf(gerador_base->info.battery, len, 1, buf);
@@ -696,13 +703,13 @@ int BrbDisplayBase_ShowInfo(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
         display_base->tft->setTextScale(1);
         display_base->tft->cursorToXY(pos_x, pos_y);
-        display_base->tft->println("Power");
+        display_base->tft->println("Energia");
     }
 
-    display_base->tft->setTextColor(ILI9341_DARKRED, ILI9341_WHITE);
+    display_base->tft->setTextColor(ILI9341_ORANGERED, ILI9341_WHITE);
     display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
     display_base->tft->setTextScale(1);
-    dtostrf(gerador_base->info.power, len, 1, buf);
+    dtostrf(gerador_base->info.power_ac, len, 1, buf);
     display_base->tft->printAlignedPivotedOffseted(buf, gTextAlignTopLeft, gTextPivotTopLeft, pos_x, pos_y + 20, 0, 60);
 
     display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, display_base->tft->getCursorY());
@@ -749,7 +756,7 @@ int BrbDisplayBase_ShowTemp(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Temperature Info"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, F("Temperatura"), 10, 10);
 
         // display_base->tft->fillRect(0, 50, sz_w, 15, ILI9341_LIGHTSALMON);
         // display_base->tft->fillRect(sz_w, 50, sz_w, 15, ILI9341_LIMEGREEN);
@@ -772,7 +779,7 @@ int BrbDisplayBase_ShowTemp(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
         display_base->tft->setTextScale(1);
         display_base->tft->cursorToXY(pos_x, pos_y);
-        display_base->tft->println("HUMIDITY");
+        display_base->tft->println("HUMIDADE");
     }
 
     // if (dht_h > 999)
@@ -819,63 +826,117 @@ int BrbDisplayBase_ShowControl(void *brb_base_ptr, void *display_base_ptr)
     BrbGeradorBase *gerador_base = (BrbGeradorBase *)&glob_gerador_base;
     BrbServo *servo_bb;
 
+    char buf[16] = {0};
+    byte len = 5;
+
+    const __FlashStringHelper *title_ptr = BrbGeradorBase_GetState(gerador_base);
+    const __FlashStringHelper *text_ptr;
+    int retry_max = GERADOR_TIMER_START_RETRY_MAX;
+    int color = ILI9341_ORANGERED;
+    // int color = ILI9341_ORANGERED;
+
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Controle de Partida"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, F("Controle"), 10, 10);
     }
 
-    display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-    display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
-    display_base->tft->setTextScale(1);
-
-    int btn_h = 65;
+    int btn_h = 60;
     int btn_w = 300;
-    int btn_y = 120;
+    int btn_y = 170;
     int btn_x = 10;
 
-    servo_bb = BrbServoGrabByPin(&glob_brb_base, gerador_base->pin_servo);
-
-    display_base->tft->fillRect(10, 50, 300, 40, ILI9341_WHITESMOKE);
-
-    const __FlashStringHelper *text_ptr;
-
-    text_ptr = BrbGeradorBase_GetState(gerador_base);
-
-    display_base->tft->cursorToXY(10, 50);
-    display_base->tft->print("STATUS: ");
-    display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 50);
-    display_base->tft->print(text_ptr);
+    display_base->tft->fillRect(10, 50, 300, 60, ILI9341_WHITE);
 
     switch (gerador_base->state.code)
     {
     case GERADOR_STATE_START_INIT:
+    {
+        retry_max = GERADOR_TIMER_START_RETRY_MAX;
+        sprintf(buf, "%d s", (int)((GERADOR_TIMER_START_WAIT_MS - gerador_base->state.delta) / 1000));
+        color = ILI9341_ORANGERED;
+        break;
+    }
     case GERADOR_STATE_START_DELAY:
+    {
+        retry_max = GERADOR_TIMER_START_RETRY_MAX;
+        sprintf(buf, "%d s", (int)((GERADOR_TIMER_START_DELAY_MS - gerador_base->state.delta) / 1000));
+        color = ILI9341_ORANGERED;
+        break;
+    }
     case GERADOR_STATE_START_CHECK:
+    {
+        retry_max = GERADOR_TIMER_START_RETRY_MAX;
+        sprintf(buf, "%d s", (int)((GERADOR_TIMER_START_CHECK_MS - gerador_base->state.delta) / 1000));
+        color = ILI9341_ORANGERED;
+        break;
+    }
     case GERADOR_STATE_RUNNING:
     {
-        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("STOP"), ILI9341_DARKRED, ILI9341_WHITE);
+        retry_max = GERADOR_TIMER_START_RETRY_MAX;
+
+        display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+        display_base->tft->setTextScale(2);
+        long delta_minutes = (gerador_base->state.delta / 1000) / 60;
+        sprintf(buf, "%dh%02dm", (int)(delta_minutes / 60), (int)(delta_minutes % 60));
+        display_base->tft->printAtPivoted(buf, 310, 50, gTextPivotTopRight);
+
         break;
     }
     case GERADOR_STATE_FAILURE:
     {
+        retry_max = GERADOR_TIMER_START_RETRY_MAX;
 
-        text_ptr = BrbGeradorBase_GetState(gerador_base);
+        text_ptr = BrbGeradorBase_GetFailure(gerador_base);
 
+        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+        display_base->tft->setTextColor(ILI9341_INDIANRED, ILI9341_WHITE);
+        display_base->tft->setTextScale(1);
         display_base->tft->cursorToXY(10, 90);
-        display_base->tft->print("FAIL: ");
-        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 90);
-        display_base->tft->print(text_ptr);
+        display_base->tft->print(title_ptr);
+        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, display_base->tft->getCursorY());
+        display_base->tft->print(gerador_base->state.fail);
 
-        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("IGNORE"), ILI9341_DARKRED, ILI9341_WHITE);
+        sprintf(buf, "%d s", (int)((gerador_base->state.delta) / 1000));
+
+        title_ptr = text_ptr;
+
         break;
     }
     case GERADOR_STATE_STOP_INIT:
+    {
+        retry_max = GERADOR_TIMER_STOP_RETRY_MAX;
+        sprintf(buf, "%d s", (int)((GERADOR_TIMER_STOP_CHECK_MS - gerador_base->state.delta) / 1000));
+        color = ILI9341_SEAGREEN;
+        break;
+    }
     case GERADOR_STATE_STOP_DELAY:
+    {
+        retry_max = GERADOR_TIMER_STOP_RETRY_MAX;
+        sprintf(buf, "%d s", (int)((GERADOR_TIMER_STOP_DELAY_MS - gerador_base->state.delta) / 1000));
+        color = ILI9341_SEAGREEN;
+        break;
+    }
     case GERADOR_STATE_STOP_CHECK:
+    {
+        retry_max = GERADOR_TIMER_STOP_RETRY_MAX;
+        sprintf(buf, "%d s", (int)((GERADOR_TIMER_STOP_CHECK_MS - gerador_base->state.delta) / 1000));
+        color = ILI9341_SEAGREEN;
+        break;
+    }
     case GERADOR_STATE_NONE:
     {
-        BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, F("START"), ILI9341_DARKRED, ILI9341_WHITE);
+        retry_max = 0;
+
+        display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+        display_base->tft->setTextScale(2);
+        long delta_minutes = (gerador_base->state.delta / 1000) / 60;
+        sprintf(buf, "%dh%02dm", (int)(delta_minutes / 60), (int)(delta_minutes % 60));
+        display_base->tft->printAtPivoted(buf, 310, 50, gTextPivotTopRight);
+
+        color = ILI9341_SEAGREEN;
         break;
     }
     default:
@@ -884,36 +945,109 @@ int BrbDisplayBase_ShowControl(void *brb_base_ptr, void *display_base_ptr)
     }
     }
 
-    display_base->tft->fillRect(10, 200, 140, 35, ILI9341_WHITESMOKE);
+    display_base->tft->setTextColor(color, ILI9341_WHITE);
+    display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
+    display_base->tft->setTextScale(1);
+    display_base->tft->cursorToXY(10, 50);
+    display_base->tft->print(title_ptr);
 
-    if (servo_bb)
+    display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+    display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+    display_base->tft->setTextScale(2);
+    display_base->tft->printAtPivoted(buf, 310, 50, gTextPivotTopRight);
+
+    if (display_base->screen_cur != display_base->screen_last)
     {
-        display_base->tft->cursorToXY(10, 200);
         display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
         display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
         display_base->tft->setTextScale(1);
-        display_base->tft->print("BB: ");
-        display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 200);
-        display_base->tft->print(servo_bb->pos_cur);
+        display_base->tft->cursorToXY(10, 110);
+        display_base->tft->print("Energia");
     }
 
-    display_base->tft->fillRect(170, 200, 140, 35, ILI9341_WHITE);
+    display_base->tft->fillRect(10, 125, 300, 60, ILI9341_WHITE);
 
-    display_base->tft->cursorToXY(170, 200);
-    display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+    display_base->tft->setTextColor(ILI9341_ORANGERED, ILI9341_WHITE);
+    display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
+    display_base->tft->setTextScale(1);
+    dtostrf(gerador_base->info.power_ac, len, 1, buf);
+    display_base->tft->cursorToXY(10, 125);
+    display_base->tft->print(buf);
+
+    display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, display_base->tft->getCursorY());
     display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
     display_base->tft->setTextScale(1);
-    display_base->tft->print("RETRY: ");
-    display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 200);
-    display_base->tft->print(gerador_base->state.retry, DEC);
+    display_base->tft->print("VAC");
 
-    display_base->tft->cursorToXY(170, 215);
-    display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+    if (display_base->screen_cur != display_base->screen_last)
+    {
+        display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+        display_base->tft->setTextScale(1);
+        display_base->tft->cursorToXY(145, 110);
+        display_base->tft->println("Servo");
+    }
+
+    servo_bb = BrbServoGrabByPin(&glob_brb_base, gerador_base->pin_servo);
+    sprintf(buf, "%d", servo_bb ? servo_bb->pos_cur : 0);
+
+    display_base->tft->setTextColor(ILI9341_DARKSLATEBLUE, ILI9341_WHITE);
+    display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
+    display_base->tft->setTextScale(1);
+    display_base->tft->cursorToXY(145, 125);
+    display_base->tft->print(buf);
+    display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, display_base->tft->getCursorY());
     display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
     display_base->tft->setTextScale(1);
-    display_base->tft->print("DELTA: ");
-    display_base->tft->cursorToXY(display_base->tft->getCursorX() + 10, 215);
-    display_base->tft->print(gerador_base->state.delta, DEC);
+    display_base->tft->print("O");
+
+    if (display_base->screen_cur != display_base->screen_last)
+    {
+        display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+        display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+        display_base->tft->setTextScale(1);
+        display_base->tft->cursorToXY(240, 110);
+        display_base->tft->println("Tentativas");
+    }
+
+    sprintf(buf, "%d/%d", gerador_base->state.retry, retry_max);
+    display_base->tft->setTextColor(ILI9341_DARKSLATEBLUE, ILI9341_WHITE);
+    display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
+    display_base->tft->setTextScale(1);
+    display_base->tft->cursorToXY(240, 125);
+    display_base->tft->print(buf);
+
+    const __FlashStringHelper *btn_text_ptr;
+
+    switch (gerador_base->state.code)
+    {
+    case GERADOR_STATE_START_INIT:
+    case GERADOR_STATE_START_DELAY:
+    case GERADOR_STATE_START_CHECK:
+    case GERADOR_STATE_RUNNING:
+    {
+        btn_text_ptr = F("PARAR");
+        break;
+    }
+    case GERADOR_STATE_FAILURE:
+    {
+        btn_text_ptr = F("IGNORAR");
+        break;
+    }
+    case GERADOR_STATE_STOP_INIT:
+    case GERADOR_STATE_STOP_DELAY:
+    case GERADOR_STATE_STOP_CHECK:
+    case GERADOR_STATE_NONE:
+    default:
+    {
+        btn_text_ptr = F("INICIAR");
+        break;
+    }
+    }
+
+    display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
+    display_base->tft->setTextScale(1);
+    BrbDisplayBase_DrawBtn(display_base, btn_x, btn_y, btn_w, btn_h, btn_text_ptr, color, ILI9341_WHITE);
 
     return 0;
 }
@@ -935,7 +1069,7 @@ int BrbDisplayBase_ShowConsume(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Consume"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, F("Consumo"), 10, 10);
 
         // display_base->tft->fillRect(0, 50, sz_w, 15, ILI9341_LIGHTSALMON);
         // display_base->tft->fillRect(sz_w, 50, sz_w, 15, ILI9341_LIMEGREEN);
@@ -949,7 +1083,7 @@ int BrbDisplayBase_ShowConsume(void *brb_base_ptr, void *display_base_ptr)
 
     double value_dec = ((double)(gerador_base->data.hourmeter_time) / 60.0);
 
-    BrbDisplayBase_DrawArcSeg(display_base, value_dec, 0, 1300, pos_x, pos_y, 100, F("Hours"), ARC_SCHEME_GREEN2RED, 0, 3, 5);
+    BrbDisplayBase_DrawArcSeg(display_base, value_dec, 0, 1300, pos_x, pos_y, 100, F("Horas"), ARC_SCHEME_GREEN2RED, 0, 3, 5);
 
     if (display_base->screen_cur != display_base->screen_last)
     {
@@ -957,7 +1091,7 @@ int BrbDisplayBase_ShowConsume(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
         display_base->tft->setTextScale(2);
         display_base->tft->cursorToXY(pos_x, pos_y);
-        display_base->tft->printAlignedPivotedOffseted(F("REMAIN"), gTextAlignTopLeft, gTextPivotTopLeft, pos_x, pos_y + 140, 0, 25);
+        display_base->tft->printAlignedPivotedOffseted(F("FALTA"), gTextAlignTopLeft, gTextPivotTopLeft, pos_x, pos_y + 140, 0, 25);
     }
 
     display_base->tft->setTextColor(ILI9341_DARKGRAY, ILI9341_WHITE);
@@ -976,7 +1110,7 @@ int BrbDisplayBase_ShowConsume(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
         display_base->tft->setTextScale(1);
         display_base->tft->cursorToXY(pos_x, pos_y);
-        display_base->tft->println("Consume");
+        display_base->tft->println("Consumo");
     }
 
     display_base->tft->setTextColor(ILI9341_DARKBLUE, ILI9341_WHITE);
@@ -990,7 +1124,7 @@ int BrbDisplayBase_ShowConsume(void *brb_base_ptr, void *display_base_ptr)
     display_base->tft->setTextScale(1);
     display_base->tft->print("Lts");
 
-    pos_y = pos_y + 50;
+    pos_y = pos_y + 60;
     pos_x = sz_w;
 
     if (display_base->screen_cur != display_base->screen_last)
@@ -999,13 +1133,12 @@ int BrbDisplayBase_ShowConsume(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
         display_base->tft->setTextScale(1);
         display_base->tft->cursorToXY(pos_x, pos_y);
-        display_base->tft->println("RESET");
+        display_base->tft->println("ZERAR");
     }
 
     display_base->tft->setTextColor(ILI9341_DARKBLUE, ILI9341_WHITE);
     display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
     display_base->tft->setTextScale(1);
-    display_base->tft->print(1);
     display_base->tft->cursorToXY(pos_x, pos_y + 20);
     display_base->tft->print(gerador_base->data.hourmeter_reset);
 
@@ -1028,7 +1161,7 @@ int BrbDisplayBase_ActionControl(void *brb_base_ptr, void *display_base_ptr)
     if (!display_base->flags.on_action)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Power Control"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, F("Controle"), 10, 10);
 
         display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
         display_base->tft->setTextScale(1);
@@ -1091,8 +1224,8 @@ int BrbDisplayBase_ActionControl(void *brb_base_ptr, void *display_base_ptr)
     display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
     display_base->tft->setTextScale(1);
 
-    BrbDisplayBase_DrawBtn(display_base, 20, 120, 120, 75, F("SIM"), display_base->user_int ? ILI9341_DARKRED : ILI9341_LIGHTGREY, display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
-    BrbDisplayBase_DrawBtn(display_base, 170, 120, 120, 75, F("NAO"), !display_base->user_int ? ILI9341_DARKRED : ILI9341_LIGHTGREY, !display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
+    BrbDisplayBase_DrawBtn(display_base, 20, 120, 120, 75, F("SIM"), display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
+    BrbDisplayBase_DrawBtn(display_base, 170, 120, 120, 75, F("NAO"), !display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, !display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
 
     return 0;
 }
@@ -1105,11 +1238,11 @@ int BrbDisplayBase_ActionConsume(void *brb_base_ptr, void *display_base_ptr)
     if (!display_base->flags.on_action)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Consume"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, F("Consumo"), 10, 10);
 
         display_base->tft->setFont(BRB_DISPLAY_FONT_TITLE);
         display_base->tft->setTextScale(2);
-        display_base->tft->printAtPivoted(F("Resetar Horimetro?"), 160, 80, gTextPivotMiddleCenter); // Units display
+        display_base->tft->printAtPivoted(F("Zerar Horimetro?"), 160, 80, gTextPivotMiddleCenter); // Units display
 
         display_base->flags.on_action = 1;
     }
@@ -1133,8 +1266,8 @@ int BrbDisplayBase_ActionConsume(void *brb_base_ptr, void *display_base_ptr)
         display_base->user_int = !display_base->user_int;
     }
 
-    BrbDisplayBase_DrawBtn(display_base, 20, 120, 120, 75, F("SIM"), display_base->user_int ? ILI9341_DARKRED : ILI9341_LIGHTGREY, display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
-    BrbDisplayBase_DrawBtn(display_base, 170, 120, 120, 75, F("NAO"), !display_base->user_int ? ILI9341_DARKRED : ILI9341_LIGHTGREY, !display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
+    BrbDisplayBase_DrawBtn(display_base, 20, 120, 120, 75, F("SIM"), display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
+    BrbDisplayBase_DrawBtn(display_base, 170, 120, 120, 75, F("NAO"), !display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, !display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
 
     return 0;
 }

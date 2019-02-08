@@ -130,9 +130,9 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const __FlashStringHelper *title_str, int x, int y)
 {
 	display_base->tft->setFont(BRB_DISPLAY_FONT_TITLE);
-	display_base->tft->fillRect(x, y, 300, 30, ILI9341_BLUE);
+	display_base->tft->fillRect(x, y, 300, 30, ILI9341_STEELBLUE);
 	display_base->tft->cursorToXY(x + 10, y + 10);
-	display_base->tft->setTextColor(ILI9341_WHITE, ILI9341_BLUE);
+	display_base->tft->setTextColor(ILI9341_WHITE, ILI9341_STEELBLUE);
 	display_base->tft->setTextScale(1);
 	display_base->tft->println(title_str);
 	// display_base->tft->printAtPivoted(title_str, x + 10, y + 10, gTextPivotBottomCenter); // Value in middle
@@ -144,7 +144,8 @@ int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const __FlashStringHel
 /**********************************************************************************************************************/
 int BrbDisplayBase_SetBg(BrbDisplayBase *display_base)
 {
-	display_base->tft->fillRect(0, 0, 320, 240, ILI9341_DIMGRAY);
+	display_base->tft->drawRect(0, 0, 320, 240, ILI9341_DIMGRAY);
+	display_base->tft->drawRect(1, 1, 319, 239, ILI9341_DIMGRAY);
 	display_base->tft->fillRect(2, 2, 316, 236, ILI9341_WHITE);
 
 	return 0;
@@ -247,7 +248,7 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 	if (r > 130)
 	{
 		display_base->tft->setTextScale(2);
-		display_base->tft->printAtPivoted(buf, x, y - 25, gTextPivotMiddleCenter);
+		display_base->tft->printAtPivoted(buf, x, y - 30, gTextPivotMiddleCenter);
 	}
 	else if (r > 84)
 	{
@@ -262,8 +263,8 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 	else
 	{
 		display_base->tft->setFont(BRB_DISPLAY_FONT_TITLE);
-		display_base->tft->setTextScale(3);
-		display_base->tft->printAtPivoted(buf, x, y - 20, gTextPivotMiddleCenter);
+		display_base->tft->setTextScale(2);
+		display_base->tft->printAtPivoted(buf, x, y - 10, gTextPivotMiddleCenter);
 	}
 
 	if (units)
@@ -283,12 +284,12 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 		else if (r > 50)
 		{
 			display_base->tft->setTextScale(1);
-			display_base->tft->printAtPivoted(units, x, y + 15, gTextPivotMiddleCenter);
+			display_base->tft->printAtPivoted(units, x, y + 12, gTextPivotMiddleCenter);
 		}
 		else
 		{
 			display_base->tft->setTextScale(1);
-			display_base->tft->printAtPivoted(units, x, y + 20, gTextPivotMiddleCenter);
+			display_base->tft->printAtPivoted(units, x, y + 5, gTextPivotMiddleCenter);
 		}
 	}
 
