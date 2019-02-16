@@ -35,7 +35,6 @@
 #define BRB_DISPLAY_BASE_H_
 /**********************************************************************************************************************/
 #include <BrbBase.h>
-#include <BrbBtnBase.h>
 
 #include <SPI.h>
 // #include <Adafruit_GFX.h>
@@ -88,20 +87,21 @@
 // #define DISPLAY_COLOR_BASE_G 63
 // #define DISPLAY_COLOR_BASE_B 3
 
+/****************************************************************************************************/
 typedef enum
 {
-	DISPLAY_SCREEN_INFO,
-	DISPLAY_SCREEN_CONTROL,
-	DISPLAY_SCREEN_TEMP,
-	DISPLAY_SCREEN_CONSUME,
-	DISPLAY_SCREEN_LASTITEM
-} BrbDisplayScreen;
+    DISPLAY_ACTION_SELECT,
+    DISPLAY_ACTION_NEXT,
+    DISPLAY_ACTION_PREV,
+    DISPLAY_ACTION_LAST_ITEM
+} BrbDisplayActionCode;
 
-typedef struct _BrbDisplayScreenEvents
+typedef struct _BrbDisplayScreenPrototype
 {
+	int code;
+	const char *title_ptr;
 	BrbGenericCBH *cb_func;
-	void *cb_data;
-} BrbDisplayScreenEvents;
+} BrbDisplayScreenPrototype;
 
 /**********************************************************************************************************************/
 typedef struct _BrbDisplayBase
@@ -127,8 +127,11 @@ typedef struct _BrbDisplayBase
 	uint8_t pin_mosi;
 	uint8_t pin_clk;
 
-	BrbDisplayScreenEvents cb_show[DISPLAY_SCREEN_LASTITEM];
-	BrbDisplayScreenEvents cb_action[DISPLAY_SCREEN_LASTITEM];
+	BrbDisplayScreenPrototype *screen_arr_ptr;
+	int screen_arr_cnt;
+
+	// BrbDisplayScreenEvents cb_show[DISPLAY_SCREEN_LASTITEM];
+	// BrbDisplayScreenEvents cb_screen[DISPLAY_SCREEN_LASTITEM];
 
 	struct {
 		unsigned int on_action:1;

@@ -77,13 +77,15 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 {
 	int op_status;
 
-	display_base->action_code = action_code;
+	if (!display_base->screen_arr_ptr)
+		return 0;
 
+	display_base->action_code = action_code;
 	display_base->flags.on_select = 0;
 
 	if (!display_base->flags.on_action)
 	{
-		if (display_base->action_code == BRB_BTN_SELECT)
+		if (display_base->action_code == DISPLAY_ACTION_SELECT)
 		{
 			display_base->flags.on_select = 1;
 			display_base->action_code = -1;
@@ -91,37 +93,41 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 		}
 
 		/* Press direction */
-		else if (display_base->action_code == BRB_BTN_NEXT)
+		else if (display_base->action_code == DISPLAY_ACTION_NEXT)
 			display_base->screen_cur++;
 
-		else if (display_base->action_code == BRB_BTN_PREV)
+		else if (display_base->action_code == DISPLAY_ACTION_PREV)
 			display_base->screen_cur--;
 	}
 
-	/* TODO, jump to correct interface */
-	if (display_base->screen_cur < DISPLAY_SCREEN_INFO)
-		display_base->screen_cur = DISPLAY_SCREEN_LASTITEM - 1;
-	else if (display_base->screen_cur >= DISPLAY_SCREEN_LASTITEM)
-		display_base->screen_cur = DISPLAY_SCREEN_INFO;
+	BrbDisplayScreenPrototype *screen_ptr = NULL;
 
-	if (display_base->flags.on_action || display_base->flags.on_select)
+	for (int i = 0; i < display_base->screen_arr_cnt; i++)
 	{
-		/* Ignore Action */
-		if (!display_base->cb_action[display_base->screen_cur].cb_func)
-			return 0;
+		/* Found */
+		if (display_base->screen_arr_ptr[i].cb_func && display_base->screen_arr_ptr[i].code == display_base->screen_cur)
+		{
+			screen_ptr = (BrbDisplayScreenPrototype *)&display_base->screen_arr_ptr[i];
+			break;
+		}
+	}
 
-		op_status = display_base->cb_action[display_base->screen_cur].cb_func(display_base->brb_base, display_base);
-
-		display_base->screen_last = display_base->screen_cur;
-
-		return op_status;
+	/* Get first screen, with reseted info */
+	if (!screen_ptr)
+	{
+		display_base->flags.on_action = 0;
+		display_base->flags.on_select = 0;
+		display_base->action_code = -1;
+		display_base->screen_last = -1;
+		display_base->screen_cur = 0;
+		screen_ptr = (BrbDisplayScreenPrototype *)&display_base->screen_arr_ptr[0];
 	}
 
 	/* Ignore Screen */
-	if (!display_base->cb_show[display_base->screen_cur].cb_func)
+	if (screen_ptr->cb_func == NULL)
 		return 0;
 
-	op_status = display_base->cb_show[display_base->screen_cur].cb_func(display_base->brb_base, display_base);
+	op_status = screen_ptr->cb_func(display_base->brb_base, display_base);
 
 	display_base->screen_last = display_base->screen_cur;
 
@@ -148,28 +154,6 @@ int BrbDisplayBase_SetBg(BrbDisplayBase *display_base)
 	display_base->tft->drawRect(0, 0, 320, 240, ILI9341_DIMGRAY);
 	display_base->tft->drawRect(1, 1, 319, 239, ILI9341_DIMGRAY);
 	display_base->tft->fillRect(2, 2, 316, 236, ILI9341_WHITE);
-
-	return 0;
-}
-/**********************************************************************************************************************/
-int BrbDisplayBase_SetScreenShowCB(BrbDisplayBase *display_base, int screen_code, BrbGenericCBH *cb_func, void *cb_data)
-{
-	if (screen_code < 0 || screen_code >= DISPLAY_SCREEN_LASTITEM)
-		return -1;
-
-	display_base->cb_show[screen_code].cb_func = cb_func;
-	display_base->cb_show[screen_code].cb_data = cb_data;
-
-	return 0;
-}
-/**********************************************************************************************************************/
-int BrbDisplayBase_SetScreenActionCB(BrbDisplayBase *display_base, int screen_code, BrbGenericCBH *cb_func, void *cb_data)
-{
-	if (screen_code < 0 || screen_code >= DISPLAY_SCREEN_LASTITEM)
-		return -1;
-
-	display_base->cb_action[screen_code].cb_func = cb_func;
-	display_base->cb_action[screen_code].cb_data = cb_data;
 
 	return 0;
 }
@@ -667,7 +651,7 @@ int BrbDisplayBase_DrawBarGraph(BrbDisplayBase *display_base, int16_t pos_x, int
 		display_base->tft->setTextColor(ILI9341_BLACK);
 
 		int max_int = (int)(max - ((int)max % 25));
-		
+
 		for (int i = 0; i <= max_int; i = i + 5)
 		{
 			int map_pct = 100.0 - map(i, 0, max_int, 0, 100);
@@ -692,7 +676,7 @@ int BrbDisplayBase_DrawBarGraph(BrbDisplayBase *display_base, int16_t pos_x, int
 			}
 		}
 	}
-	
+
 	// display_base->tft->fillRect((pos_x - (tube_w / 2) + 5), pos_y, (tube_w - 10), tube_h, color);
 	display_base->tft->fillCircle(pos_x, (tube_h + pos_y) + 7, ((tube_w / 2) + 5), color);
 

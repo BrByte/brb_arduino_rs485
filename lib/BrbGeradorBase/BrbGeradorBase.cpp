@@ -57,13 +57,11 @@ int BrbGeradorBase_Init(BrbGeradorBase *gerador_base)
 	pinMode(gerador_base->pin_extra, OUTPUT);
 	digitalWrite(gerador_base->pin_extra, GERADOR_POWER_OFF);
 
-	pinMode(gerador_base->pin_sensor_ac, INPUT);
-	pinMode(gerador_base->pin_sensor_dc, INPUT);
+	if (gerador_base->pin_sensor_ac > 0)
+		pinMode(gerador_base->pin_sensor_ac, INPUT_PULLUP);
 
-	// if (gerador_base->pin_zerocross > 0)
-	// {
-	// 	pinMode(gerador_base->pin_zerocross, INPUT_PULLUP);
-	// }
+	if (gerador_base->pin_sensor_dc > 0)
+		pinMode(gerador_base->pin_sensor_dc, INPUT_PULLUP);
 
 	BrbServoSetPosByPin(gerador_base->brb_base, gerador_base->pin_servo, GERADOR_SERVO_BB_POS_OPEN);
 
@@ -99,7 +97,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		interrupts();
 	}
 
-	LOG_NOTICE(gerador_base->brb_base->log_base, "POWER [%02.01f] [%02.01f]\n", gerador_base->info.power_ac, gerador_base->info.zero_value);
+	// LOG_NOTICE(gerador_base->brb_base->log_base, "POWER [%02.01f] [%02.01f]\n", gerador_base->info.power_ac, gerador_base->info.zero_value);
 
 #define RDC1 30000.0
 #define RDC2 7500.0
@@ -417,7 +415,7 @@ static int BrbGeradorBase_PowerStop(BrbGeradorBase *gerador_base)
 /**********************************************************************************************************************/
 static int BrbGeradorBase_PowerOff(BrbGeradorBase *gerador_base)
 {
-	BrbBase *brb_base = gerador_base->brb_base;
+	// BrbBase *brb_base = gerador_base->brb_base;
 
 	/* Set pin data */
 	digitalWrite(gerador_base->pin_partida, GERADOR_POWER_OFF);
@@ -428,7 +426,7 @@ static int BrbGeradorBase_PowerOff(BrbGeradorBase *gerador_base)
 /**********************************************************************************************************************/
 static int BrbGeradorBase_PowerSetState(BrbGeradorBase *gerador_base, BrbGeradorStateCode code, BrbGeradorFailureCode fail)
 {
-	BrbBase *brb_base = gerador_base->brb_base;
+	// BrbBase *brb_base = gerador_base->brb_base;
 
 	gerador_base->state.delta = 0;
 	gerador_base->state.code = code;
@@ -440,7 +438,7 @@ static int BrbGeradorBase_PowerSetState(BrbGeradorBase *gerador_base, BrbGerador
 /**********************************************************************************************************************/
 int BrbGeradorBase_Start(BrbGeradorBase *gerador_base)
 {
-	BrbBase *brb_base = gerador_base->brb_base;
+	// BrbBase *brb_base = gerador_base->brb_base;
 
 	BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_START_INIT, GERADOR_FAILURE_NONE);
 
@@ -451,7 +449,7 @@ int BrbGeradorBase_Start(BrbGeradorBase *gerador_base)
 /**********************************************************************************************************************/
 int BrbGeradorBase_Stop(BrbGeradorBase *gerador_base)
 {
-	BrbBase *brb_base = gerador_base->brb_base;
+	// BrbBase *brb_base = gerador_base->brb_base;
 
 	BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_STOP_INIT, GERADOR_FAILURE_NONE);
 
@@ -462,7 +460,7 @@ int BrbGeradorBase_Stop(BrbGeradorBase *gerador_base)
 /**********************************************************************************************************************/
 int BrbGeradorBase_FailureConfirm(BrbGeradorBase *gerador_base)
 {
-	BrbBase *brb_base = gerador_base->brb_base;
+	// BrbBase *brb_base = gerador_base->brb_base;
 
 	BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 
@@ -594,31 +592,31 @@ const __FlashStringHelper *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador
 {
 	const __FlashStringHelper *ret_ptr = F("None");
 
-    switch (gerador_base->state.code)
-    {
-    case GERADOR_STATE_START_INIT:
-    case GERADOR_STATE_START_DELAY:
-    case GERADOR_STATE_START_CHECK:
-    case GERADOR_STATE_RUNNING:
-    {
-        ret_ptr = F("DESLIGAR");
-        break;
-    }
-    case GERADOR_STATE_FAILURE:
-    {
-        ret_ptr = F("IGNORAR");
-        break;
-    }
-    case GERADOR_STATE_STOP_INIT:
-    case GERADOR_STATE_STOP_DELAY:
-    case GERADOR_STATE_STOP_CHECK:
-    case GERADOR_STATE_NONE:
-    default:
-    {
-        ret_ptr = F("LIGAR");
-        break;
-    }
-    }
+	switch (gerador_base->state.code)
+	{
+	case GERADOR_STATE_START_INIT:
+	case GERADOR_STATE_START_DELAY:
+	case GERADOR_STATE_START_CHECK:
+	case GERADOR_STATE_RUNNING:
+	{
+		ret_ptr = F("DESLIGAR");
+		break;
+	}
+	case GERADOR_STATE_FAILURE:
+	{
+		ret_ptr = F("IGNORAR");
+		break;
+	}
+	case GERADOR_STATE_STOP_INIT:
+	case GERADOR_STATE_STOP_DELAY:
+	case GERADOR_STATE_STOP_CHECK:
+	case GERADOR_STATE_NONE:
+	default:
+	{
+		ret_ptr = F("LIGAR");
+		break;
+	}
+	}
 
 	return ret_ptr;
 }

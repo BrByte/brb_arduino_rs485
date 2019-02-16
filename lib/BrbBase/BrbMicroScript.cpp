@@ -36,13 +36,13 @@
 /**********************************************************************************************************************/
 void BrbMicroScriptInit(BrbBase *brb_base)
 {
-    LOG_WARN(brb_base->log_base, "Initialize BrbMicroScript\r\n");
-    LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScript [%d]\r\n", sizeof(BrbMicroScript));
-    LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOP [%d]\r\n", sizeof(BrbMicroScriptOP));
-    LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPDelay [%d]\r\n", sizeof(BrbMicroScriptOPDelay));
-    LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPSetDig [%d]\r\n", sizeof(BrbMicroScriptOPSetDig));
-    LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPCmp [%d]\r\n", sizeof(BrbMicroScriptOPCmp));
-    LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPIf [%d]\r\n", sizeof(BrbMicroScriptOPIf));
+    // LOG_WARN(brb_base->log_base, "Initialize BrbMicroScript\r\n");
+    // LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScript [%d]\r\n", sizeof(BrbMicroScript));
+    // LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOP [%d]\r\n", sizeof(BrbMicroScriptOP));
+    // LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPDelay [%d]\r\n", sizeof(BrbMicroScriptOPDelay));
+    // LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPSetDig [%d]\r\n", sizeof(BrbMicroScriptOPSetDig));
+    // LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPCmp [%d]\r\n", sizeof(BrbMicroScriptOPCmp));
+    // LOG_WARN(brb_base->log_base, "Sizeof BrbMicroScriptOPIf [%d]\r\n", sizeof(BrbMicroScriptOPIf));
     // LOG_WARN(brb_base->log_base, "BrbMicroScriptGrabByID [%p]\r\n", BrbMicroScriptGrabByID(brb_base, 1));
 
     // BrbMicroScript *script;

@@ -69,6 +69,7 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial)
 
 	/* receive pin, transmit pin */
 	rs485_sess->serial = serial;
+	// rs485_sess->serial = HardwareSerial(UART3);
 
 #ifdef BRB_RS485_HARDWARE_SERIAL
 	/* No pin modifications */
@@ -90,6 +91,13 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial)
 
 	/* Send hello to notify my new ID */
 	BrbRS485Session_SendHandShake(rs485_sess);
+
+	return 0;
+}
+/**********************************************************************************************************************/
+int BrbRS485Session_Loop(BrbRS485Session *rs485_sess)
+{
+	BrbRS485Session_ReadMessage(rs485_sess);
 
 	return 0;
 }
@@ -231,7 +239,7 @@ int BrbRS485Session_SendPacket(BrbRS485Session *rs485_sess, const byte *data_ptr
 	int bytes_write = 0;
 
 	/* Calculate CRC */
-	byte crc8 	= BrbRS485Session_CalcCRC8(data_ptr, data_sz);
+	byte crc8 = BrbRS485Session_CalcCRC8(data_ptr, data_sz);
 
 	LOG_DEBUG(rs485_sess->log_base, "---> Send PKT: [0x%02x -> 0x%02x] - T [%d] - 8 [0x%02x] - SZ [%u]\r\n",
 			  ((BrbRS485PacketHdr *)data_ptr)->src, ((BrbRS485PacketHdr *)data_ptr)->dst, ((BrbRS485PacketHdr *)data_ptr)->type, crc8, data_sz);
@@ -257,7 +265,7 @@ int BrbRS485Session_SendPacket(BrbRS485Session *rs485_sess, const byte *data_ptr
 
 	/* Initializer Control Data */
 	bytes_write += rs485_sess->serial->write(BRB_RS485_BEGIN);
-	
+
 	delay(1000);
 
 	/* Write data */
@@ -568,9 +576,9 @@ read_again:
 	{
 		// LOG_WARN(rs485_sess->log_base, "Read MORE sz %d - [%d / %d] c: %d \r\n", rs485_sess->pkt.in.sz, rs485_sess->buf.sz, read_avail, read_counter);
 
-		#ifdef BRB_RS485_HARDWARE_SERIAL
-			delayMicroseconds(175);
-		#endif
+#ifdef BRB_RS485_HARDWARE_SERIAL
+		delayMicroseconds(175);
+#endif
 
 		goto read_again;
 	}

@@ -306,6 +306,8 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess, HardwareSerial *serial);
 int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial);
 #endif
 
+int BrbRS485Session_Loop(BrbRS485Session *rs485_sess);
+
 int BrbRS485Session_ReadAddr(BrbRS485Session *rs485_sess, uint8_t *addr_ptr, uint8_t addr_sz, uint8_t eeprom_offset, uint8_t reset);
 
 int BrbRS485Session_SetEventCB(BrbRS485Session *rs485_sess, int action_code, BrbRS485SessionActionCBH *cb_func, void *cb_data);
