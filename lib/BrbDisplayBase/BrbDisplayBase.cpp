@@ -51,8 +51,8 @@ int BrbDisplayBase_Init(BrbDisplayBase *display_base)
 
 	display_base->tft->begin();
 	// display_base->tft->reset();
-	display_base->tft->setRotation(BRB_DISPLAY_ROTATION_DEFAULT);
-	display_base->tft->setFont(BRB_DISPLAY_FONT_DEFAULT);
+	display_base->tft->setRotation(DISPLAY_ROTATION_DEFAULT);
+	display_base->tft->setFont(DISPLAY_FONT_DEFAULT);
 
 	display_base->screen_last = -1;
 	display_base->action_code = -1;
@@ -87,6 +87,7 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 		{
 			display_base->flags.on_select = 1;
 			display_base->action_code = -1;
+			display_base->screen_last = -1;
 		}
 
 		/* Press direction */
@@ -129,7 +130,7 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 /**********************************************************************************************************************/
 int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const __FlashStringHelper *title_str, int x, int y)
 {
-	display_base->tft->setFont(BRB_DISPLAY_FONT_TITLE);
+	display_base->tft->setFont(DISPLAY_FONT_TITLE);
 	display_base->tft->fillRect(x, y, 300, 30, ILI9341_STEELBLUE);
 	display_base->tft->cursorToXY(x + 10, y + 10);
 	display_base->tft->setTextColor(ILI9341_WHITE, ILI9341_STEELBLUE);
@@ -242,7 +243,7 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 	display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
 	display_base->tft->setTextColor(text_color, ILI9341_WHITE);
 
-	display_base->tft->setFont(BRB_DISPLAY_FONT_VALUE);
+	display_base->tft->setFont(DISPLAY_FONT_VALUE);
 
 	/* Check size and spacing */
 	if (r > 130)
@@ -262,14 +263,14 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 	}
 	else
 	{
-		display_base->tft->setFont(BRB_DISPLAY_FONT_TITLE);
+		display_base->tft->setFont(DISPLAY_FONT_TITLE);
 		display_base->tft->setTextScale(2);
 		display_base->tft->printAtPivoted(buf, x, y - 10, gTextPivotMiddleCenter);
 	}
 
 	if (units)
 	{
-		display_base->tft->setFont(BRB_DISPLAY_FONT_SUB);
+		display_base->tft->setFont(DISPLAY_FONT_SUB);
 
 		if (r > 130)
 		{
@@ -349,23 +350,23 @@ int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vm
 		int color_cur = 0;
 		switch (scheme)
 		{
-		case ARC_SCHEME_RED2RED:
+		case DISPLAY_ARC_RED2RED:
 			color_cur = ILI9341_RED;
 			break; // Fixed color
-		case ARC_SCHEME_GREEN2GREEN:
+		case DISPLAY_ARC_GREEN2GREEN:
 			color_cur = ILI9341_GREEN;
 			break; // Fixed color
-		case ARC_SCHEME_BLUE2BLUE:
+		case DISPLAY_ARC_BLUE2BLUE:
 			color_cur = ILI9341_BLUE;
 			break; // Fixed color
-		case ARC_SCHEME_BLUE2RED:
+		case DISPLAY_ARC_BLUE2RED:
 			color_cur = rainbow(map(i, -angle, angle, 0, 127));
 			break; // Full spectrum blue to red
-		case ARC_SCHEME_GREEN2RED:
+		case DISPLAY_ARC_GREEN2RED:
 			color_cur = rainbow(map(i, -angle, angle, 63, 127));
 			color_cur = color_lt(color_cur, 0.9);
 			break; // Green to red (high temperature etc)
-		case ARC_SCHEME_RED2GREEN:
+		case DISPLAY_ARC_RED2GREEN:
 			color_cur = rainbow(map(i, -angle, angle, 127, 63));
 			color_cur = color_lt(color_cur, 0.9);
 			break; // Red to green (low battery etc)
@@ -466,7 +467,7 @@ int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vm
 	BrbDisplayBase_DrawArcText(display_base, value, x, y, r, units, text_color);
 
 	display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-	display_base->tft->setFont(BRB_DISPLAY_FONT_DEFAULT);
+	display_base->tft->setFont(DISPLAY_FONT_DEFAULT);
 	display_base->tft->setTextScale(1);
 	display_base->tft->cursorToXY(x - r, y + 10);
 	display_base->tft->println(vmin);
@@ -536,5 +537,186 @@ static unsigned int rainbow(byte value)
 		r = 31;
 	}
 	return (r << 11) + (g << 5) + b;
+}
+/**********************************************************************************************************************/
+int BrbDisplayBase_PrintBoxTitle(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr)
+{
+	// display_base->tft->fillRect(pos_x, pos_y, 140, 15, ILI9341_CYAN);
+	display_base->tft->setTextColor(DISPLAY_COLOR_TEXT_DEFAULT, DISPLAY_COLOR_BG);
+	display_base->tft->setFont(DISPLAY_FONT_BOX_TITLE);
+	display_base->tft->setTextScale(1);
+
+	display_base->tft->cursorToXY(pos_x, pos_y);
+	display_base->tft->print(title_ptr);
+
+	// BrbDisplayBase_PrintAlignFlash(display_base, title_ptr, pos_x, pos_y, DISPLAY_TEXT_ALIGN_BL);
+
+	return 0;
+}
+/**********************************************************************************************************************/
+int BrbDisplayBase_PrintBoxSub(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr, double value, int dots, const __FlashStringHelper *unit_ptr)
+{
+	if (display_base->screen_cur != display_base->screen_last)
+	{
+		BrbDisplayBase_PrintBoxTitle(display_base, pos_x, pos_y, title_ptr);
+	}
+
+	BrbDisplayBase_PrintBoxValue(display_base, pos_x, pos_y + 15, value, dots);
+
+	BrbDisplayBase_PrintBoxUnit(display_base, pos_x, pos_y + 15, unit_ptr);
+
+	return 0;
+}
+/**********************************************************************************************************************/
+int BrbDisplayBase_PrintBoxMax(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr, int value, int max)
+{
+	if (display_base->screen_cur != display_base->screen_last)
+	{
+		BrbDisplayBase_PrintBoxTitle(display_base, pos_x, pos_y, title_ptr);
+	}
+
+	display_base->tft->setTextColor(ILI9341_MIDNIGHTBLUE, DISPLAY_COLOR_BG);
+	display_base->tft->setFont(DISPLAY_FONT_BOX_VALUE);
+	display_base->tft->setTextScale(1);
+
+	display_base->tft->cursorToXY(pos_x, pos_y + 15);
+
+	char value_str[16] = {0};
+	sprintf(value_str, "%d/%d", value, max);
+
+	display_base->tft->print(value_str);
+
+	return 0;
+}
+/**********************************************************************************************************************/
+int BrbDisplayBase_PrintBoxValue(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, double value, int dots)
+{
+	display_base->tft->setTextColor(ILI9341_MIDNIGHTBLUE, DISPLAY_COLOR_BG);
+	display_base->tft->setFont(DISPLAY_FONT_BOX_VALUE);
+	display_base->tft->setTextScale(1);
+
+	display_base->tft->cursorToXY(pos_x, pos_y);
+	display_base->tft->print(value, dots);
+
+	// char value_str[16] = {0};
+	// sprintf(value_str, "%02.01f", value);
+	// pos_x = BrbDisplayBase_PrintAlignStr(display_base, value_str, pos_x, pos_y, DISPLAY_TEXT_ALIGN_BL);
+
+	return 0;
+}
+/**********************************************************************************************************************/
+int BrbDisplayBase_PrintBoxUnit(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *unit_ptr)
+{
+	// display_base->tft->setTextColor(ILI9341_MEDIUMAQUAMARINE, DISPLAY_COLOR_BG);
+	display_base->tft->setFont(DISPLAY_FONT_BOX_SUB);
+	display_base->tft->setTextScale(1);
+
+	display_base->tft->cursorToXY(display_base->tft->getCursorX() + 5, pos_y);
+	display_base->tft->println(unit_ptr);
+
+	// pos_x = BrbDisplayBase_PrintAlignFlash(display_base, unit_ptr, display_base->tft->getCursorX() + 5, pos_y, DISPLAY_TEXT_ALIGN_BL);
+
+	return 0;
+}
+/**********************************************************************************************************************/
+int BrbDisplayBase_DrawBarGraph(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, int16_t tube_h, double value, double min, double max)
+{
+	static int tube_h_old = 0;
+	static double tube_h_max = 0;
+
+	int tune_diff;
+	int tube_h_n;
+
+	int tube_w = 21;
+
+	// if (pos_y > 0)
+	// {
+	// 	tube_w = 22;
+	// }
+
+	int tube_r = tube_w / 2;
+	int color = ILI9341_RED;
+
+	if (value < 0)
+	{
+		color = ILI9341_SLATEBLUE;
+		value = value * -1;
+		max = min < 0 ? (min * -1) : min;
+	}
+
+	pos_x = pos_x + tube_w;
+	pos_y = pos_y + tube_w;
+
+	if (display_base->screen_cur != display_base->screen_last)
+	{
+		display_base->tft->fillCircle(pos_x, pos_y, (tube_w / 2), ILI9341_BLACK);
+		display_base->tft->fillRect((pos_x - (tube_w / 2)), pos_y, tube_w, tube_h, ILI9341_BLACK);
+		display_base->tft->fillCircle(pos_x, (tube_h + pos_y) + 7, ((tube_w / 2) + 10), ILI9341_BLACK);
+
+		display_base->tft->fillCircle(pos_x, pos_y, (((tube_w - 6) / 2)), ILI9341_WHITESMOKE);
+		display_base->tft->fillRect((pos_x - (tube_w / 2) + 3), pos_y, (tube_w - 6), tube_h, ILI9341_WHITESMOKE);
+		display_base->tft->fillCircle(pos_x, (tube_h + pos_y) + 7, ((tube_w / 2) + 7), ILI9341_WHITESMOKE);
+	}
+
+	tune_diff = tube_h_max - max; // only draw new part of bar graph for faster display
+
+	if (tune_diff != 0)
+	{
+		display_base->tft->setFont(DISPLAY_FONT_BOX_SUB);
+		display_base->tft->setTextScale(1);
+		display_base->tft->setTextColor(ILI9341_BLACK);
+
+		int max_int = (int)(max - ((int)max % 25));
+		
+		for (int i = 0; i <= max_int; i = i + 5)
+		{
+			int map_pct = 100.0 - map(i, 0, max_int, 0, 100);
+			double pct = (map_pct / 100.0);
+
+			if (map_pct % 25 == 0)
+			{
+				display_base->tft->fillRect(pos_x + (tube_w / 2) + 1, (pos_y + (tube_h - tube_r) * pct), 5, 2, ILI9341_BLACK);
+				display_base->tft->cursorToXY(((pos_x + (tube_w / 2)) + 10), (pos_y + (tube_h - tube_r) * pct) - 5);
+				// display_base->tft->cursorToXY(((pos_x + tube_w) + 8), (pos_y - 5));
+				display_base->tft->print(i);
+				// display_base->tft->setTextSize(2);
+				display_base->tft->print((char)247);
+			}
+			// else if (((int)(pct * 100) % 50) == 0)
+			// {
+			// 	display_base->tft->fillRect(pos_x + (tube_w / 2) + 1, (pos_y + (tube_h - tube_r) * pct), 3, 2, ILI9341_BLACK);
+			// }
+			else
+			{
+				display_base->tft->fillRect(pos_x + (tube_w / 2) + 1, (pos_y + (tube_h - tube_r) * pct), 3, 1, ILI9341_BLACK);
+			}
+		}
+	}
+	
+	// display_base->tft->fillRect((pos_x - (tube_w / 2) + 5), pos_y, (tube_w - 10), tube_h, color);
+	display_base->tft->fillCircle(pos_x, (tube_h + pos_y) + 7, ((tube_w / 2) + 5), color);
+
+	tube_h_n = map(value, 0, max, 0, (tube_h - tube_r));
+
+	tune_diff = tube_h_old - tube_h_n; // only draw new part of bar graph for faster display
+
+	if (tune_diff != 0)
+	{
+		display_base->tft->fillRect((pos_x - (tube_w / 2) + 5), pos_y + (tube_h - tube_h_n), (tube_w - 10), tube_h_n, color);
+	}
+
+	// display_base->tft->fillRect((pos_x - (tube_w / 2) + 5), pos_y, (tube_w - 10), ((tube_h - value) - ((tube_w / 2) + 7)), ILI9341_WHITE);
+
+	if (value > max)
+	{
+		display_base->tft->fillCircle(pos_x, pos_y, (tube_w / 2) - 5, color);
+	}
+
+	// remember how high bar is
+	tube_h_old = tube_h_n;
+
+	// display_base->tft->fillCircle(pos_x, (tube_h + pos_y), ((tube_w / 2) + 5), color);
+
+	return 0;
 }
 /**********************************************************************************************************************/

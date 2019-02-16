@@ -89,7 +89,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	gerador_base->info.zero_delta = (gerador_base->ms.cur - gerador_base->info.zero_last);
 
 	/* We are waiting delay */
-	if ((gerador_base->info.zero_last <= 0) || (gerador_base->info.zero_delta > GERADOR_TIMER_ZERO_WAIT_MS))
+	if ((gerador_base->info.zero_last <= 0) || (gerador_base->info.zero_delta >= GERADOR_TIMER_ZERO_WAIT_MS))
 	{
 		gerador_base->info.zero_last = gerador_base->ms.cur;
 
@@ -113,7 +113,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	case GERADOR_STATE_NONE:
 	{
 		/* This can't happen here, do something */
-		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER)
+		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
 		{
 			BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_RUNNING, GERADOR_FAILURE_RUNNING_WITHOUT_START);
 
@@ -130,7 +130,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		BrbGeradorBase_PowerOff(gerador_base);
 
 		/* This can't happen here, do something */
-		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER)
+		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
 		{
 			BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_RUNNING, GERADOR_FAILURE_RUNNING_WITHOUT_START);
 
@@ -152,7 +152,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	}
 	case GERADOR_STATE_START_DELAY:
 	{
-		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER)
+		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
 		{
 			/* Power off pins */
 			BrbGeradorBase_PowerOff(gerador_base);
@@ -180,7 +180,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		/* Power off pins */
 		BrbGeradorBase_PowerOff(gerador_base);
 
-		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER)
+		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
 		{
 			BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_RUNNING, GERADOR_FAILURE_NONE);
 
@@ -218,7 +218,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	}
 	case GERADOR_STATE_STOP_DELAY:
 	{
-		if (gerador_base->info.power_ac <= GERADOR_TIMER_MIN_POWER)
+		if (gerador_base->info.power_ac <= GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
 		{
 			/* Power off pins */
 			BrbGeradorBase_PowerOff(gerador_base);
@@ -246,7 +246,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		/* Power off pins */
 		BrbGeradorBase_PowerOff(gerador_base);
 
-		if (gerador_base->info.power_ac <= GERADOR_TIMER_MIN_POWER)
+		if (gerador_base->info.power_ac <= GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
 		{
 			BrbToneBase_PlayAlarm(gerador_base->tone_base);
 
@@ -275,7 +275,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	case GERADOR_STATE_RUNNING:
 	{
 		/* Check Power */
-		if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER)
+		if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
 		{
 			BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_FAILURE, GERADOR_FAILURE_DOWN_WITHOUT_STOP);
 
@@ -301,7 +301,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		{
 		case GERADOR_FAILURE_RUNNING_WITHOUT_START:
 		{
-			if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER)
+			if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
 			{
 				BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 				break;
@@ -311,7 +311,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		}
 		case GERADOR_FAILURE_DOWN_WITHOUT_STOP:
 		{
-			if (gerador_base->info.power_ac >= GERADOR_TIMER_MIN_POWER)
+			if (gerador_base->info.power_ac >= GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
 			{
 				BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 				break;
@@ -321,7 +321,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		}
 		case GERADOR_FAILURE_START_RETRY_LIMIT:
 		{
-			if (gerador_base->info.power_ac >= GERADOR_TIMER_MIN_POWER)
+			if (gerador_base->info.power_ac >= GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
 			{
 				BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 				break;
@@ -331,7 +331,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		}
 		case GERADOR_FAILURE_STOP_RETRY_LIMIT:
 		{
-			if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER)
+			if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
 			{
 				BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 				break;
@@ -360,7 +360,6 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		/* 5 seconds delay */
 		if (gerador_base->info.hourmeter_ms > 5000)
 		{
-			gerador_base->data.hourmeter_time++;
 			gerador_base->info.hourmeter_ms = (gerador_base->info.hourmeter_ms - 5000);
 
 			gerador_base->info.hourmeter_sec = gerador_base->info.hourmeter_sec + 5;
@@ -368,6 +367,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 			/* 60 seconds delay */
 			if (gerador_base->info.hourmeter_sec > 60)
 			{
+				gerador_base->data.hourmeter_total++;
 				gerador_base->data.hourmeter_time++;
 				gerador_base->info.hourmeter_sec = (gerador_base->info.hourmeter_sec - 60);
 
@@ -563,12 +563,12 @@ const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador
 	case GERADOR_STATE_START_CHECK:
 	case GERADOR_STATE_RUNNING:
 	{
-		ret_ptr = F("Stop Power?");
+		ret_ptr = F("Desligar Sistema?");
 		break;
 	}
 	case GERADOR_STATE_FAILURE:
 	{
-		ret_ptr = F("Failure!");
+		ret_ptr = F("Falha no Sistema!");
 		break;
 	}
 	case GERADOR_STATE_STOP_INIT:
@@ -576,7 +576,7 @@ const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador
 	case GERADOR_STATE_STOP_CHECK:
 	case GERADOR_STATE_NONE:
 	{
-		ret_ptr = F("Start Power?");
+		ret_ptr = F("Iniciar Sistema?");
 		break;
 	}
 	default:
@@ -585,6 +585,40 @@ const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador
 		break;
 	}
 	}
+
+	return ret_ptr;
+}
+
+/**********************************************************************************************************************/
+const __FlashStringHelper *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador_base)
+{
+	const __FlashStringHelper *ret_ptr = F("None");
+
+    switch (gerador_base->state.code)
+    {
+    case GERADOR_STATE_START_INIT:
+    case GERADOR_STATE_START_DELAY:
+    case GERADOR_STATE_START_CHECK:
+    case GERADOR_STATE_RUNNING:
+    {
+        ret_ptr = F("DESLIGAR");
+        break;
+    }
+    case GERADOR_STATE_FAILURE:
+    {
+        ret_ptr = F("IGNORAR");
+        break;
+    }
+    case GERADOR_STATE_STOP_INIT:
+    case GERADOR_STATE_STOP_DELAY:
+    case GERADOR_STATE_STOP_CHECK:
+    case GERADOR_STATE_NONE:
+    default:
+    {
+        ret_ptr = F("LIGAR");
+        break;
+    }
+    }
 
 	return ret_ptr;
 }

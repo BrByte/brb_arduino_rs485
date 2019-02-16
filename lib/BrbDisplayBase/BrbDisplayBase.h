@@ -31,8 +31,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BRB_DYSPLAY_BASE_H_
-#define BRB_DYSPLAY_BASE_H_
+#ifndef BRB_DISPLAY_BASE_H_
+#define BRB_DISPLAY_BASE_H_
 /**********************************************************************************************************************/
 #include <BrbBase.h>
 #include <BrbBtnBase.h>
@@ -46,29 +46,47 @@
 // #include <SystemFont5x7.h>
 #include <fonts/Arial14.h>
 #include <fonts/OpenSans36.h>
+#include <fonts/Ubuntu36.h>
 /****************************************************************************************************/
-#define BRB_DISPLAY_FONT_DEFAULT Arial_14
-// #define BRB_DISPLAY_FONT_DEFAULT SystemFont5x7
+#define DISPLAY_FONT_DEFAULT Arial_14
+// // #define DISPLAY_FONT_DEFAULT SystemFont5x7
 
-#define BRB_DISPLAY_FONT_TITLE Arial_14
-#define BRB_DISPLAY_FONT_SUB Arial_14
-#define BRB_DISPLAY_FONT_VALUE OpenSans36
+#define DISPLAY_FONT_TITLE Arial_14
+#define DISPLAY_FONT_VALUE Ubuntu36
+#define DISPLAY_FONT_SUB Arial_14
 
-#define BRB_DISPLAY_ROTATION_DEFAULT iliRotation270
+#define DISPLAY_FONT_ARC_VALUE Ubuntu36
+#define DISPLAY_FONT_ARC_SUB Arial_14
 
-#define ARC_SCHEME_RED2RED 0
-#define ARC_SCHEME_GREEN2GREEN 1
-#define ARC_SCHEME_BLUE2BLUE 2
-#define ARC_SCHEME_BLUE2RED 3
-#define ARC_SCHEME_GREEN2RED 4
-#define ARC_SCHEME_RED2GREEN 5
+#define DISPLAY_FONT_BOX_TITLE Arial_14
+#define DISPLAY_FONT_BOX_VALUE Ubuntu36
+#define DISPLAY_FONT_BOX_SUB Arial_14
+
+/****************************************************************************************************/
+
+#define DISPLAY_COLOR_BORDER ILI9341_DIMGRAY
+#define DISPLAY_COLOR_BG ILI9341_WHITE
+
+#define DISPLAY_COLOR_TITLE_TEXT ILI9341_WHITE
+#define DISPLAY_COLOR_TITLE_BG ILI9341_BLUE
+
+#define DISPLAY_COLOR_TEXT_DEFAULT ILI9341_BLACK
+
+#define DISPLAY_ROTATION_DEFAULT iliRotation270
+
+#define DISPLAY_ARC_RED2RED 0
+#define DISPLAY_ARC_GREEN2GREEN 1
+#define DISPLAY_ARC_BLUE2BLUE 2
+#define DISPLAY_ARC_BLUE2RED 3
+#define DISPLAY_ARC_GREEN2RED 4
+#define DISPLAY_ARC_RED2GREEN 5
 
 #define ARC_SEG 3
 #define ARC_INC 5
 
-// #define BRB_DISPLAY_COLOR_BASE_R 31
-// #define BRB_DISPLAY_COLOR_BASE_G 63
-// #define BRB_DISPLAY_COLOR_BASE_B 3
+// #define DISPLAY_COLOR_BASE_R 31
+// #define DISPLAY_COLOR_BASE_G 63
+// #define DISPLAY_COLOR_BASE_B 3
 
 typedef enum
 {
@@ -134,7 +152,15 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code);
 
 int BrbDisplayBase_SetScreenShowCB(BrbDisplayBase *display_base, int screen_code, BrbGenericCBH *cb_func, void *cb_data);
 int BrbDisplayBase_SetScreenActionCB(BrbDisplayBase *display_base, int screen_code, BrbGenericCBH *cb_func, void *cb_data);
+
+int BrbDisplayBase_PrintBoxTitle(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr);
+int BrbDisplayBase_PrintBoxSub(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr, double value, int dots, const __FlashStringHelper *unit_ptr);
+int BrbDisplayBase_PrintBoxMax(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr, int value, int max);
+int BrbDisplayBase_PrintBoxValue(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, double value, int dots);
+int BrbDisplayBase_PrintBoxUnit(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *unit_ptr);
+
+int BrbDisplayBase_DrawBarGraph(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, int16_t pos_h, double value, double min, double max);
 /**********************************************************************************************************************/
 
 /**********************************************************************************************************************/
-#endif /* BRB_DYSPLAY_BASE_H_ */
+#endif /* BRB_DISPLAY_BASE_H_ */

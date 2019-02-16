@@ -59,6 +59,8 @@
 #define GERADOR_SERVO_BB_POS_OPEN 180
 #define GERADOR_SERVO_BB_POS_CLOSE 120
 
+#define GERADOR_HOURMETER_MAX 20
+
 #define GERADOR_POWER_REVERSE 1
 
 #ifdef GERADOR_POWER_REVERSE
@@ -160,7 +162,7 @@ typedef struct _BrbGeradorBase
 	/* data is persistent */
 	struct
 	{
-
+		long hourmeter_total;
 		long hourmeter_time;
 		long hourmeter_reset;
 
@@ -189,6 +191,7 @@ int BrbGeradorBase_FailureConfirm(BrbGeradorBase *gerador_base);
 
 const __FlashStringHelper *BrbGeradorBase_GetState(BrbGeradorBase *gerador_base);
 const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador_base);
+const __FlashStringHelper *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador_base);
 const __FlashStringHelper *BrbGeradorBase_GetFailure(BrbGeradorBase *gerador_base);
 /**********************************************************************************************************************/
 #endif /* BRB_GERADOR_BASE_H_ */
