@@ -35,7 +35,6 @@
 #define BRB_MICRO_SCRIPT_H_
 
 #include <Arduino.h>
-#include <log/BrbLogBase.h>
 
 #ifndef BRB_MICRO_SCRIPT_MAX
 #define BRB_MICRO_SCRIPT_MAX 12

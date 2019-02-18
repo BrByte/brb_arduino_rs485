@@ -121,7 +121,7 @@ static const uint8_t glob_analog_pins[] = {
 
 #define BRB_PIN_DATA_MAGIC 157
 #define BRB_PIN_DATA_MASK 137
-#define BRB_PIN_DATA_OFFSET 64
+#define BRB_PIN_DATA_OFFSET 32
 
 #define BRB_COMPARE_NUM(a, b) (a > b) - (a < b)
 /**********************************************************************************************************************/

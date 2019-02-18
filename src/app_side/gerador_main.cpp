@@ -381,7 +381,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 /**********************************************************************************************************************/
 static int BrbGeradorBase_PowerStart(BrbGeradorBase *gerador_base)
 {
-	BrbBase *brb_base = gerador_base->brb_base;
+	// BrbBase *brb_base = gerador_base->brb_base;
 
 	BrbToneBase_PlayAlarm2(gerador_base->tone_base);
 
@@ -399,7 +399,7 @@ static int BrbGeradorBase_PowerStart(BrbGeradorBase *gerador_base)
 /**********************************************************************************************************************/
 static int BrbGeradorBase_PowerStop(BrbGeradorBase *gerador_base)
 {
-	BrbBase *brb_base = gerador_base->brb_base;
+	// BrbBase *brb_base = gerador_base->brb_base;
 
 	BrbToneBase_PlayAlarm3(gerador_base->tone_base);
 

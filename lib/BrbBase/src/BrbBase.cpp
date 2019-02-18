@@ -84,32 +84,32 @@ void BrbBase_PinLoad(BrbBase *brb_base)
     LOG_DEBUG(brb_base->log_base, "BRB - PIN LOAD\r\n");  
 
     /* Read EEPROM */
-    BrbBase_EEPROMRead(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_PIN_DATA_OFFSET);
+    // BrbBase_EEPROMRead(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_PIN_DATA_OFFSET);
 
     return;
 }
 /**********************************************************************************************************************/
 void BrbBase_PinCheck(BrbBase *brb_base)
 {
-    LOG_DEBUG(brb_base->log_base, "BRB - PIN CHECK\r\n");
+    // LOG_DEBUG(brb_base->log_base, "BRB - PIN CHECK\r\n");
 
-    /* Reset pin state */
-    BrbBasePinData *pin_data;
-    int i;
+    // /* Reset pin state */
+    // BrbBasePinData *pin_data;
+    // int i;
 
-    LOG_DEBUG(brb_base->log_base, "PINS A %u %u %u %u %u %u %u %u\r\n", A0, A1, A2, A3, A4, A5, A6, A7);
+    // LOG_DEBUG(brb_base->log_base, "PINS A %u %u %u %u %u %u %u %u\r\n", A0, A1, A2, A3, A4, A5, A6, A7);
 
-    for (i = MIN_DIG_PIN; i < TOTAL_PINS; i++)
-    {
-        /* Grab pin data */
-        pin_data        = (BrbBasePinData *)&brb_base->pin_data[i];
+    // for (i = MIN_DIG_PIN; i < TOTAL_PINS; i++)
+    // {
+    //     /* Grab pin data */
+    //     pin_data        = (BrbBasePinData *)&brb_base->pin_data[i];
 
-        /* Not a persist one */
-        if (!pin_data->persist || (pin_data->mask != BRB_PIN_DATA_MASK))
-            continue;
+    //     /* Not a persist one */
+    //     if (!pin_data->persist || (pin_data->mask != BRB_PIN_DATA_MASK))
+    //         continue;
 
-        BrbBase_PinSet(brb_base, i, pin_data->mode, pin_data->value);
-    }
+    //     BrbBase_PinSet(brb_base, i, pin_data->mode, pin_data->value);
+    // }
 
     return;
 }
@@ -147,10 +147,10 @@ void BrbBase_PinSet(BrbBase *brb_base, int pin_num, int pin_mode, int pin_value)
 /**********************************************************************************************************************/
 void BrbBase_PinSave(BrbBase *brb_base)
 {
-    LOG_DEBUG(brb_base->log_base, "BRB - PIN SAVE\r\n");
+    // LOG_DEBUG(brb_base->log_base, "BRB - PIN SAVE\r\n");
 
-    /* Read EEPROM */
-    BrbBase_EEPROMWrite(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_PIN_DATA_OFFSET);
+    // /* Read EEPROM */
+    // BrbBase_EEPROMWrite(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_PIN_DATA_OFFSET);
 
     return;
 }
@@ -187,40 +187,40 @@ uint8_t BrbBase_PinGetMode(uint8_t pin)
 /**********************************************************************************************************************/
 int BrbBase_EEPROMRead(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset)
 {
-    int byte_read;
+    // int byte_read;
 
-    if (!brb_base || !data_ptr)
-        return -1;
+    // if (!brb_base || !data_ptr)
+    //     return -1;
 
-    byte_read = EEPROM.read(eeprom_offset);
+    // byte_read = EEPROM.read(eeprom_offset);
 
-    if (byte_read != BRB_PIN_DATA_MAGIC)
-    {
-        /* Reset info */
-        memset(data_ptr, 0, data_sz);
+    // if (byte_read != BRB_PIN_DATA_MAGIC)
+    // {
+    //     /* Reset info */
+    //     memset(data_ptr, 0, data_sz);
 
-        return 0;
-    }
+    //     return 0;
+    // }
 
-    for (int i = 0; i < data_sz; i++)
-    {
-        data_ptr[i] = EEPROM.read(eeprom_offset + i + 1);
-    }
+    // for (int i = 0; i < data_sz; i++)
+    // {
+    //     data_ptr[i] = EEPROM.read(eeprom_offset + i + 1);
+    // }
 
     return 0;
 }
 /**********************************************************************************************************************/
 int BrbBase_EEPROMWrite(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset)
 {
-    if (!brb_base || !data_ptr)
-        return -1;
+    // if (!brb_base || !data_ptr)
+    //     return -1;
 
-    EEPROM.write(eeprom_offset, BRB_PIN_DATA_MAGIC);
+    // EEPROM.write(eeprom_offset, BRB_PIN_DATA_MAGIC);
 
-    for (int i = 0; i < data_sz; i++)
-    {
-        EEPROM.write(eeprom_offset + i + 1, data_ptr[i]);
-    }
+    // for (int i = 0; i < data_sz; i++)
+    // {
+    //     EEPROM.write(eeprom_offset + i + 1, data_ptr[i]);
+    // }
 
     return 0;
 }

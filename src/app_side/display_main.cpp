@@ -175,7 +175,7 @@ int BrbAppDisplay_ScreenTemp(void *brb_base_ptr, void *display_base_ptr)
     int pos_y;
 
     int sz_w = 224;
-    int sz_h = 40;
+    int sz_h = 50;
 
     if (display_base->screen_cur != display_base->screen_last)
     {
@@ -203,7 +203,7 @@ int BrbAppDisplay_ScreenTemp(void *brb_base_ptr, void *display_base_ptr)
     // BrbDisplayBase_DrawArcSeg(display_base, isnan(dht_t) ? 0 : dht_t, 0, 130, pos_x, pos_y, 100, PSTR("Celsius"), DISPLAY_ARC_GREEN2RED, 0, 3, 5);
 
     pos_x = sz_w;
-    pos_y = 50;
+    pos_y = sz_h;
 
     display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, ILI9341_WHITE);
     BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("HUMIDADE"), isnan(dht_h) ? 0 : dht_h, 1, PSTR("%"));
