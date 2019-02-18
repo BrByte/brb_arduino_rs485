@@ -142,13 +142,7 @@ typedef struct _BrbDisplayBase
 /**********************************************************************************************************************/
 int BrbDisplayBase_Init(BrbDisplayBase *display_base);
 
-int BrbDisplayBase_DrawBtn(BrbDisplayBase *display_base, int btn_x, int btn_y, int btn_w, int btn_h, const __FlashStringHelper *text_ptr, int btn_color, int txt_color);
-
-// int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, int value, int vmin, int vmax, int x, int y, int r, __FlashStringHelper *units, byte scheme);
-int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const __FlashStringHelper *units, byte scheme);
-int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const __FlashStringHelper *units, byte scheme, int tick, int seg, int inc);
-
-int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const __FlashStringHelper *title_str, int x, int y);
+int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const char *title_str, int x, int y);
 int BrbDisplayBase_SetBg(BrbDisplayBase *display_base);
 
 int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code);
@@ -156,13 +150,18 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code);
 int BrbDisplayBase_SetScreenShowCB(BrbDisplayBase *display_base, int screen_code, BrbGenericCBH *cb_func, void *cb_data);
 int BrbDisplayBase_SetScreenActionCB(BrbDisplayBase *display_base, int screen_code, BrbGenericCBH *cb_func, void *cb_data);
 
-int BrbDisplayBase_PrintBoxTitle(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr);
-int BrbDisplayBase_PrintBoxSub(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr, double value, int dots, const __FlashStringHelper *unit_ptr);
-int BrbDisplayBase_PrintBoxMax(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *title_ptr, int value, int max);
-int BrbDisplayBase_PrintBoxValue(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, double value, int dots);
-int BrbDisplayBase_PrintBoxUnit(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const __FlashStringHelper *unit_ptr);
-
+int BrbDisplayBase_DrawBtn(BrbDisplayBase *display_base, int btn_x, int btn_y, int btn_w, int btn_h, const char *text_ptr, int btn_color, int txt_color);
 int BrbDisplayBase_DrawBarGraph(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, int16_t pos_h, double value, double min, double max);
+// int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, int value, int vmin, int vmax, int x, int y, int r, char *units, byte scheme);
+int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const char *units, byte scheme);
+int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vmin, int vmax, int x, int y, int r, const char *units, byte scheme, int tick, int seg, int inc);
+
+int BrbDisplayBase_BoxTitle(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr);
+int BrbDisplayBase_BoxSub(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr, double value, int dots, const char *unit_ptr);
+int BrbDisplayBase_BoxMax(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr, int value, int max);
+int BrbDisplayBase_BoxValue(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, double value, int dots);
+int BrbDisplayBase_BoxUnit(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *unit_ptr);
+
 /**********************************************************************************************************************/
 
 /**********************************************************************************************************************/

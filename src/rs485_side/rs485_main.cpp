@@ -297,7 +297,7 @@ static int BrbAppRS485_SessionActionSetScriptCB(void *base_ptr, int action_code,
 
     LOG_WARN(rs485_sess->log_base, "SCRIPT SET [%p] [%p] [%d]\r\n", &glob_brb_base, brb_base, pkt_recv_set->script_id);
 
-    script = BrbMicroScriptGrabFree(brb_base);
+    script = BrbMicroScriptGrabFree(&brb_base->script_base);
 
     // LOG_WARN(rs485_sess->log_base, "SCRIPT SET [%p] [%p] [%o]\r\n", &glob_brb_base, brb_base, script);
 

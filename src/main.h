@@ -36,80 +36,31 @@
 /**********************************************************************************************************************/
 /* Import needed libraries */
 #include "Arduino.h"
-#include <BrbLogBase.h>
-#include <BrbBase.h>
-#include <BrbRS485Session.h>
+#include "BrbBase.h"
 
-#include <BrbBtnBase.h>
+#include "BrbBtnBase.h"
+#include "BrbToneBase.h"
+
 #include <BrbDisplayBase.h>
-#include <BrbGeradorBase.h>
-#include <BrbToneBase.h>
+
+#include <BrbRS485Session.h>
 
 #include "Adafruit_Sensor.h"
 #include "DHT.h"
 
 #include <avr/wdt.h>
 
+/* simple define to organize code in one */
+// #define PDU_SYSTEM_COMPILE 1
+
 /**********************************************************************************************************************/
 /* DEFINES */
 /**********************************************************/
-// #define RESERVED    0 /* RX0 */
-// #define RESERVED    1 /* TX0 */
-#define GERADOR_ZEROCROSS_PIN 2 /* INT4 - PWM */
-// #define RESERVED    3 /* INT5 - PWM */
-#define GERADOR_PARTIDA_PIN 4 /* PWM */
-#define GERADOR_PARADA_PIN 5  /* PWM */
-#define GERADOR_EXTRA_PIN 6   /* PWM */
-#define BUZZER_PIN 7          /* PWM */
-#define DHT_SENSOR_PIN 8      /* PWM */
-#define GERADOR_SERVO_PIN 9   /* PWM */
-// #define RESERVED    10 /* PCINT 4 */
-// #define RESERVED    11 /* PCINT 5 */
-// #define RESERVED    12 /* PCINT 6 */
-// #define RESERVED    13 /* PCINT 7 */
-#define RS485_DI_PIN 14 /* PCINT10 - TX3 */
-#define RS485_RO_PIN 15 /* PCINT9 - RX3 */
-// #define RESERVED    16 /* TX2 */
-// #define RESERVED    17 /* RX2 */
-// #define RESERVED    18 /* INT3 - TX1 */
-// #define RESERVED    19 /* INT2 - RX1 */
-// #define RESERVED    20 /* INT0 - SCL */
-// #define RESERVED    21 /* INT1 - SDA */
-#define RS485_REDE_PIN 22 /* TOGGLE PIN (RE + DE) */
-// #define RESERVED    23 /* */
-// #define RESERVED    24 /* */
-// #define RESERVED    25 /* */
-#define BTN_PIN_SELECT 26 /* */
-#define BTN_PIN_NEXT 27   /* */
-#define BTN_PIN_PREV 28   /* */
-// #define RESERVED    29 /* */
-// #define RESERVED    30 /* */
-// #define RESERVED    31 /* */
-// #define RESERVED    32 /* */
-// #define RESERVED    33 /* */
-// #define RESERVED    34 /* */
-// #define RESERVED    35 /* */
-// #define RESERVED    36 /* */
-// #define RESERVED    37 /* */
-// #define RESERVED    38 /* */
-// #define RESERVED    39 /* */
-// #define RESERVED    40 /* */
-// #define RESERVED    41 /* */
-// #define RESERVED    42
-// #define RESERVED    43 /*  */
-// #define RESERVED    44 /*  */
-// #define RESERVED    45 /* PWM */
-#define TFT_LED 46  /* PWM */
-#define TFT_CS 47   /*  */
-#define TFT_DC 48   /*  */
-#define TFT_RST 49  /* */
-#define TFT_MISO 50 /* PCINT3 - MISO */
-#define TFT_MOSI 51 /* PCINT2 - MOSI */
-#define TFT_CLK 52  /* PCINT1 - SCK */
-// #define RESERVED     53 /* PCINT0 - SS */
-
-#define SENSOR_VOLTAGE_DC_PIN A1
-#define SENSOR_VOLTAGE_AC_PIN A2
+#ifdef PDU_SYSTEM_COMPILE
+#include "include/core_pdu.h"
+#else
+#include "include/core_gerador.h"
+#endif
 
 /**********************************************************************************************************************/
 /* Display */
@@ -127,7 +78,13 @@ extern BrbRS485Session glob_rs485_sess;
 
 extern BrbBtnBase glob_btn_base;
 extern BrbDisplayBase glob_display_base;
-extern BrbGeradorBase glob_gerador_base;
 extern BrbToneBase glob_tone_base;
+
+#ifdef PDU_SYSTEM_COMPILE
+extern BrbPDUBase glob_pdu_base;
+#else
+extern BrbGeradorBase glob_gerador_base;
+#endif
+
 /**********************************************************************************************************************/
 #endif /* MAIN_H_ */

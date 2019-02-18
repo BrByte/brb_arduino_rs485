@@ -40,8 +40,14 @@ BrbRS485Session glob_rs485_sess;
 
 BrbBtnBase glob_btn_base;
 BrbDisplayBase glob_display_base;
-BrbGeradorBase glob_gerador_base;
 BrbToneBase glob_tone_base;
+
+
+#ifdef PDU_SYSTEM_COMPILE
+BrbPDUBase glob_pdu_base;
+#else
+BrbGeradorBase glob_gerador_base;
+#endif
 
 /**********************************************************************************************************************/
 /* RUN ONE TIME ON START */
@@ -61,10 +67,97 @@ void BrbSetup(void)
     return;
 }
 /**********************************************************************************************************************/
-void BrbGeradorBase_ZeroCross()
+void BrbBtnSetup(void)
+{
+    /* Clean up base */
+    memset(&glob_btn_base, 0, sizeof(BrbBtnBase));
+
+    glob_btn_base.brb_base = &glob_brb_base;
+    glob_btn_base.buttons[BRB_BTN_SELECT].pin = BTN_PIN_SELECT;
+    glob_btn_base.buttons[BRB_BTN_NEXT].pin = BTN_PIN_NEXT;
+    glob_btn_base.buttons[BRB_BTN_PREV].pin = BTN_PIN_PREV;
+
+    BrbBtnBase_Init(&glob_btn_base);
+
+    return;
+}
+/**********************************************************************************************************************/
+void BrbToneSetup(void)
+{
+    /* Clean up base */
+    memset(&glob_tone_base, 0, sizeof(BrbToneBase));
+
+    glob_tone_base.pin = BUZZER_PIN;
+    glob_tone_base.brb_base = &glob_brb_base;
+    BrbToneBase_Init(&glob_tone_base);
+
+    return;
+}
+#ifdef PDU_SYSTEM_COMPILE
+/**********************************************************************************************************************/
+static void BrbPDUBase_ZeroCrossPower()
+{
+    glob_pdu_base.zerocross.counter_power++;
+}
+/**********************************************************************************************************************/
+static void BrbPDUBase_ZeroCrossAux()
+{
+    glob_pdu_base.zerocross.counter_aux++;
+}
+/**********************************************************************************************************************/
+void BrbPDUSetup(void)
+{
+    /* Clean up base */
+    memset(&glob_pdu_base, 0, sizeof(BrbPDUBase));
+
+    glob_pdu_base.brb_base = (BrbBase *)&glob_brb_base;
+    glob_pdu_base.tone_base = (BrbToneBase *)&glob_tone_base;
+    glob_pdu_base.pin_partida = GERADOR_PARTIDA_PIN;
+    glob_pdu_base.pin_parada = GERADOR_PARADA_PIN;
+    glob_pdu_base.pin_servo = GERADOR_SERVO_PIN;
+    glob_pdu_base.pin_extra = GERADOR_EXTRA_PIN;
+    glob_pdu_base.pin_zerocross = GERADOR_ZEROCROSS_PIN;
+
+    glob_pdu_base.power.pin = SENSOR_VOLTAGE_AC_PIN;
+    glob_pdu_base.aux.pin = SENSOR_VOLTAGE_DC_PIN;
+
+    BrbGeradorBase_Init(&glob_pdu_base);
+
+    attachInterrupt(digitalPinToInterrupt(glob_pdu_base.pin_zerocross_power), BrbPDUBase_ZeroCrossPower, RISING);
+    attachInterrupt(digitalPinToInterrupt(glob_pdu_base.pin_zerocross_aux), BrbPDUBase_ZeroCrossAux, RISING);
+
+    return;
+}
+#else
+/**********************************************************************************************************************/
+static void BrbGeradorBase_ZeroCrossPower()
 {
     glob_gerador_base.info.zero_counter++;
 }
+/**********************************************************************************************************************/
+void BrbGeradorSetup(void)
+{
+    /* Clean up base */
+    memset(&glob_gerador_base, 0, sizeof(BrbGeradorBase));
+
+    glob_gerador_base.brb_base = (BrbBase *)&glob_brb_base;
+    glob_gerador_base.tone_base = (BrbToneBase *)&glob_tone_base;
+    glob_gerador_base.pin_partida = GERADOR_PARTIDA_PIN;
+    glob_gerador_base.pin_parada = GERADOR_PARADA_PIN;
+    glob_gerador_base.pin_servo = GERADOR_SERVO_PIN;
+    glob_gerador_base.pin_extra = GERADOR_EXTRA_PIN;
+    glob_gerador_base.pin_zerocross = GERADOR_ZEROCROSS_PIN;
+
+    glob_gerador_base.pin_sensor_ac = SENSOR_VOLTAGE_AC_PIN;
+    glob_gerador_base.pin_sensor_dc = SENSOR_VOLTAGE_DC_PIN;
+
+    BrbGeradorBase_Init(&glob_gerador_base);
+
+    attachInterrupt(digitalPinToInterrupt(glob_gerador_base.pin_zerocross), BrbGeradorBase_ZeroCrossPower, RISING);
+
+    return;
+}
+#endif
 /**********************************************************************************************************************/
 void setup()
 {
@@ -76,47 +169,13 @@ void setup()
     /* Setup Display before anything, because it can display some info, eg logs */
     BrbAppDisplay_Setup(&glob_brb_base);
 
-    /**************************************/
-    /* Clean up base */
-    memset(&glob_tone_base, 0, sizeof(BrbToneBase));
-    BrbToneBase *tone_base = (BrbToneBase *)&glob_tone_base;
+    /* Setup Tone  */
+    BrbToneSetup();
 
-    tone_base->pin = BUZZER_PIN;
-    tone_base->brb_base = &glob_brb_base;
-    BrbToneBase_Init(&glob_tone_base);
+    /* Setup Buttons  */
+    BrbBtnSetup();
 
-    /**************************************/
-    /* Clean up base */
-    memset(&glob_gerador_base, 0, sizeof(BrbGeradorBase));
-    BrbGeradorBase *gerador_base = (BrbGeradorBase *)&glob_gerador_base;
-
-    gerador_base->brb_base = (BrbBase *)&glob_brb_base;
-    gerador_base->tone_base = (BrbToneBase *)&glob_tone_base;
-    gerador_base->pin_partida = GERADOR_PARTIDA_PIN;
-    gerador_base->pin_parada = GERADOR_PARADA_PIN;
-    gerador_base->pin_servo = GERADOR_SERVO_PIN;
-    gerador_base->pin_extra = GERADOR_EXTRA_PIN;
-    gerador_base->pin_zerocross = GERADOR_ZEROCROSS_PIN;
-
-    gerador_base->pin_sensor_ac = SENSOR_VOLTAGE_AC_PIN;
-    gerador_base->pin_sensor_dc = SENSOR_VOLTAGE_DC_PIN;
-
-    BrbGeradorBase_Init(gerador_base);
-
-    attachInterrupt(digitalPinToInterrupt(gerador_base->pin_zerocross), BrbGeradorBase_ZeroCross, RISING);
-    /**************************************/
-    /* Clean up base */
-    memset(&glob_btn_base, 0, sizeof(BrbBtnBase));
-
-    BrbBtnBase *btn_base = (BrbBtnBase *)&glob_btn_base;
-
-    btn_base->brb_base = &glob_brb_base;
-    btn_base->buttons[BRB_BTN_SELECT].pin = BTN_PIN_SELECT;
-    btn_base->buttons[BRB_BTN_NEXT].pin = BTN_PIN_NEXT;
-    btn_base->buttons[BRB_BTN_PREV].pin = BTN_PIN_PREV;
-
-    BrbBtnBase_Init(btn_base);
-    /**************************************/
+    BrbGeradorSetup();
 
     /* Setup RS485 Serial */
     BrbAppRS485_Setup(&glob_brb_base);

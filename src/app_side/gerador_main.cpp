@@ -1,7 +1,7 @@
 /*
- * BrbGeradorBase.cpp
+ * gerador_main.cpp
  *
- *  Created on: 2019-01-27
+ *  Created on: 2019-02-18
  *      Author: Luiz Fernando Souza Softov <softov@brbyte.com>
  *      Author: Guilherme Amorim de Oliveira Alves <guilherme@brbyte.com>
  *
@@ -31,7 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "BrbGeradorBase.h"
+#include "../main.h"
 
 static int BrbGeradorBase_PowerStart(BrbGeradorBase *gerador_base);
 static int BrbGeradorBase_PowerStop(BrbGeradorBase *gerador_base);
@@ -493,50 +493,50 @@ int BrbGeradorBase_Save(BrbGeradorBase *gerador_base)
 	return 0;
 }
 /**********************************************************************************************************************/
-const __FlashStringHelper *BrbGeradorBase_GetState(BrbGeradorBase *gerador_base)
+const char *BrbGeradorBase_GetState(BrbGeradorBase *gerador_base)
 {
-	const __FlashStringHelper *ret_ptr = F("Parado");
+	const char *ret_ptr = PSTR("Parado");
 
 	switch (gerador_base->state.code)
 	{
 	case GERADOR_STATE_START_INIT:
 	{
-		ret_ptr = F("Iniciando");
+		ret_ptr = PSTR("Iniciando");
 		break;
 	}
 	case GERADOR_STATE_START_DELAY:
 	{
-		ret_ptr = F("Ligando");
+		ret_ptr = PSTR("Ligando");
 		break;
 	}
 	case GERADOR_STATE_START_CHECK:
 	{
-		ret_ptr = F("Verificando");
+		ret_ptr = PSTR("Verificando");
 		break;
 	}
 	case GERADOR_STATE_RUNNING:
 	{
-		ret_ptr = F("Funcionando");
+		ret_ptr = PSTR("Funcionando");
 		break;
 	}
 	case GERADOR_STATE_FAILURE:
 	{
-		ret_ptr = F("Falha");
+		ret_ptr = PSTR("Falha");
 		break;
 	}
 	case GERADOR_STATE_STOP_INIT:
 	{
-		ret_ptr = F("Finalizando");
+		ret_ptr = PSTR("Finalizando");
 		break;
 	}
 	case GERADOR_STATE_STOP_DELAY:
 	{
-		ret_ptr = F("Desligando");
+		ret_ptr = PSTR("Desligando");
 		break;
 	}
 	case GERADOR_STATE_STOP_CHECK:
 	{
-		ret_ptr = F("Encerrando");
+		ret_ptr = PSTR("Encerrando");
 		break;
 	}
 	case GERADOR_STATE_NONE:
@@ -550,9 +550,9 @@ const __FlashStringHelper *BrbGeradorBase_GetState(BrbGeradorBase *gerador_base)
 	return ret_ptr;
 }
 /**********************************************************************************************************************/
-const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador_base)
+const char *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador_base)
 {
-	const __FlashStringHelper *ret_ptr = F("None");
+	const char *ret_ptr = PSTR("None");
 
 	switch (gerador_base->state.code)
 	{
@@ -561,12 +561,12 @@ const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador
 	case GERADOR_STATE_START_CHECK:
 	case GERADOR_STATE_RUNNING:
 	{
-		ret_ptr = F("Desligar Sistema?");
+		ret_ptr = PSTR("Desligar Sistema?");
 		break;
 	}
 	case GERADOR_STATE_FAILURE:
 	{
-		ret_ptr = F("Falha no Sistema!");
+		ret_ptr = PSTR("Falha no Sistema!");
 		break;
 	}
 	case GERADOR_STATE_STOP_INIT:
@@ -574,7 +574,7 @@ const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador
 	case GERADOR_STATE_STOP_CHECK:
 	case GERADOR_STATE_NONE:
 	{
-		ret_ptr = F("Iniciar Sistema?");
+		ret_ptr = PSTR("Iniciar Sistema?");
 		break;
 	}
 	default:
@@ -588,9 +588,9 @@ const __FlashStringHelper *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador
 }
 
 /**********************************************************************************************************************/
-const __FlashStringHelper *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador_base)
+const char *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador_base)
 {
-	const __FlashStringHelper *ret_ptr = F("None");
+	const char *ret_ptr = PSTR("None");
 
 	switch (gerador_base->state.code)
 	{
@@ -599,12 +599,12 @@ const __FlashStringHelper *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador
 	case GERADOR_STATE_START_CHECK:
 	case GERADOR_STATE_RUNNING:
 	{
-		ret_ptr = F("DESLIGAR");
+		ret_ptr = PSTR("DESLIGAR");
 		break;
 	}
 	case GERADOR_STATE_FAILURE:
 	{
-		ret_ptr = F("IGNORAR");
+		ret_ptr = PSTR("IGNORAR");
 		break;
 	}
 	case GERADOR_STATE_STOP_INIT:
@@ -613,7 +613,7 @@ const __FlashStringHelper *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador
 	case GERADOR_STATE_NONE:
 	default:
 	{
-		ret_ptr = F("LIGAR");
+		ret_ptr = PSTR("LIGAR");
 		break;
 	}
 	}
@@ -621,30 +621,30 @@ const __FlashStringHelper *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador
 	return ret_ptr;
 }
 /**********************************************************************************************************************/
-const __FlashStringHelper *BrbGeradorBase_GetFailure(BrbGeradorBase *gerador_base)
+const char *BrbGeradorBase_GetFailure(BrbGeradorBase *gerador_base)
 {
-	const __FlashStringHelper *ret_ptr = F("- - - - -");
+	const char *ret_ptr = PSTR("- - - - -");
 
 	switch (gerador_base->state.fail)
 	{
 	case GERADOR_FAILURE_RUNNING_WITHOUT_START:
 	{
-		ret_ptr = F("Energia Detectada");
+		ret_ptr = PSTR("Energia Detectada");
 		break;
 	}
 	case GERADOR_FAILURE_DOWN_WITHOUT_STOP:
 	{
-		ret_ptr = F("Sem Energia");
+		ret_ptr = PSTR("Sem Energia");
 		break;
 	}
 	case GERADOR_FAILURE_START_RETRY_LIMIT:
 	{
-		ret_ptr = F("Limite Partida");
+		ret_ptr = PSTR("Limite Partida");
 		break;
 	}
 	case GERADOR_FAILURE_STOP_RETRY_LIMIT:
 	{
-		ret_ptr = F("Limite Parada");
+		ret_ptr = PSTR("Limite Parada");
 		break;
 	}
 	default:

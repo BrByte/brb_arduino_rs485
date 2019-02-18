@@ -132,26 +132,26 @@ int BrbAppDisplay_ScreenInfo(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Geral"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, PSTR("Geral"), 10, 10);
     }
 
     pos_x = 10;
     pos_y = 50;
 
     display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x, pos_y, F("Bateria"), gerador_base->info.battery, 1, F("VDC"));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("Bateria"), gerador_base->info.battery, 1, PSTR("VDC"));
 
     display_base->tft->fillRect(pos_x + 160, pos_y + 15, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x + 160, pos_y, F("Energia"), gerador_base->info.power_ac, 1, F("VAC"));
+    BrbDisplayBase_BoxSub(display_base, pos_x + 160, pos_y, PSTR("Energia"), gerador_base->info.power_ac, 1, PSTR("VAC"));
 
     pos_x = 10;
     pos_y = pos_y + 65;
 
-    BrbDisplayBase_DrawArc(display_base, gerador_base->info.gas, 0, 100, pos_x, pos_y, 65, F("Tanque"), DISPLAY_ARC_RED2GREEN);
+    BrbDisplayBase_DrawArc(display_base, gerador_base->info.gas, 0, 100, pos_x, pos_y, 65, PSTR("Tanque"), DISPLAY_ARC_RED2GREEN);
 
     pos_x = pos_x + 160;
 
-    BrbDisplayBase_DrawArc(display_base, gerador_base->info.load, 0, 30, pos_x, pos_y, 65, F("Amp"), DISPLAY_ARC_GREEN2RED);
+    BrbDisplayBase_DrawArc(display_base, gerador_base->info.load, 0, 30, pos_x, pos_y, 65, PSTR("Amp"), DISPLAY_ARC_GREEN2RED);
 
     return 0;
 }
@@ -180,7 +180,7 @@ int BrbAppDisplay_ScreenTemp(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Temperatura"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, PSTR("Temperatura"), 10, 10);
 
         // display_base->tft->fillRect(0, 50, sz_w, 15, ILI9341_LIGHTSALMON);
         // display_base->tft->fillRect(sz_w, 50, sz_w, 15, ILI9341_LIMEGREEN);
@@ -198,18 +198,18 @@ int BrbAppDisplay_ScreenTemp(void *brb_base_ptr, void *display_base_ptr)
     pos_y = 50;
 
     display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x, pos_y, F("TEMP"), isnan(dht_t) ? 0 : dht_t, 1, F("C"));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("TEMP"), isnan(dht_t) ? 0 : dht_t, 1, PSTR("C"));
 
-    // BrbDisplayBase_DrawArcSeg(display_base, isnan(dht_t) ? 0 : dht_t, 0, 130, pos_x, pos_y, 100, F("Celsius"), DISPLAY_ARC_GREEN2RED, 0, 3, 5);
+    // BrbDisplayBase_DrawArcSeg(display_base, isnan(dht_t) ? 0 : dht_t, 0, 130, pos_x, pos_y, 100, PSTR("Celsius"), DISPLAY_ARC_GREEN2RED, 0, 3, 5);
 
     pos_x = sz_w;
     pos_y = 50;
 
     display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x, pos_y, F("HUMIDADE"), isnan(dht_h) ? 0 : dht_h, 1, F("%"));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("HUMIDADE"), isnan(dht_h) ? 0 : dht_h, 1, PSTR("%"));
 
     display_base->tft->fillRect(pos_x, pos_y + 75, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x, pos_y + 60, F("HEAT INDEX"), isnan(dht_hic) ? 0 : dht_hic, 1, F(""));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y + 60, PSTR("HEAT INDEX"), isnan(dht_hic) ? 0 : dht_hic, 1, PSTR(""));
 
     return 0;
 }
@@ -224,8 +224,8 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
     int pos_x;
     int pos_y;
 
-    const __FlashStringHelper *title_ptr = NULL;
-    const __FlashStringHelper *text_ptr = NULL;
+    const char *title_ptr = NULL;
+    const char *text_ptr = NULL;
 
     int retry_max = GERADOR_TIMER_START_RETRY_MAX;
     int color = ILI9341_ORANGERED;
@@ -233,7 +233,7 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Controle"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, PSTR("Controle"), 10, 10);
     }
 
     if (!display_base->flags.on_action && display_base->flags.on_select)
@@ -356,7 +356,7 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
     display_base->tft->setFont(DISPLAY_FONT_BOX_VALUE);
     display_base->tft->setTextScale(1);
     display_base->tft->cursorToXY(10, 50);
-    display_base->tft->println(title_ptr);
+    display_base->tft->println((const __FlashStringHelper *)title_ptr);
 
     if (text_ptr)
     {
@@ -364,7 +364,7 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
         display_base->tft->setFont(DISPLAY_FONT_BOX_SUB);
         display_base->tft->setTextScale(1);
         display_base->tft->cursorToXY(10, 80);
-        display_base->tft->print(text_ptr);
+        display_base->tft->print((const __FlashStringHelper *)text_ptr);
 
         // if (gerador_base->state.fail > 0)
         // {
@@ -382,10 +382,10 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
     servo_bb = BrbServoGrabByPin(gerador_base->brb_base, gerador_base->pin_servo);
 
     display_base->tft->fillRect(pos_x, pos_y + 15, 300, 30, ILI9341_WHITE);
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x, pos_y, F("ENERGIA"), gerador_base->info.power_ac, 1, F("VAC"));
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x + 110, pos_y, F("FREQUENCIA"), gerador_base->info.zero_value, 1, F("Hz"));
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x + 210, pos_y, F("SERVO"), servo_bb ? servo_bb->pos_cur : 0, 1, F("o"));
-    // BrbDisplayBase_PrintBoxMax(display_base, pos_x, pos_y, F("Tentativas"), gerador_base->state.retry, retry_max);
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("ENERGIA"), gerador_base->info.power_ac, 1, PSTR("VAC"));
+    BrbDisplayBase_BoxSub(display_base, pos_x + 110, pos_y, PSTR("FREQUENCIA"), gerador_base->info.zero_value, 1, PSTR("Hz"));
+    BrbDisplayBase_BoxSub(display_base, pos_x + 210, pos_y, PSTR("SERVO"), servo_bb ? servo_bb->pos_cur : 0, 1, PSTR("o"));
+    // BrbDisplayBase_BoxMax(display_base, pos_x, pos_y, PSTR("Tentativas"), gerador_base->state.retry, retry_max);
 
     display_base->tft->setFont(DISPLAY_FONT_BOX_VALUE);
     display_base->tft->setTextScale(1);
@@ -439,13 +439,13 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
             display_base->user_int = !display_base->user_int;
         }
 
-        BrbDisplayBase_DrawBtn(display_base, 20, 170, 120, 60, F("SIM"), display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
-        BrbDisplayBase_DrawBtn(display_base, 170, 170, 120, 60, F("NAO"), !display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, !display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
+        BrbDisplayBase_DrawBtn(display_base, 20, 170, 120, 60, PSTR("SIM"), display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
+        BrbDisplayBase_DrawBtn(display_base, 170, 170, 120, 60, PSTR("NAO"), !display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, !display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
     }
     else
     {
 
-        const __FlashStringHelper *btn_text_ptr = BrbGeradorBase_GetStateButton(gerador_base);
+        const char *btn_text_ptr = BrbGeradorBase_GetStateButton(gerador_base);
 
         BrbDisplayBase_DrawBtn(display_base, 20, 170, 280, 60, btn_text_ptr, color, ILI9341_WHITE);
     }
@@ -464,7 +464,7 @@ int BrbAppDisplay_ScreenConsume(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, F("Consumo"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, PSTR("Consumo"), 10, 10);
     }
 
     if (!display_base->flags.on_action && display_base->flags.on_select)
@@ -497,13 +497,13 @@ int BrbAppDisplay_ScreenConsume(void *brb_base_ptr, void *display_base_ptr)
 
         display_base->tft->setFont(DISPLAY_FONT_TITLE);
         display_base->tft->setTextScale(2);
-        display_base->tft->printAtPivoted(F("Zerar Horimetro?"), 160, 80, gTextPivotMiddleCenter);
+        display_base->tft->printAtPivoted(PSTR("Zerar Horimetro?"), 160, 80, gTextPivotMiddleCenter);
 
         display_base->tft->setFont(DISPLAY_FONT_BOX_VALUE);
         display_base->tft->setTextScale(1);
 
-        BrbDisplayBase_DrawBtn(display_base, 20, 170, 120, 60, F("SIM"), display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
-        BrbDisplayBase_DrawBtn(display_base, 170, 170, 120, 60, F("NAO"), !display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, !display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
+        BrbDisplayBase_DrawBtn(display_base, 20, 170, 120, 60, PSTR("SIM"), display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
+        BrbDisplayBase_DrawBtn(display_base, 170, 170, 120, 60, PSTR("NAO"), !display_base->user_int ? ILI9341_ORANGERED : ILI9341_LIGHTGREY, !display_base->user_int ? ILI9341_WHITE : ILI9341_BLACK);
 
         return 0;
     }
@@ -513,24 +513,24 @@ int BrbAppDisplay_ScreenConsume(void *brb_base_ptr, void *display_base_ptr)
 
     double value_dec = ((double)(gerador_base->data.hourmeter_time) / 60.0);
 
-    BrbDisplayBase_DrawArcSeg(display_base, value_dec, 0, GERADOR_HOURMETER_MAX, pos_x, pos_y, 100, F("Horas"), DISPLAY_ARC_GREEN2RED, 0, 3, 5);
+    BrbDisplayBase_DrawArcSeg(display_base, value_dec, 0, GERADOR_HOURMETER_MAX, pos_x, pos_y, 100, PSTR("Horas"), DISPLAY_ARC_GREEN2RED, 0, 3, 5);
 
     pos_x = 220;
     pos_y = 50;
 
     // display_base->tft->fillRect(pos_x, pos_y + 20, 70, 30, ILI9341_PURPLE);
-    // BrbDisplayBase_PrintBoxSub(display_base, pos_x, pos_y, F("SOBRA"), (GERADOR_HOURMETER_MAX - value_dec), 1, F("Hrs"));
+    // BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("SOBRA"), (GERADOR_HOURMETER_MAX - value_dec), 1, PSTR("Hrs"));
 
     // display_base->tft->fillRect(pos_x, pos_y + 80, 70, 30, ILI9341_PURPLE);
-    // BrbDisplayBase_PrintBoxSub(display_base, pos_x + 220, pos_y, F("ZERAGEM"), gerador_base->data.hourmeter_reset, 0, F("x"));
+    // BrbDisplayBase_BoxSub(display_base, pos_x + 220, pos_y, PSTR("ZERAGEM"), gerador_base->data.hourmeter_reset, 0, PSTR("x"));
 
     pos_x = 10;
     pos_y = 180;
 
     display_base->tft->fillRect(pos_x, pos_y + 20, 300, 30, ILI9341_WHITE);
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x, pos_y, F("SOBRA"), (GERADOR_HOURMETER_MAX - value_dec), 1, F("Hrs"));
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x + 110, pos_y, F("TOTAL"), (gerador_base->data.hourmeter_time / 60), 0, F("Hrs"));
-    BrbDisplayBase_PrintBoxSub(display_base, pos_x + 220, pos_y, F("ZERAGEM"), gerador_base->data.hourmeter_reset, 0, F("x"));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("SOBRA"), (GERADOR_HOURMETER_MAX - value_dec), 1, PSTR("Hrs"));
+    BrbDisplayBase_BoxSub(display_base, pos_x + 110, pos_y, PSTR("TOTAL"), (gerador_base->data.hourmeter_time / 60), 0, PSTR("Hrs"));
+    BrbDisplayBase_BoxSub(display_base, pos_x + 220, pos_y, PSTR("ZERAGEM"), gerador_base->data.hourmeter_reset, 0, PSTR("x"));
 
     return 0;
 }
