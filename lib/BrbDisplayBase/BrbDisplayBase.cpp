@@ -33,9 +33,6 @@
 
 #include "BrbDisplayBase.h"
 
-static unsigned int color_lt(unsigned int color, float pct);
-static unsigned int rainbow(byte value);
-
 /**********************************************************************************************************************/
 int BrbDisplayBase_Init(BrbDisplayBase *display_base)
 {
@@ -43,20 +40,21 @@ int BrbDisplayBase_Init(BrbDisplayBase *display_base)
 	if (!display_base)
 		return -1;
 
-	// display_base->tft = (ILI9341_due *)&tft;
 	if (!display_base->tft)
 	{
 		display_base->tft = new ILI9341_due(display_base->pin_cs, display_base->pin_dc, display_base->pin_rst);
 	}
 
+    LOG_NOTICE(display_base->brb_base->log_base, "DISPLAY - INIT [%d]\r\n", display_base->screen_arr_cnt);
+
 	display_base->tft->begin();
-	// display_base->tft->reset();
 	display_base->tft->setRotation(DISPLAY_ROTATION_DEFAULT);
 	display_base->tft->setFont(DISPLAY_FONT_DEFAULT);
 
 	display_base->screen_last = -1;
 	display_base->action_code = -1;
 	display_base->flags.on_action = 0;
+	display_base->box.text_color = DISPLAY_COLOR_BOX_VALUE;
 
 	if (display_base->pin_led > MIN_DIG_PIN)
 	{
@@ -69,7 +67,6 @@ int BrbDisplayBase_Init(BrbDisplayBase *display_base)
 /**********************************************************************************************************************/
 int BrbDisplayBase_Loop(BrbDisplayBase *display_base)
 {
-
 	return 0;
 }
 /**********************************************************************************************************************/
@@ -99,6 +96,11 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 		else if (display_base->action_code == DISPLAY_ACTION_PREV)
 			display_base->screen_cur--;
 	}
+
+	if (display_base->screen_cur < 0)
+		display_base->screen_cur = display_base->screen_arr_cnt - 1;
+	else if (display_base->screen_cur >= display_base->screen_arr_cnt)
+		display_base->screen_cur = 0;
 
 	BrbDisplayScreenPrototype *screen_ptr = NULL;
 
@@ -134,81 +136,28 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 	return op_status;
 }
 /**********************************************************************************************************************/
-int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const char *title_str, int x, int y)
+int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const char *title_str)
 {
-	display_base->tft->setFont(DISPLAY_FONT_TITLE);
-	display_base->tft->fillRect(x, y, 300, 30, ILI9341_STEELBLUE);
-	display_base->tft->cursorToXY(x + 10, y + 10);
-	display_base->tft->setTextColor(ILI9341_WHITE, ILI9341_STEELBLUE);
+	display_base->tft->fillRect(DISPLAY_SZ_MARGIN, DISPLAY_SZ_MARGIN, DISPLAY_SZ_TITLE_W, DISPLAY_SZ_TITLE_H, DISPLAY_COLOR_TITLE_BG);
+	display_base->tft->setFont(DISPLAY_FONT_SCREEN_TITLE);
+	display_base->tft->setTextColor(DISPLAY_COLOR_TITLE_TEXT, DISPLAY_COLOR_TITLE_BG);
+
+	display_base->tft->cursorToXY(DISPLAY_SZ_MARGIN * 2, DISPLAY_SZ_MARGIN * 2);
 	display_base->tft->setTextScale(1);
 	display_base->tft->println((const __FlashStringHelper *)title_str);
-	// display_base->tft->printAtPivoted(title_str, x + 10, y + 10, gTextPivotBottomCenter); // Value in middle
-
-	display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+	display_base->tft->setTextColor(DISPLAY_COLOR_TEXT_DEFAULT, DISPLAY_COLOR_BG);
 
 	return 0;
 }
 /**********************************************************************************************************************/
 int BrbDisplayBase_SetBg(BrbDisplayBase *display_base)
 {
-	display_base->tft->drawRect(0, 0, 320, 240, ILI9341_DIMGRAY);
-	display_base->tft->drawRect(1, 1, 319, 239, ILI9341_DIMGRAY);
-	display_base->tft->fillRect(2, 2, 316, 236, ILI9341_WHITE);
+	for (int i = 0; i < DISPLAY_SZ_BORDER; i++)
+	{
+		display_base->tft->drawRect(i, i, DISPLAY_SZ_DISPLAY_W - (i + 1), DISPLAY_SZ_DISPLAY_H - (i + 1), DISPLAY_COLOR_BORDER);
+	}
+	display_base->tft->fillRect(DISPLAY_SZ_BORDER, DISPLAY_SZ_BORDER, DISPLAY_SZ_DISPLAY_W - (DISPLAY_SZ_BORDER * 2), DISPLAY_SZ_DISPLAY_H - (DISPLAY_SZ_BORDER * 2), DISPLAY_COLOR_BG);
 
 	return 0;
-}
-/**********************************************************************************************************************/
-int BrbDisplayBase_Test(BrbDisplayBase *display_base)
-{
-	int pos_s = 15;
-	int pos_x = 15;
-	int pos_y = 15;
-
-	int btn_w = 210;
-	int btn_h = 50;
-
-	int txt_s = 10;
-	int txt_x = pos_x + txt_s;
-	int txt_y = pos_y + txt_s;
-
-	// display_base->tft->setRotation(3);
-
-	display_base->tft->fillScreen(ILI9341_BLACK);
-	display_base->tft->setTextScale(2);
-	display_base->tft->cursorToXY(0, 0);
-
-	display_base->tft->setTextColor(ILI9341_WHITE);
-
-	display_base->tft->fillRect(pos_x, pos_y, btn_w, btn_h, ILI9341_RED);
-	pos_y = pos_y + pos_s + btn_h;
-	display_base->tft->cursorToXY(txt_x, txt_y);
-	txt_y = pos_y + txt_s;
-
-	display_base->tft->println("Button Test 01");
-
-	display_base->tft->fillRect(pos_x, pos_y, btn_w, btn_h, ILI9341_YELLOW);
-	pos_y = pos_y + pos_s + btn_h;
-	display_base->tft->cursorToXY(txt_x, txt_y);
-	txt_y = pos_y + txt_s;
-
-	display_base->tft->println("Button Test 02");
-
-	display_base->tft->fillRect(pos_x, pos_y, btn_w, btn_h, ILI9341_GREEN);
-	pos_y = pos_y + pos_s + btn_h;
-	display_base->tft->cursorToXY(txt_x, txt_y);
-	txt_y = pos_y + txt_s;
-
-	display_base->tft->println("Button Test 03");
-
-	display_base->tft->fillRect(pos_x, pos_y, btn_w, btn_h, ILI9341_RED);
-	pos_y = pos_y + pos_s + btn_h;
-	display_base->tft->cursorToXY(txt_x, txt_y);
-	txt_y = pos_y + txt_s;
-
-	display_base->tft->println("Button Test 04");
-
-	// display_base->tft->fillRect(cx - i2, cy - i2, i, i, color1);
-
-	return 1;
 }
 /**********************************************************************************************************************/

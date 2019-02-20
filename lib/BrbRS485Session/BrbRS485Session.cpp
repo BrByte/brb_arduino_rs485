@@ -51,25 +51,27 @@ BrbRS485Session *BrbRS485Session_New(BrbBase *brb_base)
 	return rs485_sess;
 }
 /**********************************************************************************************************************/
-#ifdef BRB_RS485_HARDWARE_SERIAL
-int BrbRS485Session_Init(BrbRS485Session *rs485_sess, HardwareSerial *serial)
-#else
-int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial)
-#endif
+int BrbRS485Session_Init(BrbRS485Session *rs485_sess)
 {
 	/* sanitize */
-	if (!rs485_sess || !serial)
+	if (!rs485_sess)
 		return -1;
 
-	memset(&rs485_sess->uuid, 0, sizeof(rs485_sess->uuid));
+	LOG_DEBUG(rs485_sess->log_base, "BrbRS485Session_Init - [%p]\r\n", rs485_sess);
+	delay(10);
+
+	memset((uint8_t *)&rs485_sess->uuid, 0, sizeof(rs485_sess->uuid));
 
 	/* Read Client Address */
-	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->address, 1, 0, 0);
-	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->uuid, 4, 10, 0);
+	// BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->uuid, 4, 0, 0);
+	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->uuid, 4, 4, 0);
+	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->address, 1, 8, 0);
 
 	/* receive pin, transmit pin */
-	rs485_sess->serial = serial;
-	// rs485_sess->serial = HardwareSerial(UART3);
+	if (rs485_sess->serial == NULL)
+	{
+		rs485_sess->serial = &Serial3;
+	}
 
 #ifdef BRB_RS485_HARDWARE_SERIAL
 	/* No pin modifications */
@@ -80,17 +82,32 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial)
 	pinMode(rs485_sess->pinRO, INPUT);
 #endif
 
+	LOG_DEBUG(rs485_sess->log_base, "BRB_RS485 - [%p] [%p] [%p] BAUDRATE [%d]\r\n", rs485_sess, rs485_sess->serial, &Serial3, BRB_RS485_BAUDRATE);
+	delay(10);
+
 	/* Initialize SoftwareSerial to RS485 */
 	rs485_sess->serial->begin(BRB_RS485_BAUDRATE);
 
+	LOG_DEBUG(rs485_sess->log_base, "BRB_RS485 - [%p] [%p] [%p] BAUDRATE [%d]\r\n", rs485_sess, rs485_sess->serial, &Serial3, BRB_RS485_BAUDRATE);
+	delay(10);
+
 	/* set up various pins */
-	pinMode(rs485_sess->pinREDE, OUTPUT);
+	if (rs485_sess->pinREDE > 0)
+	{
+		pinMode(rs485_sess->pinREDE, OUTPUT);
+	}
+
+	LOG_DEBUG(rs485_sess->log_base, "rs485_sess - [%p]\r\n", rs485_sess);
+	delay(10);
 
 	/* Add timer to send HandShake */
 	rs485_sess->timer_id = BrbTimerAdd(rs485_sess->brb_base, BRB_RS485_HANDSHAKE_TIME, BRB_RS485_HANDSHAKE_REPEAT, BrbRS485Session_TimerHandShakeCB, rs485_sess);
 
 	/* Send hello to notify my new ID */
 	BrbRS485Session_SendHandShake(rs485_sess);
+
+	LOG_DEBUG(rs485_sess->log_base, "rs485_sess - [%p]\r\n", rs485_sess);
+	delay(10);
 
 	return 0;
 }

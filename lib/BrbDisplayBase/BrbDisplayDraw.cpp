@@ -34,8 +34,6 @@
 #include "BrbDisplayBase.h"
 
 static unsigned int color_lt(unsigned int color, float pct);
-static unsigned int rainbow(byte value);
-
 /**********************************************************************************************************************/
 int BrbDisplayBase_DrawBtn(BrbDisplayBase *display_base, int btn_x, int btn_y, int btn_w, int btn_h, const char *text_ptr, int btn_color, int txt_color)
 {
@@ -61,7 +59,7 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 	display_base->tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
 	display_base->tft->setTextColor(text_color, ILI9341_WHITE);
 
-	display_base->tft->setFont(DISPLAY_FONT_VALUE);
+	display_base->tft->setFont(DISPLAY_FONT_ARC_VALUE);
 
 	/* Check size and spacing */
 	if (r > 130)
@@ -81,14 +79,14 @@ int BrbDisplayBase_DrawArcText(BrbDisplayBase *display_base, double value, int x
 	}
 	else
 	{
-		display_base->tft->setFont(DISPLAY_FONT_TITLE);
+		display_base->tft->setFont(DISPLAY_FONT_ARC_SUB);
 		display_base->tft->setTextScale(2);
 		display_base->tft->printAtPivoted(buf, x, y - 10, gTextPivotMiddleCenter);
 	}
 
 	if (units)
 	{
-		display_base->tft->setFont(DISPLAY_FONT_SUB);
+		display_base->tft->setFont(DISPLAY_FONT_ARC_SUB);
 
 		if (r > 130)
 		{
@@ -169,14 +167,14 @@ int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vm
 			color_cur = ILI9341_BLUE;
 			break; // Fixed color
 		case DISPLAY_ARC_BLUE2RED:
-			color_cur = rainbow(map(i, -angle, angle, 0, 127));
+			color_cur = BrbDisplayBase_Rainbow(map(i, -angle, angle, 0, 127));
 			break; // Full spectrum blue to red
 		case DISPLAY_ARC_GREEN2RED:
-			color_cur = rainbow(map(i, -angle, angle, 63, 127));
+			color_cur = BrbDisplayBase_Rainbow(map(i, -angle, angle, 63, 127));
 			color_cur = color_lt(color_cur, 0.9);
 			break; // Green to red (high temperature etc)
 		case DISPLAY_ARC_RED2GREEN:
-			color_cur = rainbow(map(i, -angle, angle, 127, 63));
+			color_cur = BrbDisplayBase_Rainbow(map(i, -angle, angle, 127, 63));
 			color_cur = color_lt(color_cur, 0.9);
 			break; // Red to green (low battery etc)
 		default:
@@ -304,7 +302,7 @@ static unsigned int color_lt(unsigned int color, float pct)
 /**********************************************************************************************************************/
 /* Return a 16 bit rainbow color */
 /**********************************************************************************************************************/
-static unsigned int rainbow(byte value)
+unsigned int BrbDisplayBase_Rainbow(byte value)
 {
 	/* Value is expected to be in range 0-127 */
 
@@ -385,9 +383,18 @@ int BrbDisplayBase_DrawBarGraph(BrbDisplayBase *display_base, int16_t pos_x, int
 		display_base->tft->fillCircle(pos_x, pos_y, (((tube_w - 6) / 2)), ILI9341_WHITESMOKE);
 		display_base->tft->fillRect((pos_x - (tube_w / 2) + 3), pos_y, (tube_w - 6), tube_h, ILI9341_WHITESMOKE);
 		display_base->tft->fillCircle(pos_x, (tube_h + pos_y) + 7, ((tube_w / 2) + 7), ILI9341_WHITESMOKE);
+
+		tube_h_old = 0;
 	}
 
-	tune_diff = tube_h_max - max; // only draw new part of bar graph for faster display
+	// tune_diff = tube_h_max - max; // only draw new part of bar graph for faster display
+
+	// display_base->tft->fillRect((pos_x - (tube_w / 2) + 5), pos_y, (tube_w - 10), tube_h, color);
+	display_base->tft->fillCircle(pos_x, (tube_h + pos_y) + 7, ((tube_w / 2) + 5), color);
+
+	tube_h_n = map(value, 0, max, 0, (tube_h - tube_r));
+
+	tune_diff = tube_h_old - tube_h_n; // only draw new part of bar graph for faster display
 
 	if (tune_diff != 0)
 	{
@@ -420,19 +427,16 @@ int BrbDisplayBase_DrawBarGraph(BrbDisplayBase *display_base, int16_t pos_x, int
 				display_base->tft->fillRect(pos_x + (tube_w / 2) + 1, (pos_y + (tube_h - tube_r) * pct), 3, 1, ILI9341_BLACK);
 			}
 		}
-	}
 
-	// display_base->tft->fillRect((pos_x - (tube_w / 2) + 5), pos_y, (tube_w - 10), tube_h, color);
-	display_base->tft->fillCircle(pos_x, (tube_h + pos_y) + 7, ((tube_w / 2) + 5), color);
-
-	tube_h_n = map(value, 0, max, 0, (tube_h - tube_r));
-
-	tune_diff = tube_h_old - tube_h_n; // only draw new part of bar graph for faster display
-
-	if (tune_diff != 0)
-	{
 		display_base->tft->fillRect((pos_x - (tube_w / 2) + 5), pos_y + (tube_h - tube_h_n), (tube_w - 10), tube_h_n, color);
+
+		display_base->tft->fillRect(pos_x + (tube_w / 2) + 5, pos_y + (tube_h - tube_h_n), 30, 1, color);
+		display_base->tft->cursorToXY(pos_x + (tube_w / 2) + 10, pos_y + (tube_h - tube_h_n) + 3);
+		display_base->tft->setTextColor(color);
+		display_base->tft->print(value, 1);
 	}
+
+	// display_base->tft->fillRect(pos_x, (pos_y + (tube_h - tube_r) * tube_h_n), 300, 6, ILI9341_SALMON);
 
 	// display_base->tft->fillRect((pos_x - (tube_w / 2) + 5), pos_y, (tube_w - 10), ((tube_h - value) - ((tube_w / 2) + 7)), ILI9341_WHITE);
 

@@ -132,7 +132,7 @@ int BrbAppDisplay_ScreenInfo(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, PSTR("Geral"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, PSTR("Geral"));
     }
 
     pos_x = 10;
@@ -180,7 +180,7 @@ int BrbAppDisplay_ScreenTemp(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, PSTR("Temperatura"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, PSTR("Temperatura"));
 
         // display_base->tft->fillRect(0, 50, sz_w, 15, ILI9341_LIGHTSALMON);
         // display_base->tft->fillRect(sz_w, 50, sz_w, 15, ILI9341_LIMEGREEN);
@@ -233,7 +233,7 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, PSTR("Controle"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, PSTR("Controle"));
     }
 
     if (!display_base->flags.on_action && display_base->flags.on_select)
@@ -464,7 +464,7 @@ int BrbAppDisplay_ScreenConsume(void *brb_base_ptr, void *display_base_ptr)
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
-        BrbDisplayBase_SetTitle(display_base, PSTR("Consumo"), 10, 10);
+        BrbDisplayBase_SetTitle(display_base, PSTR("Consumo"));
     }
 
     if (!display_base->flags.on_action && display_base->flags.on_select)

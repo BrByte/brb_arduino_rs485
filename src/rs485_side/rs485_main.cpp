@@ -14,14 +14,14 @@ static BrbRS485SessionActionCBH BrbAppRS485_SessionActionSetScriptCB;
 int BrbAppRS485_Setup(BrbBase *brb_base)
 {
     /* Clean up base */
-    memset(&glob_rs485_sess, 0, sizeof(BrbRS485Session));
+    // memset(&glob_rs485_sess, 0, sizeof(BrbRS485Session));
     BrbRS485Session *rs485_sess = (BrbRS485Session *)&glob_rs485_sess;
 
     rs485_sess->brb_base = brb_base;
+    rs485_sess->log_base = brb_base->log_base;
     rs485_sess->pinRO = RS485_RO_PIN;
     rs485_sess->pinDI = RS485_DI_PIN;
     rs485_sess->pinREDE = RS485_REDE_PIN;
-    rs485_sess->log_base = brb_base->log_base;
 
     BrbRS485Session_SetEventCB(rs485_sess, RS485_PKT_TYPE_HANDSHAKE, BrbAppRS485_SessionActionHandShakeCB, brb_base);
     BrbRS485Session_SetEventCB(rs485_sess, RS485_PKT_TYPE_CMD_GET_A, BrbAppRS485_SessionActionGetAnalogCB, brb_base);
@@ -35,7 +35,7 @@ int BrbAppRS485_Setup(BrbBase *brb_base)
     BrbRS485Session_SetEventCB(rs485_sess, RS485_PKT_TYPE_CMD_SET_SCRIPT, BrbAppRS485_SessionActionSetScriptCB, brb_base);
 
     /* Initialize session data */
-    BrbRS485Session_Init(rs485_sess, &Serial3);
+    BrbRS485Session_Init(rs485_sess);
 
     return 0;
 }

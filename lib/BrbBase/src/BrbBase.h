@@ -36,8 +36,9 @@
 
 /**********************************************************************************************************************/
 #include "Arduino.h"
-
+#include <HardwareSerial.h>
 #include <SoftwareSerial.h>
+
 #include "Servo.h"
 
 #include "Boards.h"
@@ -109,7 +110,7 @@ static const uint8_t glob_analog_pins[] = {
 
 #define MAX_TIMER 16
 #define MAX_SCRIPT 8
-#define MAX_SERVO 8
+#define MAX_SERVO 4
 
 #define MIN_ANA_PIN 0
 #define MAX_ANA_PIN NUM_ANALOG_INPUTS

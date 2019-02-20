@@ -36,6 +36,7 @@
  /**********************************************************************************************************************/
 #include "Arduino.h"
 #include <BrbBase.h>
+#include <log/BrbLogBase.h>
  /**********************************************************************************************************************/
 #define TO_HEX(i) (i <= 9 ? ('0' + i) : ('A' - 10 + i))
 #define TO_NUM(a, b) (((a <= '9' ? a - '0' : a - 'A' + 10) << 4) | (b <= '9' ? b - '0' : b - 'A' + 10))
@@ -238,7 +239,7 @@ typedef struct _BrbRS485Session
 	BrbBase *brb_base;
 	BrbLogBase *log_base;
 
-#ifdef BRB_RS485_HARDWARE_SERIAL	
+#ifdef BRB_RS485_HARDWARE_SERIAL
 	HardwareSerial *serial;
 #else
 	SoftwareSerial *serial;
@@ -298,12 +299,7 @@ typedef struct _BrbRS485Session
  /**********************************************************************************************************************/
 BrbRS485Session *BrbRS485Session_New(BrbBase *brb_base);
 
-#ifdef BRB_RS485_HARDWARE_SERIAL	
-int BrbRS485Session_Init(BrbRS485Session *rs485_sess, HardwareSerial *serial);
-#else
-int BrbRS485Session_Init(BrbRS485Session *rs485_sess, SoftwareSerial *serial);
-#endif
-
+int BrbRS485Session_Init(BrbRS485Session *rs485_sess);
 int BrbRS485Session_Loop(BrbRS485Session *rs485_sess);
 
 int BrbRS485Session_ReadAddr(BrbRS485Session *rs485_sess, uint8_t *addr_ptr, uint8_t addr_sz, uint8_t eeprom_offset, uint8_t reset);

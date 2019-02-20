@@ -46,23 +46,41 @@
 #include <fonts/Arial14.h>
 #include <fonts/OpenSans36.h>
 #include <fonts/Ubuntu36.h>
-/****************************************************************************************************/
-#define DISPLAY_FONT_DEFAULT Arial_14
-// // #define DISPLAY_FONT_DEFAULT SystemFont5x7
+/**********************************************************************************************************************/
+/* DEFINES */
+/**********************************************************/
+/* FONTS */
+/**********************************************************/
+// #define DISPLAY_FONT_DEFAULT Arial_14
+// // // #define DISPLAY_FONT_DEFAULT SystemFont5x7
 
-#define DISPLAY_FONT_TITLE Arial_14
-#define DISPLAY_FONT_VALUE Ubuntu36
-#define DISPLAY_FONT_SUB Arial_14
+#define DISPLAY_FONT_SCREEN_TITLE Arial_14
+
+#define DISPLAY_FONT_DEFAULT Arial_14
+#define DISPLAY_FONT_TITLE Ubuntu36
 
 #define DISPLAY_FONT_ARC_VALUE Ubuntu36
+#define DISPLAY_FONT_ARC_TICK Arial_14
 #define DISPLAY_FONT_ARC_SUB Arial_14
 
 #define DISPLAY_FONT_BOX_TITLE Arial_14
 #define DISPLAY_FONT_BOX_VALUE Ubuntu36
 #define DISPLAY_FONT_BOX_SUB Arial_14
+/**********************************************************/
+/* SIZE */
+/**********************************************************/
+#define DISPLAY_SZ_DISPLAY_W 320
+#define DISPLAY_SZ_DISPLAY_H 240
 
-/****************************************************************************************************/
+#define DISPLAY_SZ_BORDER 0
+#define DISPLAY_SZ_MARGIN DISPLAY_SZ_BORDER + 5
 
+#define DISPLAY_SZ_TITLE_M 5
+#define DISPLAY_SZ_TITLE_H 25
+#define DISPLAY_SZ_TITLE_W DISPLAY_SZ_DISPLAY_W - (DISPLAY_SZ_MARGIN + DISPLAY_SZ_TITLE_M)
+/**********************************************************/
+/* COLOR */
+/**********************************************************/
 #define DISPLAY_COLOR_BORDER ILI9341_DIMGRAY
 #define DISPLAY_COLOR_BG ILI9341_WHITE
 
@@ -70,6 +88,9 @@
 #define DISPLAY_COLOR_TITLE_BG ILI9341_BLUE
 
 #define DISPLAY_COLOR_TEXT_DEFAULT ILI9341_BLACK
+
+#define DISPLAY_COLOR_BOX_TITLE ILI9341_BLACK
+#define DISPLAY_COLOR_BOX_VALUE ILI9341_ORANGERED
 
 #define DISPLAY_ROTATION_DEFAULT iliRotation270
 
@@ -82,18 +103,15 @@
 
 #define ARC_SEG 3
 #define ARC_INC 5
-
-// #define DISPLAY_COLOR_BASE_R 31
-// #define DISPLAY_COLOR_BASE_G 63
-// #define DISPLAY_COLOR_BASE_B 3
-
-/****************************************************************************************************/
+/**********************************************************************************************************************/
+/* ENUMS */
+/**********************************************************/
 typedef enum
 {
-    DISPLAY_ACTION_SELECT,
-    DISPLAY_ACTION_NEXT,
-    DISPLAY_ACTION_PREV,
-    DISPLAY_ACTION_LAST_ITEM
+	DISPLAY_ACTION_SELECT,
+	DISPLAY_ACTION_NEXT,
+	DISPLAY_ACTION_PREV,
+	DISPLAY_ACTION_LAST_ITEM
 } BrbDisplayActionCode;
 
 typedef struct _BrbDisplayScreenPrototype
@@ -106,17 +124,17 @@ typedef struct _BrbDisplayScreenPrototype
 /**********************************************************************************************************************/
 typedef struct _BrbDisplayBase
 {
-    BrbBase *brb_base;
+	BrbBase *brb_base;
 
-    // Adafruit_ILI9341 *tft;
-    ILI9341_due *tft;
+	// Adafruit_ILI9341 *tft;
+	ILI9341_due *tft;
 
 	int screen_last;
 	int screen_cur;
 	int screen_int;
 
 	int action_code;
-	
+
 	int user_int;
 
 	uint8_t pin_led;
@@ -130,19 +148,26 @@ typedef struct _BrbDisplayBase
 	BrbDisplayScreenPrototype *screen_arr_ptr;
 	int screen_arr_cnt;
 
+	struct
+	{
+		uint16_t bg_color;
+		uint16_t text_color;
+	} box;
+
 	// BrbDisplayScreenEvents cb_show[DISPLAY_SCREEN_LASTITEM];
 	// BrbDisplayScreenEvents cb_screen[DISPLAY_SCREEN_LASTITEM];
 
-	struct {
-		unsigned int on_action:1;
-		unsigned int on_select:1;
+	struct
+	{
+		unsigned int on_action : 1;
+		unsigned int on_select : 1;
 	} flags;
 
 } BrbDisplayBase;
 /**********************************************************************************************************************/
 int BrbDisplayBase_Init(BrbDisplayBase *display_base);
 
-int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const char *title_str, int x, int y);
+int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const char *title_str);
 int BrbDisplayBase_SetBg(BrbDisplayBase *display_base);
 
 int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code);
@@ -150,6 +175,10 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code);
 int BrbDisplayBase_SetScreenShowCB(BrbDisplayBase *display_base, int screen_code, BrbGenericCBH *cb_func, void *cb_data);
 int BrbDisplayBase_SetScreenActionCB(BrbDisplayBase *display_base, int screen_code, BrbGenericCBH *cb_func, void *cb_data);
 
+/**********************************************************************************************************************/
+unsigned int BrbDisplayBase_Rainbow(byte value);
+
+/**********************************************************************************************************************/
 int BrbDisplayBase_DrawBtn(BrbDisplayBase *display_base, int btn_x, int btn_y, int btn_w, int btn_h, const char *text_ptr, int btn_color, int txt_color);
 int BrbDisplayBase_DrawBarGraph(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, int16_t pos_h, double value, double min, double max);
 // int BrbDisplayBase_DrawArc(BrbDisplayBase *display_base, int value, int vmin, int vmax, int x, int y, int r, char *units, byte scheme);

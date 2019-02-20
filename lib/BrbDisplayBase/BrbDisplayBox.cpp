@@ -36,8 +36,8 @@
 /**********************************************************************************************************************/
 int BrbDisplayBase_BoxTitle(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr)
 {
-	// display_base->tft->fillRect(pos_x, pos_y, 140, 15, ILI9341_CYAN);
-	display_base->tft->setTextColor(DISPLAY_COLOR_TEXT_DEFAULT, DISPLAY_COLOR_BG);
+	// display_base->tft->fillRect(pos_x, pos_y, 140, 1, DISPLAY_COLOR_BOX_TITLE);
+	display_base->tft->setTextColor(DISPLAY_COLOR_BOX_TITLE, DISPLAY_COLOR_BG);
 	display_base->tft->setFont(DISPLAY_FONT_BOX_TITLE);
 	display_base->tft->setTextScale(1);
 
@@ -70,7 +70,7 @@ int BrbDisplayBase_BoxMax(BrbDisplayBase *display_base, int16_t pos_x, int16_t p
 		BrbDisplayBase_BoxTitle(display_base, pos_x, pos_y, title_ptr);
 	}
 
-	display_base->tft->setTextColor(ILI9341_MIDNIGHTBLUE, DISPLAY_COLOR_BG);
+	display_base->tft->setTextColor(display_base->box.text_color, DISPLAY_COLOR_BG);
 	display_base->tft->setFont(DISPLAY_FONT_BOX_VALUE);
 	display_base->tft->setTextScale(1);
 
@@ -86,7 +86,7 @@ int BrbDisplayBase_BoxMax(BrbDisplayBase *display_base, int16_t pos_x, int16_t p
 /**********************************************************************************************************************/
 int BrbDisplayBase_BoxValue(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, double value, int dots)
 {
-	display_base->tft->setTextColor(ILI9341_MIDNIGHTBLUE, DISPLAY_COLOR_BG);
+	display_base->tft->setTextColor(display_base->box.text_color, DISPLAY_COLOR_BG);
 	display_base->tft->setFont(DISPLAY_FONT_BOX_VALUE);
 	display_base->tft->setTextScale(1);
 

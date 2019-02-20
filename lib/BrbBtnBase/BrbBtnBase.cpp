@@ -92,7 +92,7 @@ static int BrbBtnBase_DataCheck(BrbBtnBase *btn_base, BrbBtnData *btn_data)
     /* BTN CHANGEG STATE */
     if (old_state != btn_data->state)
     {
-        LOG_NOTICE(btn_base->brb_base->log_base, "BTN [%d] - hit [%d] - State [%d] -> [%d]\r\n", btn_data->pin, btn_data->hit, old_state, btn_data->state);
+        LOG_DEBUG(btn_base->brb_base->log_base, "BTN [%d] - hit [%d] - State [%d] -> [%d]\r\n", btn_data->pin, btn_data->hit, old_state, btn_data->state);
 
         if (btn_data->state == HIGH)
         {
