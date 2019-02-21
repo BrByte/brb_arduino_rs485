@@ -58,6 +58,8 @@
 // #define BRB_RS485_BAUDRATE 115200
 #define BRB_RS485_HARDWARE_SERIAL 1
 
+#define BRB_RS485_EEPROM_OFFSET BRB_EEPROM_OFFSET + 32
+
  /**********************************************************************************************************************/
 typedef int BrbRS485SessionActionCBH(void *base_ptr, int action_code, const void *data_str, unsigned int data_sz, void *cb_data_ptr);
 
@@ -247,8 +249,6 @@ typedef struct _BrbRS485Session
 
 	long baudrate;
 
-	uint8_t address;
-	uint8_t uuid[4];
 
 	int pinRO; 		// rx pin
 	int pinDI; 		// tx pin
@@ -260,6 +260,13 @@ typedef struct _BrbRS485Session
 
 	BrbRS485StatsData stats;
 	BrbRS485SessionActionEvents cb[RS485_PKT_TYPE_LAST_ITEM];
+
+	/* Data is persistent to EEPROM, when saved */
+	struct
+	{
+		uint8_t address;
+		uint8_t uuid[4];
+	} data;
 
 	/* Buff to read data */
 	struct
@@ -302,16 +309,13 @@ BrbRS485Session *BrbRS485Session_New(BrbBase *brb_base);
 int BrbRS485Session_Init(BrbRS485Session *rs485_sess);
 int BrbRS485Session_Loop(BrbRS485Session *rs485_sess);
 
-int BrbRS485Session_ReadAddr(BrbRS485Session *rs485_sess, uint8_t *addr_ptr, uint8_t addr_sz, uint8_t eeprom_offset, uint8_t reset);
+int BrbRS485Session_DataLoad(BrbRS485Session *rs485_sess);
+int BrbRS485Session_DataSave(BrbRS485Session *rs485_sess);
 
 int BrbRS485Session_SetEventCB(BrbRS485Session *rs485_sess, int action_code, BrbRS485SessionActionCBH *cb_func, void *cb_data);
 
 int BrbRS485Session_SendComplemented(BrbRS485Session *rs485_sess, const byte p);
 int BrbRS485Session_SendPacket(BrbRS485Session *rs485_sess, const byte *data_ptr, size_t data_sz);
-
-int BrbRS485Session_ReadAddress(BrbRS485Session *rs485_sess);
-int BrbRS485Session_SetAddress(BrbRS485Session *rs485_sess, int address);
-int BrbRS485Session_SetUUID(BrbRS485Session *rs485_sess, byte reset);
 
 int BrbRS485Session_SendMsg(BrbRS485Session *rs485_sess, byte src, byte dst, char *buffer_ptr, unsigned int buffer_sz);
 int BrbRS485Session_SendHandShake(BrbRS485Session *rs485_sess);

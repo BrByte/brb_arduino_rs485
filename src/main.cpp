@@ -42,13 +42,7 @@ BrbBtnBase glob_btn_base;
 BrbDisplayBase glob_display_base;
 BrbToneBase glob_tone_base;
 
-
-#ifdef PDU_SYSTEM_COMPILE
-BrbPDUBase glob_pdu_base;
-#else
 BrbGeradorBase glob_gerador_base;
-#endif
-
 /**********************************************************************************************************************/
 /* RUN ONE TIME ON START */
 /**********************************************************************************************************************/
@@ -93,46 +87,10 @@ void BrbToneSetup(void)
 
     return;
 }
-#ifdef PDU_SYSTEM_COMPILE
-/**********************************************************************************************************************/
-static void BrbPDUBase_ZeroCrossPower()
-{
-    glob_pdu_base.zerocross.counter_power++;
-}
-/**********************************************************************************************************************/
-static void BrbPDUBase_ZeroCrossAux()
-{
-    glob_pdu_base.zerocross.counter_aux++;
-}
-/**********************************************************************************************************************/
-void BrbPDUSetup(void)
-{
-    /* Clean up base */
-    memset(&glob_pdu_base, 0, sizeof(BrbPDUBase));
-
-    glob_pdu_base.brb_base = (BrbBase *)&glob_brb_base;
-    glob_pdu_base.tone_base = (BrbToneBase *)&glob_tone_base;
-    glob_pdu_base.pin_partida = GERADOR_PARTIDA_PIN;
-    glob_pdu_base.pin_parada = GERADOR_PARADA_PIN;
-    glob_pdu_base.pin_servo = GERADOR_SERVO_PIN;
-    glob_pdu_base.pin_extra = GERADOR_EXTRA_PIN;
-    glob_pdu_base.pin_zerocross = GERADOR_ZEROCROSS_PIN;
-
-    glob_pdu_base.power.pin = SENSOR_VOLTAGE_AC_PIN;
-    glob_pdu_base.aux.pin = SENSOR_VOLTAGE_DC_PIN;
-
-    BrbGeradorBase_Init(&glob_pdu_base);
-
-    attachInterrupt(digitalPinToInterrupt(glob_pdu_base.pin_zerocross_power), BrbPDUBase_ZeroCrossPower, RISING);
-    attachInterrupt(digitalPinToInterrupt(glob_pdu_base.pin_zerocross_aux), BrbPDUBase_ZeroCrossAux, RISING);
-
-    return;
-}
-#else
 /**********************************************************************************************************************/
 static void BrbGeradorBase_ZeroCrossPower()
 {
-    glob_gerador_base.info.zero_counter++;
+    glob_gerador_base.zero_power.counter++;
 }
 /**********************************************************************************************************************/
 void BrbGeradorSetup(void)
@@ -146,18 +104,17 @@ void BrbGeradorSetup(void)
     glob_gerador_base.pin_parada = GERADOR_PARADA_PIN;
     glob_gerador_base.pin_servo = GERADOR_SERVO_PIN;
     glob_gerador_base.pin_extra = GERADOR_EXTRA_PIN;
-    glob_gerador_base.pin_zerocross = GERADOR_ZEROCROSS_PIN;
+    glob_gerador_base.zero_power.pin = GERADOR_ZEROCROSS_PIN;
 
-    glob_gerador_base.pin_sensor_ac = SENSOR_VOLTAGE_AC_PIN;
-    glob_gerador_base.pin_sensor_dc = SENSOR_VOLTAGE_DC_PIN;
+    glob_gerador_base.sensor_power.pin = SENSOR_VOLTAGE_AC_PIN;
+    glob_gerador_base.sensor_sp01_in.pin = SENSOR_VOLTAGE_DC_PIN;
 
     BrbGeradorBase_Init(&glob_gerador_base);
 
-    attachInterrupt(digitalPinToInterrupt(glob_gerador_base.pin_zerocross), BrbGeradorBase_ZeroCrossPower, RISING);
+    attachInterrupt(digitalPinToInterrupt(glob_gerador_base.zero_power.pin), BrbGeradorBase_ZeroCrossPower, RISING);
 
     return;
 }
-#endif
 /**********************************************************************************************************************/
 void setup()
 {
@@ -183,7 +140,7 @@ void setup()
     LOG_NOTICE(glob_log_base, "BrbBox Panel Control - START [%u] - 0.1.2\r\n", micros());
     LOG_NOTICE(glob_log_base, "BRB [%p], RS485 [%p]\r\n", &glob_brb_base, &glob_rs485_sess);
     LOG_NOTICE(glob_log_base, "RS485 - ADDR 0x%02x UUID [%02x-%02x-%02x-%02x]\r\n",
-               glob_rs485_sess.address, glob_rs485_sess.uuid[0], glob_rs485_sess.uuid[1], glob_rs485_sess.uuid[2], glob_rs485_sess.uuid[3]);
+               glob_rs485_sess.data.address, glob_rs485_sess.data.uuid[0], glob_rs485_sess.data.uuid[1], glob_rs485_sess.data.uuid[2], glob_rs485_sess.data.uuid[3]);
     LOG_HEAP(glob_log_base);
 
     return;
@@ -212,11 +169,15 @@ void loop()
         glob_btn_base.buttons[BRB_BTN_PREV].hit = BrbDisplayBase_ScreenAction((BrbDisplayBase *)&glob_display_base, DISPLAY_ACTION_PREV);
     }
     
-    /* Do loop RS485 */
+    /* Do RS485 loop */
     BrbRS485Session_Loop(&glob_rs485_sess);
+    
+    /* Do Gerador loop */
     BrbGeradorBase_Loop(&glob_gerador_base);
+    
+    /* Do TONE loop */
     BrbToneBase_Loop(&glob_tone_base);
 
-    // LOG_INFO(glob_log_base, "last: %ld - cur %ld - delay %ld\n", glob_brb_base.us.last, glob_brb_base.us.cur, glob_brb_base.us.delay);
+    return;
 }
 /**********************************************************************************************************************/

@@ -46,7 +46,7 @@ int BrbGeradorBase_Init(BrbGeradorBase *gerador_base)
 		return -1;
 
 	/* Read EEPROM */
-	BrbBase_EEPROMRead(gerador_base->brb_base, (uint8_t *)&gerador_base->data, sizeof(gerador_base->data), BRB_PIN_DATA_OFFSET + 100 + (sizeof(BrbBasePinData) * TOTAL_PINS));
+	BrbBase_EEPROMRead(gerador_base->brb_base, (uint8_t *)&gerador_base->data, sizeof(gerador_base->data), GERADOR_EEPROM_OFFSET);
 
 	pinMode(gerador_base->pin_partida, OUTPUT);
 	digitalWrite(gerador_base->pin_partida, GERADOR_POWER_OFF);
@@ -57,11 +57,11 @@ int BrbGeradorBase_Init(BrbGeradorBase *gerador_base)
 	pinMode(gerador_base->pin_extra, OUTPUT);
 	digitalWrite(gerador_base->pin_extra, GERADOR_POWER_OFF);
 
-	if (gerador_base->pin_sensor_ac > 0)
-		pinMode(gerador_base->pin_sensor_ac, INPUT_PULLUP);
+	if (gerador_base->sensor_power.pin > 0)
+		pinMode(gerador_base->sensor_power.pin, INPUT_PULLUP);
 
-	if (gerador_base->pin_sensor_dc > 0)
-		pinMode(gerador_base->pin_sensor_dc, INPUT_PULLUP);
+	if (gerador_base->sensor_sp01_in.pin > 0)
+		pinMode(gerador_base->sensor_sp01_in.pin, INPUT_PULLUP);
 
 	BrbServoSetPosByPin(gerador_base->brb_base, gerador_base->pin_servo, GERADOR_SERVO_BB_POS_OPEN);
 
@@ -84,34 +84,51 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	gerador_base->info.gas = random(750, 1000) / 10.0;
 	gerador_base->info.load = random(250, 300) / 10.0;
 
-	gerador_base->info.zero_delta = (gerador_base->ms.cur - gerador_base->info.zero_last);
+	gerador_base->zerocross.ms_delta = (gerador_base->ms.cur - gerador_base->zerocross.ms_last);
 
 	/* We are waiting delay */
-	if ((gerador_base->info.zero_last <= 0) || (gerador_base->info.zero_delta >= GERADOR_TIMER_ZERO_WAIT_MS))
+	if ((gerador_base->zerocross.ms_last <= 0) || (gerador_base->zerocross.ms_delta >= GERADOR_TIMER_ZERO_WAIT_MS))
 	{
-		gerador_base->info.zero_last = gerador_base->ms.cur;
+		gerador_base->zerocross.ms_last = gerador_base->ms.cur;
 
 		noInterrupts();
-		gerador_base->info.zero_value = (gerador_base->info.zero_counter / (gerador_base->info.zero_delta / 1000.0)) / 2.0;
-		gerador_base->info.zero_counter = 0;
+		gerador_base->zero_power.value = (gerador_base->zero_power.counter / (gerador_base->zerocross.ms_delta / 1000.0)) / 2.0;
+		gerador_base->zero_power.counter = 0;
 		interrupts();
 	}
 
-	// LOG_NOTICE(gerador_base->brb_base->log_base, "POWER [%02.01f] [%02.01f]\n", gerador_base->info.power_ac, gerador_base->info.zero_value);
+	// LOG_NOTICE(gerador_base->brb_base->log_base, "POWER [%02.01f] [%02.01f]\n", gerador_base->sensor_power.value, gerador_base->zero_power.value);
 
 #define RDC1 30000.0
 #define RDC2 7500.0
 #define RDCR (RDC2 / (RDC2 + RDC1))
 
-	gerador_base->info.power_ac = ((analogRead(gerador_base->pin_sensor_ac) * 5.0) / 1024.0) / 0.013;
-	gerador_base->info.battery = ((analogRead(gerador_base->pin_sensor_dc) * 5.0) / 1024.0) / RDCR;
+	gerador_base->sensor_power.value = ((analogRead(gerador_base->sensor_power.pin) * 5.0) / 1024.0) / 0.013;
+	gerador_base->sensor_sp01_in.value = ((analogRead(gerador_base->sensor_sp01_in.pin) * 5.0) / 1024.0) / RDCR;
+
+	gerador_base->dht_data.ms_delta = (gerador_base->ms.cur - gerador_base->dht_data.ms_last);
+
+	if ((gerador_base->dht_sensor) && (gerador_base->dht_data.ms_last <= 0) || (gerador_base->dht_data.ms_delta >= 1000))
+    {
+		gerador_base->dht_data.ms_last = gerador_base->ms.cur;
+
+        gerador_base->dht_data.dht_temp = gerador_base->dht_sensor->readTemperature();
+        gerador_base->dht_data.dht_humi = gerador_base->dht_sensor->readHumidity();
+
+        /* Compute heat index in Celsius (isFahreheit = false) */
+        gerador_base->dht_data.dht_hidx = gerador_base->dht_sensor->computeHeatIndex(gerador_base->dht_data.dht_temp, gerador_base->dht_data.dht_humi, false);
+
+        gerador_base->dht_data.dht_temp = isnan(gerador_base->dht_data.dht_temp) ? 0.0 : gerador_base->dht_data.dht_temp;
+        gerador_base->dht_data.dht_humi = isnan(gerador_base->dht_data.dht_humi) ? 0.0 : gerador_base->dht_data.dht_humi;
+        gerador_base->dht_data.dht_hidx = isnan(gerador_base->dht_data.dht_hidx) ? 0.0 : gerador_base->dht_data.dht_hidx;
+    }
 
 	switch (gerador_base->state.code)
 	{
 	case GERADOR_STATE_NONE:
 	{
 		/* This can't happen here, do something */
-		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
+		if (gerador_base->sensor_power.value > GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value > 30)
 		{
 			BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_RUNNING, GERADOR_FAILURE_RUNNING_WITHOUT_START);
 
@@ -128,7 +145,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		BrbGeradorBase_PowerOff(gerador_base);
 
 		/* This can't happen here, do something */
-		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
+		if (gerador_base->sensor_power.value > GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value > 30)
 		{
 			BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_RUNNING, GERADOR_FAILURE_RUNNING_WITHOUT_START);
 
@@ -150,7 +167,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	}
 	case GERADOR_STATE_START_DELAY:
 	{
-		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
+		if (gerador_base->sensor_power.value > GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value > 30)
 		{
 			/* Power off pins */
 			BrbGeradorBase_PowerOff(gerador_base);
@@ -178,7 +195,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		/* Power off pins */
 		BrbGeradorBase_PowerOff(gerador_base);
 
-		if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
+		if (gerador_base->sensor_power.value > GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value > 30)
 		{
 			BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_RUNNING, GERADOR_FAILURE_NONE);
 
@@ -216,7 +233,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	}
 	case GERADOR_STATE_STOP_DELAY:
 	{
-		if (gerador_base->info.power_ac <= GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
+		if (gerador_base->sensor_power.value <= GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value < 30)
 		{
 			/* Power off pins */
 			BrbGeradorBase_PowerOff(gerador_base);
@@ -244,7 +261,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		/* Power off pins */
 		BrbGeradorBase_PowerOff(gerador_base);
 
-		if (gerador_base->info.power_ac <= GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
+		if (gerador_base->sensor_power.value <= GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value < 30)
 		{
 			BrbToneBase_PlayAlarm(gerador_base->tone_base);
 
@@ -273,7 +290,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	case GERADOR_STATE_RUNNING:
 	{
 		/* Check Power */
-		if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
+		if (gerador_base->sensor_power.value < GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value < 30)
 		{
 			BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_FAILURE, GERADOR_FAILURE_DOWN_WITHOUT_STOP);
 
@@ -299,7 +316,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		{
 		case GERADOR_FAILURE_RUNNING_WITHOUT_START:
 		{
-			if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
+			if (gerador_base->sensor_power.value < GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value < 30)
 			{
 				BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 				break;
@@ -309,7 +326,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		}
 		case GERADOR_FAILURE_DOWN_WITHOUT_STOP:
 		{
-			if (gerador_base->info.power_ac >= GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
+			if (gerador_base->sensor_power.value >= GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value > 30)
 			{
 				BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 				break;
@@ -319,7 +336,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		}
 		case GERADOR_FAILURE_START_RETRY_LIMIT:
 		{
-			if (gerador_base->info.power_ac >= GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value > 30)
+			if (gerador_base->sensor_power.value >= GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value > 30)
 			{
 				BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 				break;
@@ -329,7 +346,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 		}
 		case GERADOR_FAILURE_STOP_RETRY_LIMIT:
 		{
-			if (gerador_base->info.power_ac < GERADOR_TIMER_MIN_POWER && gerador_base->info.zero_value < 30)
+			if (gerador_base->sensor_power.value < GERADOR_TIMER_MIN_POWER && gerador_base->zero_power.value < 30)
 			{
 				BrbGeradorBase_PowerSetState(gerador_base, GERADOR_STATE_NONE, GERADOR_FAILURE_NONE);
 				break;
@@ -351,7 +368,7 @@ int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base)
 	}
 	}
 
-	if (gerador_base->info.power_ac > GERADOR_TIMER_MIN_POWER)
+	if (gerador_base->sensor_power.value > GERADOR_TIMER_MIN_POWER)
 	{
 		gerador_base->info.hourmeter_ms = gerador_base->info.hourmeter_ms + gerador_base->ms.delay;
 
@@ -488,7 +505,7 @@ int BrbGeradorBase_Save(BrbGeradorBase *gerador_base)
 		return -1;
 
 	/* Read EEPROM */
-	BrbBase_EEPROMWrite(gerador_base->brb_base, (uint8_t *)&gerador_base->data, sizeof(gerador_base->data), BRB_PIN_DATA_OFFSET + 100 + (sizeof(BrbBasePinData) * TOTAL_PINS));
+	BrbBase_EEPROMWrite(gerador_base->brb_base, (uint8_t *)&gerador_base->data, sizeof(gerador_base->data), GERADOR_EEPROM_OFFSET);
 
 	return 0;
 }

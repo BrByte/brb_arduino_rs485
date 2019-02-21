@@ -67,6 +67,25 @@ void BrbBaseLoop(BrbBase *brb_base)
     brb_base->us.cur = micros();
     brb_base->us.delay = brb_base->us.cur - brb_base->us.last;
 
+    brb_base->ms.lifetime_delay = brb_base->ms.lifetime_delay + brb_base->ms.delay;
+
+    /* 5 seconds delay */
+    if (brb_base->ms.lifetime_delay > 5000)
+    {
+        brb_base->ms.lifetime_delay = (brb_base->ms.lifetime_delay - 5000);
+
+        brb_base->data.lifetime_sec = brb_base->ms.lifetime_sec + 5;
+        brb_base->data.lifetime_sec = brb_base->ms.lifetime_sec + 5;
+
+        /* Save every 60 seconds */
+        if (brb_base->ms.lifetime_sec > 60)
+        {
+            brb_base->ms.lifetime_sec = (brb_base->ms.lifetime_sec - 60);
+
+            BrbBase_DataSave(brb_base);
+        }
+    }
+
     /* Dispatch Timers */
     BrbTimerDispatch(brb_base);
     
@@ -79,12 +98,32 @@ void BrbBaseLoop(BrbBase *brb_base)
     return;
 }
 /**********************************************************************************************************************/
+void BrbBase_DataLoad(BrbBase *brb_base)
+{
+    LOG_DEBUG(brb_base->log_base, "BRB - DATA LOAD\r\n");
+
+    /* Read EEPROM */
+    BrbBase_EEPROMRead(brb_base, (uint8_t *)&brb_base->data, sizeof(brb_base->data), 0);
+
+    return;
+}
+/**********************************************************************************************************************/
+void BrbBase_DataSave(BrbBase *brb_base)
+{
+    LOG_DEBUG(brb_base->log_base, "BRB - DATA SAVE\r\n");
+
+    /* Save to EEPROM */
+    BrbBase_EEPROMWrite(brb_base, (uint8_t *)&brb_base->data, sizeof(brb_base->data), 0);
+
+    return;
+}
+/**********************************************************************************************************************/
 void BrbBase_PinLoad(BrbBase *brb_base)
 {
     LOG_DEBUG(brb_base->log_base, "BRB - PIN LOAD\r\n");  
 
     /* Read EEPROM */
-    // BrbBase_EEPROMRead(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_PIN_DATA_OFFSET);
+    // BrbBase_EEPROMRead(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_EEPROM_OFFSET);
 
     return;
 }
@@ -105,7 +144,7 @@ void BrbBase_PinCheck(BrbBase *brb_base)
     //     pin_data        = (BrbBasePinData *)&brb_base->pin_data[i];
 
     //     /* Not a persist one */
-    //     if (!pin_data->persist || (pin_data->mask != BRB_PIN_DATA_MASK))
+    //     if (!pin_data->persist || (pin_data->mask != BRB_EEPROM_MASK))
     //         continue;
 
     //     BrbBase_PinSet(brb_base, i, pin_data->mode, pin_data->value);
@@ -150,7 +189,7 @@ void BrbBase_PinSave(BrbBase *brb_base)
     // LOG_DEBUG(brb_base->log_base, "BRB - PIN SAVE\r\n");
 
     // /* Read EEPROM */
-    // BrbBase_EEPROMWrite(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_PIN_DATA_OFFSET);
+    // BrbBase_EEPROMWrite(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_EEPROM_OFFSET);
 
     return;
 }
@@ -187,40 +226,52 @@ uint8_t BrbBase_PinGetMode(uint8_t pin)
 /**********************************************************************************************************************/
 int BrbBase_EEPROMRead(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset)
 {
-    // int byte_read;
+    int byte_read;
 
-    // if (!brb_base || !data_ptr)
-    //     return -1;
+    if (!brb_base || !data_ptr)
+        return -1;
 
-    // byte_read = EEPROM.read(eeprom_offset);
+    byte_read = EEPROM.read(eeprom_offset++);
 
-    // if (byte_read != BRB_PIN_DATA_MAGIC)
-    // {
-    //     /* Reset info */
-    //     memset(data_ptr, 0, data_sz);
+    if (byte_read != BRB_EEPROM_MAGIC)
+    {
+        /* Reset info */
+        memset(data_ptr, 0, data_sz);
 
-    //     return 0;
-    // }
+        return 0;
+    }
 
-    // for (int i = 0; i < data_sz; i++)
-    // {
-    //     data_ptr[i] = EEPROM.read(eeprom_offset + i + 1);
-    // }
+    for (int i = 0; i < data_sz; i++)
+    {
+        data_ptr[i] = EEPROM.read(eeprom_offset++);
+    }
+
+    byte_read = EEPROM.read(eeprom_offset++);
+
+    if (byte_read != BRB_EEPROM_MAGIC)
+    {
+        /* Reset info */
+        memset(data_ptr, 0, data_sz);
+
+        return 0;
+    }
 
     return 0;
 }
 /**********************************************************************************************************************/
 int BrbBase_EEPROMWrite(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset)
 {
-    // if (!brb_base || !data_ptr)
-    //     return -1;
+    if (!brb_base || !data_ptr)
+        return -1;
 
-    // EEPROM.write(eeprom_offset, BRB_PIN_DATA_MAGIC);
+    EEPROM.write(eeprom_offset++, BRB_EEPROM_MAGIC);
 
-    // for (int i = 0; i < data_sz; i++)
-    // {
-    //     EEPROM.write(eeprom_offset + i + 1, data_ptr[i]);
-    // }
+    for (int i = 0; i < data_sz; i++)
+    {
+        EEPROM.write(eeprom_offset++, data_ptr[i]);
+    }
+
+    EEPROM.write(eeprom_offset++, BRB_EEPROM_MAGIC);
 
     return 0;
 }

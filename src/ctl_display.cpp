@@ -139,10 +139,10 @@ int BrbAppDisplay_ScreenInfo(void *brb_base_ptr, void *display_base_ptr)
     pos_y = 50;
 
     display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("Bateria"), gerador_base->info.battery, 1, PSTR("VDC"));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("Bateria"), gerador_base->sensor_sp01_in.value, 1, PSTR("VDC"));
 
     display_base->tft->fillRect(pos_x + 160, pos_y + 15, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_BoxSub(display_base, pos_x + 160, pos_y, PSTR("Energia"), gerador_base->info.power_ac, 1, PSTR("VAC"));
+    BrbDisplayBase_BoxSub(display_base, pos_x + 160, pos_y, PSTR("Energia"), gerador_base->sensor_power.value, 1, PSTR("VAC"));
 
     pos_x = 10;
     pos_y = pos_y + 65;
@@ -159,57 +159,47 @@ int BrbAppDisplay_ScreenInfo(void *brb_base_ptr, void *display_base_ptr)
 int BrbAppDisplay_ScreenTemp(void *brb_base_ptr, void *display_base_ptr)
 {
     BrbDisplayBase *display_base = (BrbDisplayBase *)display_base_ptr;
-    // BrbGeradorBase *gerador_base = (BrbGeradorBase *)&glob_gerador_base;
-
-    /* This goes to the loop LIB */
-    float dht_t = dht_sensor.readTemperature();
-    float dht_h = dht_sensor.readHumidity();
-
-    // Compute heat index in Fahrenheit (the default)
-    // float dht_hif = dht.computeHeatIndex(f, h);
-
-    // Compute heat index in Celsius (isFahreheit = false)
-    float dht_hic = dht_sensor.computeHeatIndex(dht_t, dht_h, false);
+    BrbGeradorBase *gerador_base = (BrbGeradorBase *)&glob_gerador_base;
 
     int pos_x;
     int pos_y;
 
     int sz_w = 224;
-    int sz_h = 50;
+    int sz_h = 40;
 
     if (display_base->screen_cur != display_base->screen_last)
     {
         BrbDisplayBase_SetBg(display_base);
         BrbDisplayBase_SetTitle(display_base, PSTR("Temperatura"));
-
-        // display_base->tft->fillRect(0, 50, sz_w, 15, ILI9341_LIGHTSALMON);
-        // display_base->tft->fillRect(sz_w, 50, sz_w, 15, ILI9341_LIMEGREEN);
-
-        // display_base->tft->fillRect(0, 50, 320 - sz_w, 15, ILI9341_LIGHTSALMON);
-        // display_base->tft->fillRect(sz_w, 50, 320 - sz_w, 15, ILI9341_LIMEGREEN);
     }
 
-    pos_x = 20;
-    pos_y = 50;
-
-    BrbDisplayBase_DrawBarGraph(display_base, pos_x, pos_y, 130, isnan(dht_t) ? 0 : dht_t, -50, 150);
-
-    pos_x = 90;
-    pos_y = 50;
-
-    display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("TEMP"), isnan(dht_t) ? 0 : dht_t, 1, PSTR("C"));
-
-    // BrbDisplayBase_DrawArcSeg(display_base, isnan(dht_t) ? 0 : dht_t, 0, 130, pos_x, pos_y, 100, PSTR("Celsius"), DISPLAY_ARC_GREEN2RED, 0, 3, 5);
-
-    pos_x = sz_w;
+    pos_x = DISPLAY_SZ_MARGIN;
     pos_y = sz_h;
 
-    display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("HUMIDADE"), isnan(dht_h) ? 0 : dht_h, 1, PSTR("%"));
+    BrbDisplayBase_DrawBarGraph(display_base, pos_x, pos_y, 130, gerador_base->dht_data.dht_temp, -50, 150);
 
-    display_base->tft->fillRect(pos_x, pos_y + 75, 90, 30, ILI9341_WHITE);
-    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y + 60, PSTR("HEAT INDEX"), isnan(dht_hic) ? 0 : dht_hic, 1, PSTR(""));
+    pos_x = 90;
+    pos_y = sz_h;
+
+    display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, DISPLAY_COLOR_BG);
+    display_base->box.text_color = BrbDisplayBase_Rainbow(map(gerador_base->dht_data.dht_temp, -25, 100, 0, 127));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("TEMP"), gerador_base->dht_data.dht_temp, 1, PSTR("C"));
+
+    // BrbDisplayBase_DrawArcSeg(display_base, gerador_base->dht_data.dht_temp, 0, 130, pos_x, pos_y, 100, PSTR("Celsius"), DISPLAY_ARC_GREEN2RED, 0, 3, 5);
+
+    pos_x = pos_x;
+    pos_y = pos_y + 60;
+
+    display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, DISPLAY_COLOR_BG);
+    display_base->box.text_color = BrbDisplayBase_Rainbow(map(gerador_base->dht_data.dht_humi, -25, 100, 127, 0));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("HUMIDADE"), gerador_base->dht_data.dht_humi, 1, PSTR("%"));
+
+    pos_x = pos_x;
+    pos_y = pos_y + 60;
+
+    display_base->tft->fillRect(pos_x, pos_y + 15, 90, 30, DISPLAY_COLOR_BG);
+    display_base->box.text_color = BrbDisplayBase_Rainbow(map(gerador_base->dht_data.dht_hidx, -25, 100, 0, 127));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("HEAT INDEX"), gerador_base->dht_data.dht_hidx, 1, PSTR("C"));
 
     return 0;
 }
@@ -382,8 +372,8 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
     servo_bb = BrbServoGrabByPin(gerador_base->brb_base, gerador_base->pin_servo);
 
     display_base->tft->fillRect(pos_x, pos_y + 15, 300, 30, ILI9341_WHITE);
-    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("ENERGIA"), gerador_base->info.power_ac, 1, PSTR("VAC"));
-    BrbDisplayBase_BoxSub(display_base, pos_x + 110, pos_y, PSTR("FREQUENCIA"), gerador_base->info.zero_value, 1, PSTR("Hz"));
+    BrbDisplayBase_BoxSub(display_base, pos_x, pos_y, PSTR("ENERGIA"), gerador_base->sensor_power.value, 1, PSTR("VAC"));
+    BrbDisplayBase_BoxSub(display_base, pos_x + 110, pos_y, PSTR("FREQUENCIA"), gerador_base->zero_power.value, 1, PSTR("Hz"));
     BrbDisplayBase_BoxSub(display_base, pos_x + 210, pos_y, PSTR("SERVO"), servo_bb ? servo_bb->pos_cur : 0, 1, PSTR("o"));
     // BrbDisplayBase_BoxMax(display_base, pos_x, pos_y, PSTR("Tentativas"), gerador_base->state.retry, retry_max);
 
@@ -392,7 +382,7 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
 
     if (display_base->flags.on_action)
     {
-        if (display_base->action_code == BRB_BTN_SELECT)
+        if (display_base->action_code == DISPLAY_ACTION_SELECT)
         {
             if (display_base->user_int == 1)
             {
@@ -434,7 +424,7 @@ int BrbAppDisplay_ScreenControl(void *brb_base_ptr, void *display_base_ptr)
 
             return 0;
         }
-        else if ((display_base->action_code == BRB_BTN_NEXT) || (display_base->action_code == BRB_BTN_PREV))
+        else if ((display_base->action_code == DISPLAY_ACTION_NEXT) || (display_base->action_code == DISPLAY_ACTION_PREV))
         {
             display_base->user_int = !display_base->user_int;
         }
@@ -475,7 +465,7 @@ int BrbAppDisplay_ScreenConsume(void *brb_base_ptr, void *display_base_ptr)
 
     if (display_base->flags.on_action)
     {
-        if (display_base->action_code == BRB_BTN_SELECT)
+        if (display_base->action_code == DISPLAY_ACTION_SELECT)
         {
             if (display_base->user_int == 1)
             {
@@ -490,7 +480,7 @@ int BrbAppDisplay_ScreenConsume(void *brb_base_ptr, void *display_base_ptr)
 
             return 0;
         }
-        else if ((display_base->action_code == BRB_BTN_NEXT) || (display_base->action_code == BRB_BTN_PREV))
+        else if ((display_base->action_code == DISPLAY_ACTION_NEXT) || (display_base->action_code == DISPLAY_ACTION_PREV))
         {
             display_base->user_int = !display_base->user_int;
         }

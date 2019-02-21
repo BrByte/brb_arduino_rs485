@@ -46,7 +46,7 @@ static int BrbAppRS485_SessionActionHandShakeCB(void *base_ptr, int action_code,
     // BrbRS485PacketHandShake *pkt_recv_hs    = (BrbRS485PacketHandShake *)buffer_ptr;
 
     // LOG_INFO(rs485_sess->log_base, "GET HANDSHAKE [%02x][%02x][%02x][%02x]\n",
-    // 		pkt_recv_hs->uuid[0], pkt_recv_hs->uuid[1], pkt_recv_hs->uuid[2], pkt_recv_hs->uuid[3]);
+    // 		pkt_recv_hs->data.uuid[0], pkt_recv_hs->data.uuid[1], pkt_recv_hs->data.uuid[2], pkt_recv_hs->data.uuid[3]);
 
     return RS485_PKT_RETURN_QUIET;
 }
@@ -79,7 +79,7 @@ static int BrbAppRS485_SessionActionGetAnalogCB(void *base_ptr, int action_code,
 
     /* Inverse the order two reply */
     pkt_reply->hdr.dst = pkt_recv->hdr.src;
-    pkt_reply->hdr.src = rs485_sess->address;
+    pkt_reply->hdr.src = rs485_sess->data.address;
     pkt_reply->hdr.id = pkt_recv->hdr.id;
     pkt_reply->hdr.type = RS485_PKT_TYPE_CMD_GET_A;
     pkt_reply->hdr.len = sizeof(BrbRS485PacketData) + (sizeof(BrbRS485PacketPinData) * (pin_max - pin_begin));
@@ -199,7 +199,7 @@ static int BrbAppRS485_SessionActionGetDigitalCB(void *base_ptr, int action_code
 
     /* Inverse the order two reply */
     pkt_reply->hdr.dst = pkt_recv->hdr.src;
-    pkt_reply->hdr.src = rs485_sess->address;
+    pkt_reply->hdr.src = rs485_sess->data.address;
     pkt_reply->hdr.id = pkt_recv->hdr.id;
     pkt_reply->hdr.type = RS485_PKT_TYPE_CMD_GET_D;
     pkt_reply->hdr.len = sizeof(BrbRS485PacketData) + (sizeof(BrbRS485PacketPinData) * (pin_max - pin_begin));

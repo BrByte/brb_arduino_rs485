@@ -57,15 +57,8 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess)
 	if (!rs485_sess)
 		return -1;
 
-	LOG_DEBUG(rs485_sess->log_base, "BrbRS485Session_Init - [%p]\r\n", rs485_sess);
-	delay(10);
-
-	memset((uint8_t *)&rs485_sess->uuid, 0, sizeof(rs485_sess->uuid));
-
-	/* Read Client Address */
-	// BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->uuid, 4, 0, 0);
-	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->uuid, 4, 4, 0);
-	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->address, 1, 8, 0);
+	/* Read data */
+	BrbRS485Session_DataLoad(rs485_sess);
 
 	/* receive pin, transmit pin */
 	if (rs485_sess->serial == NULL)
@@ -82,14 +75,8 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess)
 	pinMode(rs485_sess->pinRO, INPUT);
 #endif
 
-	LOG_DEBUG(rs485_sess->log_base, "BRB_RS485 - [%p] [%p] [%p] BAUDRATE [%d]\r\n", rs485_sess, rs485_sess->serial, &Serial3, BRB_RS485_BAUDRATE);
-	delay(10);
-
 	/* Initialize SoftwareSerial to RS485 */
 	rs485_sess->serial->begin(BRB_RS485_BAUDRATE);
-
-	LOG_DEBUG(rs485_sess->log_base, "BRB_RS485 - [%p] [%p] [%p] BAUDRATE [%d]\r\n", rs485_sess, rs485_sess->serial, &Serial3, BRB_RS485_BAUDRATE);
-	delay(10);
 
 	/* set up various pins */
 	if (rs485_sess->pinREDE > 0)
@@ -97,17 +84,11 @@ int BrbRS485Session_Init(BrbRS485Session *rs485_sess)
 		pinMode(rs485_sess->pinREDE, OUTPUT);
 	}
 
-	LOG_DEBUG(rs485_sess->log_base, "rs485_sess - [%p]\r\n", rs485_sess);
-	delay(10);
-
 	/* Add timer to send HandShake */
 	rs485_sess->timer_id = BrbTimerAdd(rs485_sess->brb_base, BRB_RS485_HANDSHAKE_TIME, BRB_RS485_HANDSHAKE_REPEAT, BrbRS485Session_TimerHandShakeCB, rs485_sess);
 
 	/* Send hello to notify my new ID */
 	BrbRS485Session_SendHandShake(rs485_sess);
-
-	LOG_DEBUG(rs485_sess->log_base, "rs485_sess - [%p]\r\n", rs485_sess);
-	delay(10);
 
 	return 0;
 }
@@ -119,34 +100,41 @@ int BrbRS485Session_Loop(BrbRS485Session *rs485_sess)
 	return 0;
 }
 /**********************************************************************************************************************/
-int BrbRS485Session_ReadAddr(BrbRS485Session *rs485_sess, uint8_t *addr_ptr, uint8_t addr_sz, uint8_t eeprom_offset, uint8_t reset)
+int BrbRS485Session_DataLoad(BrbRS485Session *rs485_sess)
 {
-	uint8_t new_byte = 0;
+	/* Clear all data before loading */
+	memset((uint8_t *)&rs485_sess->data, 0, sizeof(rs485_sess->data));
+
+	/* Read EEPROM */
+	BrbBase_EEPROMRead(rs485_sess->brb_base, (uint8_t *)&rs485_sess->data, sizeof(rs485_sess->data), BRB_RS485_EEPROM_OFFSET);
+
+	int changed = 0;
 
 	if (!rs485_sess)
 		return -1;
 
-	for (int c = 0; c < addr_sz; c++)
+	if (rs485_sess->data.address == 0 || rs485_sess->data.address == 255)
 	{
-		new_byte = 0;
-		if (addr_ptr[c] == 0 || reset == 1)
+		rs485_sess->data.address = random(1, 254);
+		changed = 1;
+	}
+
+	for (int i = 0; i < sizeof(rs485_sess->data.uuid); i++)
+	{
+		if (rs485_sess->data.uuid[i] == 0 || rs485_sess->data.uuid[i] == 255)
 		{
-			new_byte = EEPROM.read(eeprom_offset + c);
-
-			// LOG_INFO(rs485_sess->log_base, "0x%02x - r [0x%02x]\n", rs485_sess, new_byte);
-
-			if (new_byte == 0 || new_byte == 255 || reset == 1)
-			{
-				new_byte = random(1, 254);
-
-				// LOG_INFO(rs485_sess->log_base, "0x%02x - s [0x%02x]\n", rs485_sess, new_byte);
-
-				EEPROM.write(eeprom_offset + c, new_byte);
-			}
-
-			addr_ptr[c] = new_byte;
+			rs485_sess->data.uuid[i] = random(1, 254);
+			changed = 1;
 		}
 	}
+
+	return 0;
+}
+/**********************************************************************************************************************/
+int BrbRS485Session_DataSave(BrbRS485Session *rs485_sess)
+{
+	/* Read EEPROM */
+	BrbBase_EEPROMWrite(rs485_sess->brb_base, (uint8_t *)&rs485_sess->data, sizeof(rs485_sess->data), BRB_RS485_EEPROM_OFFSET);
 
 	return 0;
 }
@@ -159,64 +147,6 @@ static int BrbRS485Session_TimerHandShakeCB(void *base_ptr, void *cb_data_ptr)
 	// LOG_INFO(rs485_sess->log_base, "TIMER: %d cb: 0x%02x\n", timer->timer_id, rs485_sess);
 
 	BrbRS485Session_SendHandShake(rs485_sess);
-
-	return 0;
-}
-/**********************************************************************************************************************/
-int BrbRS485Session_SetAddress(BrbRS485Session *rs485_sess, uint16_t address)
-{
-	uint8_t *addr_ptr;
-
-	/* sanitize */
-	if (!rs485_sess)
-		return -1;
-
-	addr_ptr = (uint8_t *)&address;
-
-	//LOG_INFO(rs485_sess->log_base, "SET ID %d -> %d\n", rs485_sess->address, address);
-
-	/* Read Client Address */
-	EEPROM.write(0, addr_ptr[0]);
-
-	BrbRS485Session_ReadAddr(rs485_sess, (uint8_t *)&rs485_sess->address, 1, 0, 0);
-
-	return 0;
-}
-/**********************************************************************************************************************/
-int BrbRS485Session_SetUUID(BrbRS485Session *rs485_sess, uint8_t reset)
-{
-	int eeprom_offset = 2;
-	uint8_t new_byte = 0;
-	uint8_t *uuid_addr;
-
-	if (!rs485_sess)
-		return -1;
-
-	uuid_addr = (uint8_t *)&rs485_sess->uuid;
-
-	// eeprom_read_block((void *)&rs485_sess->uuid, (void *)1, sizeof(rs485_sess->uuid));
-
-	for (int c = 0; c < 1; c++)
-	{
-		new_byte = 0;
-		if (uuid_addr[c] == 0 || reset == 1)
-		{
-			new_byte = EEPROM.read(eeprom_offset + c);
-
-			// LOG_INFO(rs485_sess->log_base, "0x%02x - r [0x%02x]\n", rs485_sess, new_byte);
-
-			if (new_byte == 0 || new_byte == 255 || reset == 1)
-			{
-				new_byte = random(1, 254);
-
-				// LOG_INFO(rs485_sess->log_base, "0x%02x - s [0x%02x]\n", rs485_sess, new_byte);
-
-				EEPROM.write(eeprom_offset + c, new_byte);
-			}
-
-			uuid_addr[c] = new_byte;
-		}
-	}
 
 	return 0;
 }
@@ -349,7 +279,7 @@ int BrbRS485Session_SendACK(BrbRS485Session *rs485_sess, BrbRS485PacketHdr *rs48
 {
 	BrbRS485PacketHdr *rs485_packet_ack = (BrbRS485PacketHdr *)&rs485_sess->pkt.out.data;
 
-	rs485_packet_ack->src = rs485_sess->address;
+	rs485_packet_ack->src = rs485_sess->data.address;
 	rs485_packet_ack->dst = rs485_packet->src;
 	rs485_packet_ack->magic = BRB_RS485_MAGIC;
 	rs485_packet_ack->type = RS485_PKT_TYPE_ACK;
@@ -364,13 +294,13 @@ int BrbRS485Session_SendHandShake(BrbRS485Session *rs485_sess)
 {
 	BrbRS485PacketHandShake *rs485_pkt_hs = (BrbRS485PacketHandShake *)&rs485_sess->pkt.out.data;
 
-	rs485_pkt_hs->hdr.src = rs485_sess->address;
+	rs485_pkt_hs->hdr.src = rs485_sess->data.address;
 	rs485_pkt_hs->hdr.dst = 0xFF;
 	rs485_pkt_hs->hdr.type = RS485_PKT_TYPE_HANDSHAKE;
 	rs485_pkt_hs->hdr.len = sizeof(BrbRS485PacketHandShake);
 	rs485_pkt_hs->hdr.id = 0;
 
-	memcpy(&rs485_pkt_hs->uuid, &rs485_sess->uuid, sizeof(rs485_pkt_hs->uuid));
+	memcpy(&rs485_pkt_hs->uuid, &rs485_sess->data.uuid, sizeof(rs485_pkt_hs->uuid));
 
 	LOG_INFO(rs485_sess->log_base, "Send handshake - b:%u sz:%u buf i:%u s:%u pkt:%u/%u\r\n",
 			 rs485_sess->flags.has_begin, rs485_sess->pkt.in.sz, rs485_sess->buf.index, rs485_sess->buf.sz,
@@ -654,9 +584,9 @@ static uint8_t BrbRS485Session_PktParser(BrbRS485Session *rs485_sess, BrbRS485Pa
 		}
 	}
 	/* Is it not for my bus addr? */
-	else if (rs485_sess->address != brb_pkt->dst)
+	else if (rs485_sess->data.address != brb_pkt->dst)
 	{
-		// LOG_WARN(rs485_sess->log_base, "Not for me [0x%02x] dst [0x%02x]\r\n", rs485_sess->address, brb_pkt->dst);
+		// LOG_WARN(rs485_sess->log_base, "Not for me [0x%02x] dst [0x%02x]\r\n", rs485_sess->data.address, brb_pkt->dst);
 		/* Its not a bad packet, just a packet we don't care about */
 		return 0;
 	}

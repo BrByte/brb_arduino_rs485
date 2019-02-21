@@ -148,6 +148,8 @@
 #define GERADOR_POWER_ON HIGH
 #define GERADOR_POWER_OFF LOW
 #endif
+
+#define GERADOR_EEPROM_OFFSET (BRB_RS485_EEPROM_OFFSET + 64)
 /**********************************************************************************************************************/
 /* ENUMS */
 /**********************************************************/
@@ -188,17 +190,16 @@ typedef struct _BrbGeradorBase
 
 	long delay;
 
-	// BrbServo servo_bb;
-
 	int pin_servo;
 	int pin_partida;
 	int pin_parada;
 
 	int pin_extra;
-	int pin_zerocross;
 
-	int pin_sensor_ac;
-	int pin_sensor_dc;
+	BrbZeroCross zero_power;
+	BrbSensorVoltage sensor_power;
+
+	BrbSensorVoltage sensor_sp01_in;
 
 	struct
 	{
@@ -207,6 +208,22 @@ typedef struct _BrbGeradorBase
 		long delay;
 
 	} ms;
+
+	struct
+	{
+		int ms_delta;
+		int ms_last;
+
+	} zerocross;
+	
+	struct
+	{
+		float dht_temp;
+		float dht_humi;
+		float dht_hidx;
+		int ms_delta;
+		int ms_last;
+	} dht_data;
 
 	struct
 	{
@@ -222,17 +239,7 @@ typedef struct _BrbGeradorBase
 
 	struct
 	{
-
-		double battery;
 		double gas;
-
-		double power_ac;
-
-		double zero_value;
-		int zero_counter;
-		int zero_delta;
-		int zero_last;
-
 		double load;
 
 		long hourmeter_ms;
@@ -292,11 +299,6 @@ extern BrbBtnBase glob_btn_base;
 extern BrbDisplayBase glob_display_base;
 extern BrbToneBase glob_tone_base;
 
-#ifdef PDU_SYSTEM_COMPILE
-extern BrbPDUBase glob_pdu_base;
-#else
 extern BrbGeradorBase glob_gerador_base;
-#endif
-
 /**********************************************************************************************************************/
 #endif /* MAIN_H_ */

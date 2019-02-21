@@ -44,6 +44,7 @@
 #include "Boards.h"
 
 #include "log/BrbLogBase.h"
+#include "data/BrbDLinkedList.h"
 #include "data/BrbMicroScript.h"
 
 static const uint8_t glob_analog_pins[] = {
@@ -120,9 +121,9 @@ static const uint8_t glob_analog_pins[] = {
 // #define MAX_DIG_PIN NUM_DIGITAL_PINS
 #define MAX_DIG_PIN PIN_A0
 
-#define BRB_PIN_DATA_MAGIC 157
-#define BRB_PIN_DATA_MASK 137
-#define BRB_PIN_DATA_OFFSET 32
+#define BRB_EEPROM_MAGIC 157
+#define BRB_EEPROM_MASK 137
+#define BRB_EEPROM_OFFSET 32
 
 #define BRB_COMPARE_NUM(a, b) (a > b) - (a < b)
 /**********************************************************************************************************************/
@@ -198,6 +199,9 @@ typedef struct _BrbBase
         long last;
         long cur;
         int delay;
+
+        long lifetime_delay;
+        long lifetime_sec;
     } ms;
 
     struct
@@ -218,12 +222,22 @@ typedef struct _BrbBase
         int count;
         BrbServo arr[MAX_SERVO];
     } servo;
+
+    struct
+    {
+        long long lifetime_sec;
+        int upcount;
+    } data;
+
 } BrbBase;
 /**********************************************************************************************************************/
 /* PUBLIC FUNCTIONS */
 /**********************************************************/
 void BrbBaseInit(BrbBase *brb_base);
 void BrbBaseLoop(BrbBase *brb_base);
+
+void BrbBase_DataLoad(BrbBase *brb_base);
+void BrbBase_DataSave(BrbBase *brb_base);
 
 /**********************************************************/
 /* BrbTimer */
