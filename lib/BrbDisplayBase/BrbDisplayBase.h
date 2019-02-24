@@ -46,6 +46,7 @@
 #include <fonts/Arial14.h>
 #include <fonts/OpenSans36.h>
 #include <fonts/Ubuntu36.h>
+#include <fonts/TrebuchetMS34.h>
 /**********************************************************************************************************************/
 /* DEFINES */
 /**********************************************************/
@@ -64,7 +65,8 @@
 #define DISPLAY_FONT_ARC_SUB Arial_14
 
 #define DISPLAY_FONT_BOX_TITLE Arial_14
-#define DISPLAY_FONT_BOX_VALUE Ubuntu36
+#define DISPLAY_FONT_BOX_VALUE TrebuchetMS34
+#define DISPLAY_FONT_BOX_SCALE 1
 #define DISPLAY_FONT_BOX_SUB Arial_14
 /**********************************************************/
 /* SIZE */
@@ -75,7 +77,9 @@
 #define DISPLAY_SZ_BORDER 0
 #define DISPLAY_SZ_MARGIN DISPLAY_SZ_BORDER + 5
 
-#define DISPLAY_SZ_TITLE_M 5
+#define DISPLAY_SZ_BOX_H 12
+
+#define DISPLAY_SZ_TITLE_M 8
 #define DISPLAY_SZ_TITLE_H 25
 #define DISPLAY_SZ_TITLE_W DISPLAY_SZ_DISPLAY_W - (DISPLAY_SZ_MARGIN + DISPLAY_SZ_TITLE_M)
 /**********************************************************/
@@ -85,7 +89,7 @@
 #define DISPLAY_COLOR_BG ILI9341_WHITE
 
 #define DISPLAY_COLOR_TITLE_TEXT ILI9341_WHITE
-#define DISPLAY_COLOR_TITLE_BG ILI9341_BLUE
+#define DISPLAY_COLOR_TITLE_BG ILI9341_MIDNIGHTBLUE
 
 #define DISPLAY_COLOR_TEXT_DEFAULT ILI9341_BLACK
 
@@ -151,7 +155,9 @@ typedef struct _BrbDisplayBase
 	struct
 	{
 		uint16_t bg_color;
+
 		uint16_t text_color;
+		uint16_t text_scale;
 	} box;
 
 	// BrbDisplayScreenEvents cb_show[DISPLAY_SCREEN_LASTITEM];
@@ -187,10 +193,13 @@ int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vm
 
 int BrbDisplayBase_BoxTitle(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr);
 int BrbDisplayBase_BoxSub(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr, double value, int dots, const char *unit_ptr);
+
+int BrbDisplayBase_BoxUptime(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr, long seconds);
 int BrbDisplayBase_BoxMax(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr, int value, int max);
 int BrbDisplayBase_BoxValue(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, double value, int dots);
 int BrbDisplayBase_BoxUnit(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *unit_ptr);
 
+int BrbDisplayBase_BoxFmt(BrbDisplayBase *display_base, int16_t pos_x, int16_t pos_y, const char *title_ptr, const char *format, ...);
 /**********************************************************************************************************************/
 
 /**********************************************************************************************************************/

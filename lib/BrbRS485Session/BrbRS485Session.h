@@ -68,9 +68,15 @@ typedef struct _BrbRS485StatsData
 {
 	struct
 	{
+		long last_write;
+		
+	} ms;
+
+	struct
+	{
 		uint32_t bcast;
 		uint32_t srv;
-		uint32_t me;
+		// uint32_t me;
 		uint32_t tx;
 		uint32_t rx;
 	} byte;
@@ -78,7 +84,7 @@ typedef struct _BrbRS485StatsData
 	struct
 	{
 		uint32_t bcast;
-		uint32_t srv;
+		// uint32_t srv;
 		uint32_t me;
 		uint32_t tx;
 		uint32_t rx;
@@ -126,6 +132,7 @@ typedef enum
 	RS485_PKT_TYPE_CMD_SET_SCRIPT,
 
 	RS485_PKT_TYPE_REPLY,
+	RS485_PKT_TYPE_DATA,
 
 	RS485_PKT_TYPE_LAST_ITEM
 
@@ -139,6 +146,16 @@ typedef enum
 	RS485_PKT_RETURN_LAST_ITEM
 
 } BrbRS485PacketReply;
+
+typedef enum
+{
+	RS485_PKT_DATA_TYPE_NONE,
+	RS485_PKT_DATA_TYPE_ACTION,
+	RS485_PKT_DATA_TYPE_INFORM,
+	RS485_PKT_DATA_TYPE_NOTIFY,
+	RS485_PKT_DATA_TYPE_LAST_ITEM
+
+} BrbRS485PacketDataType;
 
 /* 8 Bytes = 64 bits */
 typedef struct _BrbRS485PacketHdr
@@ -160,12 +177,22 @@ typedef struct _BrbRS485PacketHandShake
 	uint8_t uuid[4];
 } BrbRS485PacketHandShake;
 
+typedef struct _BrbRS485PacketVal
+{
+	uint8_t type;
+	uint8_t code;
+	uint8_t pad0;
+	uint8_t pad1;
+
+} BrbRS485PacketVal;
+
 /* 12 Bytes = 96 bits - 64 HDR + 32 UUID */
 typedef struct _BrbRS485PacketData
 {
 	BrbRS485PacketHdr hdr;
+	
 	/* This here can be used as map from 16 bits */
-	uint32_t val;
+	BrbRS485PacketVal val;
 } BrbRS485PacketData;
 
 /* 12 Bytes = 96 bits - 64 HDR + 32 BODY */
@@ -248,6 +275,8 @@ typedef struct _BrbRS485Session
 #endif
 
 	long baudrate;
+	
+	uint8_t device_type;
 
 
 	int pinRO; 		// rx pin
@@ -264,8 +293,13 @@ typedef struct _BrbRS485Session
 	/* Data is persistent to EEPROM, when saved */
 	struct
 	{
-		uint8_t address;
 		uint8_t uuid[4];
+
+		uint8_t address;
+		uint8_t pad_01;
+		uint8_t pad_02;
+		uint8_t pad_03;
+
 	} data;
 
 	/* Buff to read data */
@@ -319,6 +353,7 @@ int BrbRS485Session_SendPacket(BrbRS485Session *rs485_sess, const byte *data_ptr
 
 int BrbRS485Session_SendMsg(BrbRS485Session *rs485_sess, byte src, byte dst, char *buffer_ptr, unsigned int buffer_sz);
 int BrbRS485Session_SendHandShake(BrbRS485Session *rs485_sess);
+int BrbRS485Session_SendPacketData(BrbRS485Session *rs485_sess, uint8_t dst, BrbRS485PacketVal *val);
 
 int BrbRS485Session_ReadByte(BrbRS485Session *rs485_sess, uint8_t byte_read);
 int BrbRS485Session_ReadMessage(BrbRS485Session *rs485_sess);

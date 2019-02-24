@@ -47,55 +47,6 @@
 #include "data/BrbDLinkedList.h"
 #include "data/BrbMicroScript.h"
 
-static const uint8_t glob_analog_pins[] = {
-    A0,A1,A2,A3,A4,A5,A6,A7,
-#ifdef A8
-    A9,
-#endif
-#ifdef A10
-    A10,
-#endif
-#ifdef A11
-    A12,
-#endif
-#ifdef A12
-    A12,
-#endif
-#ifdef A13
-    A13,
-#endif
-#ifdef A14
-    A14,
-#endif
-#ifdef A15
-    A15,
-#endif
-#ifdef A16
-    A16,
-#endif
-#ifdef A17
-    A17,
-#endif
-#ifdef A18
-    A18,
-#endif
-#ifdef A19
-    A19,
-#endif
-#ifdef A21
-    A21,
-#endif
-#ifdef A22
-    A22,
-#endif
-#ifdef A23
-    A23,
-#endif
-#ifdef A24
-    A24,
-#endif
-};
-
 /**********************************************************************************************************************/
 /* DEFINES */
 /**********************************************************/
@@ -183,6 +134,22 @@ typedef struct _BrbServo
     
 } BrbServo;
 /**********************************************************/
+typedef struct _BrbSensorVoltage
+{
+	double value;
+	int counter;
+	int pin;
+
+} BrbSensorVoltage;
+
+typedef struct _BrbZeroCross
+{
+	double value;
+	int counter;
+	int pin;
+
+} BrbZeroCross;
+/**********************************************************/
 typedef struct _BrbBase
 {
 	BrbLogBase *log_base;
@@ -239,6 +206,7 @@ void BrbBaseLoop(BrbBase *brb_base);
 void BrbBase_DataLoad(BrbBase *brb_base);
 void BrbBase_DataSave(BrbBase *brb_base);
 
+int BrbBase_FreeRAM(void);
 /**********************************************************/
 /* BrbTimer */
 /**********************************************************/
@@ -251,9 +219,11 @@ void BrbTimerDispatch(BrbBase *brb_base);
 /**********************************************************/
 void BrbBase_PinLoad(BrbBase *brb_base);
 void BrbBase_PinCheck(BrbBase *brb_base);
-void BrbBase_PinSet(BrbBase *brb_base, int pin_num, int pin_mode, int pin_value);
+// void BrbBase_PinSet(BrbBase *brb_base, int pin_num, int pin_mode, int pin_value);
 void BrbBase_PinSave(BrbBase *brb_base);
+
 uint8_t BrbBase_PinGetMode(uint8_t pin);
+uint8_t BrbBase_PinGetAnalogPin(uint8_t pin);
 
 int BrbBase_EEPROMRead(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset);
 int BrbBase_EEPROMWrite(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset);
@@ -267,22 +237,6 @@ BrbServo *BrbServoGrabByPin(BrbBase *brb_base, int pin);
 int BrbServoAttach(BrbBase *brb_base, BrbServo *servo, int pin);
 BrbServo *BrbServoSetPosByPin(BrbBase *brb_base, int pin, int pos_set);
 BrbServo *BrbServoSetPos(BrbBase *brb_base, BrbServo *servo, int pos_set);
-/**********************************************************************************************************************/
-typedef struct _BrbSensorVoltage
-{
-	double value;
-	int counter;
-	int pin;
-
-} BrbSensorVoltage;
-
-typedef struct _BrbZeroCross
-{
-	double value;
-	int counter;
-	int pin;
-
-} BrbZeroCross;
 /**********************************************************************************************************************/
 
 #endif /* BRB_BASE_H_ */

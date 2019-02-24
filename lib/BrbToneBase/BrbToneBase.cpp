@@ -38,8 +38,6 @@ int BrbToneBase_PlayStarWars(BrbToneBase *tone_base);
 /**********************************************************************************************************************/
 int BrbToneBase_Init(BrbToneBase *tone_base)
 {
-    BrbBase *brb_base = tone_base->brb_base;
-
     /* Sanitize */
     if (!tone_base)
         return -1;

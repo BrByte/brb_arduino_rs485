@@ -45,28 +45,25 @@
 
 #include <BrbRS485Session.h>
 
-#include "Adafruit_Sensor.h"
-#include "DHT.h"
-
 #include <avr/wdt.h>
 
-/* simple define to organize code in one */
-// #define PDU_SYSTEM_COMPILE 1
-
+#define DHT_DEBUG 1
+#include "Adafruit_Sensor.h"
+#include "DHT.h"
 /**********************************************************************************************************************/
 /* DEFINES */
 /**********************************************************/
-
 // #define RESERVED    0 /* RX0 */
 // #define RESERVED    1 /* TX0 */
-#define GERADOR_ZEROCROSS_PIN 2 /* INT4 - PWM */
-// #define RESERVED    3 /* INT5 - PWM */
-#define GERADOR_PARTIDA_PIN 4 /* PWM */
-#define GERADOR_PARADA_PIN 5  /* PWM */
-#define GERADOR_EXTRA_PIN 6   /* PWM */
-#define BUZZER_PIN 7          /* PWM */
-#define DHT_SENSOR_PIN 8      /* PWM */
-#define GERADOR_SERVO_PIN 9   /* PWM */
+#define PDU_ZEROCROSS_POWER_PIN 2 /* INT4 - PWM */
+#define PDU_ZEROCROSS_AUX_PIN 3   /* INT5 - PWM */
+// #define RESERVED 4 /* PWM */
+// #define RESERVED 5 /* PWM */
+// #define RESERVED 6 /* PWM */
+#define BUZZER_PIN 7	 /* PWM */
+#define DHT_SENSOR_PIN 8 /* PWM */
+#define DHT_SENSOR_TYPE DHT11
+// #define RESERVED        9 /* PWM */
 // #define RESERVED    10 /* PCINT 4 */
 // #define RESERVED    11 /* PCINT 5 */
 // #define RESERVED    12 /* PCINT 6 */
@@ -112,94 +109,108 @@
 #define TFT_CLK 52  /* PCINT1 - SCK */
 // #define RESERVED     53 /* PCINT0 - SS */
 
-#define SENSOR_VOLTAGE_DC_PIN A1
-#define SENSOR_VOLTAGE_AC_PIN A2
+#define SENSOR_DC_SUPPLY_01_IN_PIN A0
+#define SENSOR_DC_SUPPLY_01_OUT_PIN A1
+#define SENSOR_DC_SUPPLY_02_IN_PIN A2
+#define SENSOR_DC_SUPPLY_02_OUT_PIN A3
 
-/* Minimal power to be considered online */
-#define GERADOR_TIMER_MIN_POWER 5.0
+#define SENSOR_AC_POWER_PIN A5
+#define SENSOR_AC_AUX_PIN A6
+// #define SENSOR_AC_BAT_PIN A7
+/**********************************************************/
+#define PDU_EEPROM_OFFSET (BRB_RS485_EEPROM_OFFSET + 64)
 
-#define GERADOR_TIMER_FAIL_ALARM_MS 5000
+// #define PDU_POWER_REVERSE 1
 
-#define GERADOR_TIMER_ZERO_WAIT_MS 2000
-
-#define GERADOR_TIMER_START_WAIT_MS 15000
-
-#define GERADOR_TIMER_START_DELAY_MS 5000
-#define GERADOR_TIMER_START_CHECK_MS 15000
-#define GERADOR_TIMER_START_RETRY_MAX 3
-
-#define GERADOR_TIMER_STOP_DELAY_MS 10000
-#define GERADOR_TIMER_STOP_CHECK_MS 30000
-#define GERADOR_TIMER_STOP_RETRY_MAX 3
-
-#define GERADOR_TIMER_CHECK_MS 5000
-
-#define GERADOR_SERVO_BB_POS_OPEN 180
-#define GERADOR_SERVO_BB_POS_CLOSE 120
-
-#define GERADOR_HOURMETER_MAX 20
-
-#define GERADOR_POWER_REVERSE 1
-
-#ifdef GERADOR_POWER_REVERSE
-#define GERADOR_POWER_ON LOW
-#define GERADOR_POWER_OFF HIGH
+#ifdef PDU_POWER_REVERSE
+#define PDU_POWER_ON LOW
+#define PDU_POWER_OFF HIGH
 #else
-#define GERADOR_POWER_ON HIGH
-#define GERADOR_POWER_OFF LOW
+#define PDU_POWER_ON HIGH
+#define PDU_POWER_OFF LOW
 #endif
 
-#define GERADOR_EEPROM_OFFSET (BRB_RS485_EEPROM_OFFSET + 64)
+#define PDU_POWER_MIN_VALUE 5
+#define PDU_POWER_MIN_HZ 10
+
+#define PDU_AUX_MIN_VALUE 5
+#define PDU_AUX_MIN_HZ 10
+/**********************************************************/
+#define PDU_TIMER_FAIL_WAIT_MS 10000
+
+#define PDU_TIMER_POWER_MIN_MS 15000
+
+#define PDU_TIMER_AUX_MIN_MS 15000
+// #define PDU_TIMER_AUX_WAIT_MS 5000
+
+#define PDU_TIMER_TRANSF_P2A_WAIT_MS 15000
+#define PDU_TIMER_TRANSF_A2P_WAIT_MS 15000
+
+#define PDU_TIMER_ZERO_WAIT_MS 2000
+
+#define PDU_TIMER_SENSOR_WAIT_MS 2000
+#define PDU_TIMER_SENSOR_SAMPLES 5
+
+#define PDU_TIMER_DHT_MS 1000
 /**********************************************************************************************************************/
 /* ENUMS */
 /**********************************************************/
 typedef enum
 {
-	GERADOR_FAILURE_NONE,
-	GERADOR_FAILURE_RUNNING_WITHOUT_START,
-	GERADOR_FAILURE_DOWN_WITHOUT_STOP,
+	PDU_ACTION_NONE,
+	PDU_ACTION_TRANSFER_ENABLE,
+	PDU_ACTION_TRANSFER_DISABLE,
+	PDU_ACTION_TRANSFER_FORCE,
 
-	GERADOR_FAILURE_START_RETRY_LIMIT,
+	PDU_ACTION_LAST_ITEM
 
-	GERADOR_FAILURE_STOP_RETRY_LIMIT,
-
-} BrbGeradorFailureCode;
+} BrbPDUActionCode;
 
 typedef enum
 {
-	GERADOR_STATE_NONE,
-	GERADOR_STATE_START_INIT,
-	GERADOR_STATE_START_DELAY,
-	GERADOR_STATE_START_CHECK,
+	PDU_FAILURE_NONE,
+	PDU_FAILURE_POWER_DOWN,
+	PDU_FAILURE_AUX_DOWN,
 
-	GERADOR_STATE_RUNNING,
-	GERADOR_STATE_FAILURE,
+	PDU_FAILURE_CANT_P2A,
+	PDU_FAILURE_CANT_A2P,
 
-	GERADOR_STATE_STOP_INIT,
-	GERADOR_STATE_STOP_DELAY,
-	GERADOR_STATE_STOP_CHECK,
+} BrbPDUFailureCode;
 
-} BrbGeradorStateCode;
+typedef enum
+{
+	PDU_STATE_NONE,
+	PDU_STATE_FAILURE,
+
+	PDU_STATE_RUNNING_POWER,
+	PDU_STATE_RUNNING_AUX,
+
+	PDU_STATE_TRANSF_P2A_DELAY,
+	PDU_STATE_TRANSF_A2P_DELAY
+
+} BrbPDUStateCode;
 /**********************************************************************************************************************/
 /* STRUCTS */
 /**********************************************************/
-typedef struct _BrbGeradorBase
+typedef struct _BrbPDUBase
 {
 	BrbBase *brb_base;
 	BrbToneBase *tone_base;
-
-	long delay;
-
-	int pin_servo;
-	int pin_partida;
-	int pin_parada;
-
-	int pin_extra;
+	DHT *dht_sensor;
 
 	BrbZeroCross zero_power;
+	BrbZeroCross zero_aux;
+
 	BrbSensorVoltage sensor_power;
+	BrbSensorVoltage sensor_aux;
 
 	BrbSensorVoltage sensor_sp01_in;
+	BrbSensorVoltage sensor_sp01_out;
+
+	BrbSensorVoltage sensor_sp02_in;
+	BrbSensorVoltage sensor_sp02_out;
+
+	int pin_transfer;
 
 	struct
 	{
@@ -207,14 +218,27 @@ typedef struct _BrbGeradorBase
 		long last;
 		long delay;
 
+		long power_time;
+		long power_delay;
+
+		long aux_time;
+		long aux_delay;
+
 	} ms;
 
 	struct
 	{
-		int ms_delta;
-		int ms_last;
+		long ms_delta;
+		long ms_last;
 
 	} zerocross;
+
+	struct
+	{
+		long ms_delta;
+		long ms_last;
+
+	} sensor;
 	
 	struct
 	{
@@ -223,25 +247,25 @@ typedef struct _BrbGeradorBase
 		float dht_hidx;
 		int ms_delta;
 		int ms_last;
+
+		uint8_t pin;
+		uint8_t type;
 	} dht_data;
 
 	struct
 	{
-		BrbGeradorStateCode code;		
-		BrbGeradorFailureCode fail;
+		BrbPDUStateCode code;
+		BrbPDUFailureCode fail;
 
 		long time;
 		long delta;
-		
+
 		int retry;
 
 	} state;
 
 	struct
 	{
-		double gas;
-		double load;
-
 		long hourmeter_ms;
 		long hourmeter_sec;
 
@@ -262,33 +286,34 @@ typedef struct _BrbGeradorBase
 
 	struct
 	{
-		unsigned int foo : 1;
+		unsigned int transfer_enabled : 1;
+		unsigned int transfer_force : 1;
 	} flags;
 
-} BrbGeradorBase;
+} BrbPDUBase;
 /**********************************************************************************************************************/
-int BrbGeradorBase_Init(BrbGeradorBase *gerador_base);
-int BrbGeradorBase_Loop(BrbGeradorBase *gerador_base);
-int BrbGeradorBase_Save(BrbGeradorBase *gerador_base);
-int BrbGeradorBase_HourmeterReset(BrbGeradorBase *gerador_base);
+int BrbPDUBase_Init(BrbPDUBase *pdu_base);
+int BrbPDUBase_Loop(BrbPDUBase *pdu_base);
+int BrbPDUBase_Save(BrbPDUBase *pdu_base);
 
-int BrbGeradorBase_Start(BrbGeradorBase *gerador_base);
-int BrbGeradorBase_Stop(BrbGeradorBase *gerador_base);
+// int BrbPDUBase_HourmeterReset(BrbPDUBase *pdu_base);
+int BrbPDUBase_ActionCmd(BrbPDUBase *pdu_base, int cmd_code);
 
-int BrbGeradorBase_FailureConfirm(BrbGeradorBase *gerador_base);
+// int BrbPDUBase_Start(BrbPDUBase *pdu_base);
+// int BrbPDUBase_Stop(BrbPDUBase *pdu_base);
+// int BrbPDUBase_FailureConfirm(BrbPDUBase *pdu_base);
 
-const char *BrbGeradorBase_GetState(BrbGeradorBase *gerador_base);
-const char *BrbGeradorBase_GetStateAction(BrbGeradorBase *gerador_base);
-const char *BrbGeradorBase_GetStateButton(BrbGeradorBase *gerador_base);
-const char *BrbGeradorBase_GetFailure(BrbGeradorBase *gerador_base);
+const char *BrbPDUBase_GetStateText(BrbPDUBase *pdu_base);
+uint16_t BrbPDUBase_GetStateColor(BrbPDUBase *pdu_base);
+const char *BrbPDUBase_GetFailureText(BrbPDUBase *pdu_base);
 /**********************************************************************************************************************/
 /* Display */
 /**********************************************************/
-int BrbAppDisplay_Setup(BrbBase *brb_base);
+int BrbCtlDisplay_Setup(BrbBase *brb_base);
 /**********************************************************************************************************************/
 /* RS485 */
 /**********************************************************/
-int BrbAppRS485_Setup(BrbBase *brb_base);
+int BrbCtlRS485_Setup(BrbBase *brb_base);
 /**********************************************************************************************************************/
 /* Global control structures */
 extern BrbLogBase *glob_log_base;
@@ -299,6 +324,6 @@ extern BrbBtnBase glob_btn_base;
 extern BrbDisplayBase glob_display_base;
 extern BrbToneBase glob_tone_base;
 
-extern BrbGeradorBase glob_gerador_base;
+extern BrbPDUBase glob_pdu_base;
 /**********************************************************************************************************************/
 #endif /* MAIN_H_ */

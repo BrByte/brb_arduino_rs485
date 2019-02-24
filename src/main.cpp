@@ -33,6 +33,8 @@
 
 #include "main.h"
 
+DHT dht_sensor(DHT_SENSOR_PIN, DHT11);
+
 /* Global control structures */
 BrbLogBase *glob_log_base;
 BrbBase glob_brb_base;
@@ -42,7 +44,7 @@ BrbBtnBase glob_btn_base;
 BrbDisplayBase glob_display_base;
 BrbToneBase glob_tone_base;
 
-BrbGeradorBase glob_gerador_base;
+BrbPDUBase glob_pdu_base;
 /**********************************************************************************************************************/
 /* RUN ONE TIME ON START */
 /**********************************************************************************************************************/
@@ -88,43 +90,58 @@ void BrbToneSetup(void)
     return;
 }
 /**********************************************************************************************************************/
-static void BrbGeradorBase_ZeroCrossPower()
+static void BrbCtlPDU_IntZeroCrossPower()
 {
-    glob_gerador_base.zero_power.counter++;
+    glob_pdu_base.zero_power.counter++;
+    return;
 }
 /**********************************************************************************************************************/
-void BrbGeradorSetup(void)
+static void BrbCtlPDU_IntZeroCrossAux()
+{
+    glob_pdu_base.zero_aux.counter++;
+    return;
+}
+/**********************************************************************************************************************/
+void BrbCtlPDU_Setup(void)
 {
     /* Clean up base */
-    memset(&glob_gerador_base, 0, sizeof(BrbGeradorBase));
+    memset(&glob_pdu_base, 0, sizeof(BrbPDUBase));
 
-    glob_gerador_base.brb_base = (BrbBase *)&glob_brb_base;
-    glob_gerador_base.tone_base = (BrbToneBase *)&glob_tone_base;
-    glob_gerador_base.pin_partida = GERADOR_PARTIDA_PIN;
-    glob_gerador_base.pin_parada = GERADOR_PARADA_PIN;
-    glob_gerador_base.pin_servo = GERADOR_SERVO_PIN;
-    glob_gerador_base.pin_extra = GERADOR_EXTRA_PIN;
-    glob_gerador_base.zero_power.pin = GERADOR_ZEROCROSS_PIN;
+    glob_pdu_base.brb_base = (BrbBase *)&glob_brb_base;
+    glob_pdu_base.tone_base = (BrbToneBase *)&glob_tone_base;
 
-    glob_gerador_base.sensor_power.pin = SENSOR_VOLTAGE_AC_PIN;
-    glob_gerador_base.sensor_sp01_in.pin = SENSOR_VOLTAGE_DC_PIN;
+    glob_pdu_base.sensor_sp01_in.pin = SENSOR_DC_SUPPLY_01_IN_PIN;
+    glob_pdu_base.sensor_sp01_out.pin = SENSOR_DC_SUPPLY_01_OUT_PIN;
 
-    BrbGeradorBase_Init(&glob_gerador_base);
+    glob_pdu_base.sensor_sp02_in.pin = SENSOR_DC_SUPPLY_02_IN_PIN;
+    glob_pdu_base.sensor_sp02_out.pin = SENSOR_DC_SUPPLY_02_OUT_PIN;
 
-    attachInterrupt(digitalPinToInterrupt(glob_gerador_base.zero_power.pin), BrbGeradorBase_ZeroCrossPower, RISING);
+    glob_pdu_base.sensor_power.pin = SENSOR_AC_POWER_PIN;
+    glob_pdu_base.sensor_aux.pin = SENSOR_AC_AUX_PIN;
+
+    glob_pdu_base.zero_power.pin = PDU_ZEROCROSS_POWER_PIN;
+    glob_pdu_base.zero_aux.pin = PDU_ZEROCROSS_AUX_PIN;
+
+    glob_pdu_base.dht_data.pin = DHT_SENSOR_PIN;
+    glob_pdu_base.dht_data.type = DHT_SENSOR_TYPE;
+
+    BrbPDUBase_Init(&glob_pdu_base);
+
+    attachInterrupt(digitalPinToInterrupt(glob_pdu_base.zero_power.pin), BrbCtlPDU_IntZeroCrossPower, RISING);
+    attachInterrupt(digitalPinToInterrupt(glob_pdu_base.zero_aux.pin), BrbCtlPDU_IntZeroCrossAux, RISING);
 
     return;
 }
 /**********************************************************************************************************************/
 void setup()
 {
-    randomSeed(((analogRead(0) + analogRead(1)) / 2));
+    randomSeed(((analogRead(A0) + analogRead(A1)) / 2));
 
     /* Initialize Brb internal data */
     BrbSetup();
 
     /* Setup Display before anything, because it can display some info, eg logs */
-    BrbAppDisplay_Setup(&glob_brb_base);
+    BrbCtlDisplay_Setup(&glob_brb_base);
 
     /* Setup Tone  */
     BrbToneSetup();
@@ -132,10 +149,11 @@ void setup()
     /* Setup Buttons  */
     BrbBtnSetup();
 
-    BrbGeradorSetup();
-
     /* Setup RS485 Serial */
-    BrbAppRS485_Setup(&glob_brb_base);
+    BrbCtlRS485_Setup(&glob_brb_base);
+
+    /* Setup System */
+    BrbCtlPDU_Setup();
 
     LOG_NOTICE(glob_log_base, "BrbBox Panel Control - START [%u] - 0.1.2\r\n", micros());
     LOG_NOTICE(glob_log_base, "BRB [%p], RS485 [%p]\r\n", &glob_brb_base, &glob_rs485_sess);
@@ -152,13 +170,16 @@ void loop()
 {
     /* Dispatch */
     BrbBaseLoop(&glob_brb_base);
-    
+
     /* Check for Buttons */
     BrbBtnBase_Loop((BrbBtnBase *)&glob_btn_base);
 
     if (glob_btn_base.buttons[BRB_BTN_SELECT].hit > 0)
     {
         glob_btn_base.buttons[BRB_BTN_SELECT].hit = BrbDisplayBase_ScreenAction((BrbDisplayBase *)&glob_display_base, DISPLAY_ACTION_SELECT);
+
+        // glob_display_base.tft->setSPIClockDivider(SPI_CLOCK_DIV8);
+        // glob_display_base.tft->screenshotToConsole();
     }
     else if (glob_btn_base.buttons[BRB_BTN_NEXT].hit > 0)
     {
@@ -168,13 +189,13 @@ void loop()
     {
         glob_btn_base.buttons[BRB_BTN_PREV].hit = BrbDisplayBase_ScreenAction((BrbDisplayBase *)&glob_display_base, DISPLAY_ACTION_PREV);
     }
-    
+
     /* Do RS485 loop */
     BrbRS485Session_Loop(&glob_rs485_sess);
-    
-    /* Do Gerador loop */
-    BrbGeradorBase_Loop(&glob_gerador_base);
-    
+
+    /* Do PDU loop */
+    BrbPDUBase_Loop(&glob_pdu_base);
+
     /* Do TONE loop */
     BrbToneBase_Loop(&glob_tone_base);
 

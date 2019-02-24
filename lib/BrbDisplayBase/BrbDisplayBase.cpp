@@ -142,7 +142,7 @@ int BrbDisplayBase_SetTitle(BrbDisplayBase *display_base, const char *title_str)
 	display_base->tft->setFont(DISPLAY_FONT_SCREEN_TITLE);
 	display_base->tft->setTextColor(DISPLAY_COLOR_TITLE_TEXT, DISPLAY_COLOR_TITLE_BG);
 
-	display_base->tft->cursorToXY(DISPLAY_SZ_MARGIN * 2, DISPLAY_SZ_MARGIN * 2);
+	display_base->tft->cursorToXY(DISPLAY_SZ_MARGIN + DISPLAY_SZ_TITLE_M, DISPLAY_SZ_MARGIN + DISPLAY_SZ_TITLE_M);
 	display_base->tft->setTextScale(1);
 	display_base->tft->println((const __FlashStringHelper *)title_str);
 	display_base->tft->setTextColor(DISPLAY_COLOR_TEXT_DEFAULT, DISPLAY_COLOR_BG);

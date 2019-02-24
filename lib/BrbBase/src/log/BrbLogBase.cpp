@@ -31,7 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "BrbLogBase.h"
+#include "BrbBase.h"
 
 /**********************************************************************************************************************/
 BrbLogBase *BrbLogBase_New(void)
@@ -107,26 +107,8 @@ void BrbLogBase_HexDump(BrbLogBase *log_base, char *data, int size)
 	return;
 }
  /**********************************************************************************************************************/
-// deterine free heap memory. platform dependent.
-static int free_ram()
-{
-#if defined(ESP8266) || defined(ESP32)
-	return ESP.getFreeHeap();
-#elif defined(AVR)
-	// taken from
-	// https://learn.adafruit.com/memories-of-an-arduino/measuring-free-memory
-	extern uintptr_t __heap_start;
-	extern void *__brkval;
-	intptr_t v;
-	return (uintptr_t)&v -
-		   (__brkval == 0 ? (uintptr_t)&__heap_start : (uintptr_t)__brkval);
-#else
-	return 0;
-#endif
-}
- /**********************************************************************************************************************/
 int BrbLogBase_Info(BrbLogBase *log_base)
 {
-	return BrbLogBase_PrintFmt(log_base, PSTR("HEAP: T %ld - M %d\r\n"), millis(), free_ram());
+	return BrbLogBase_PrintFmt(log_base, PSTR("HEAP: T %ld - M %d\r\n"), millis(), BrbBase_FreeRAM());
 }
  /**********************************************************************************************************************/
