@@ -261,7 +261,7 @@ int BrbBase_EEPROMRead(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, ui
         /* Reset info */
         memset(data_ptr, 0, data_sz);
 
-        return 0;
+        return -1;
     }
 
     for (int i = 0; i < data_sz; i++)

@@ -42,11 +42,15 @@
 #include <ILI9341_due_config.h>
 #include <ILI9341_due.h>
 
+#include <brbyte_white.h>
+
 // #include <SystemFont5x7.h>
 #include <fonts/Arial14.h>
-#include <fonts/OpenSans36.h>
-#include <fonts/Ubuntu36.h>
+// #include <fonts/OpenSans36.h>
+// #include <fonts/Ubuntu36.h>
 #include <fonts/TrebuchetMS34.h>
+#include <fonts/Heydings_Controls_32pt.h>
+#include <fonts/Heydings_Icons_32pt.h>
 /**********************************************************************************************************************/
 /* DEFINES */
 /**********************************************************/
@@ -58,9 +62,9 @@
 #define DISPLAY_FONT_SCREEN_TITLE Arial_14
 
 #define DISPLAY_FONT_DEFAULT Arial_14
-#define DISPLAY_FONT_TITLE Ubuntu36
+#define DISPLAY_FONT_TITLE TrebuchetMS34
 
-#define DISPLAY_FONT_ARC_VALUE Ubuntu36
+#define DISPLAY_FONT_ARC_VALUE TrebuchetMS34
 #define DISPLAY_FONT_ARC_TICK Arial_14
 #define DISPLAY_FONT_ARC_SUB Arial_14
 
@@ -68,6 +72,27 @@
 #define DISPLAY_FONT_BOX_VALUE TrebuchetMS34
 #define DISPLAY_FONT_BOX_SCALE 1
 #define DISPLAY_FONT_BOX_SUB Arial_14
+
+#define DISPLAY_FONT_ICON Heydings_Icons_32pt
+#define DISPLAY_FONT_ICON2 Heydings_Controls_32pt
+
+#define DISPLAY_FONT_ICON_INFO PSTR("i")
+#define DISPLAY_FONT_ICON_ALERT PSTR("!")
+#define DISPLAY_FONT_ICON_POWER PSTR("r")
+#define DISPLAY_FONT_ICON_AUX PSTR("4")
+
+#define DISPLAY_FONT_ICON_A2P PSTR("N")
+#define DISPLAY_FONT_ICON_P2A PSTR("@")
+
+#define DISPLAY_FONT_ICON_LAMP PSTR("l")
+
+#define DISPLAY_FONT_ICON_C_OFF PSTR("O")
+
+#define DISPLAY_FONT_ICON_C_R PSTR("<")
+#define DISPLAY_FONT_ICON_C_L PSTR(">")
+
+
+
 /**********************************************************/
 /* SIZE */
 /**********************************************************/

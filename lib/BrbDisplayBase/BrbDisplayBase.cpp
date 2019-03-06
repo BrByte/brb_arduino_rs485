@@ -86,7 +86,7 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 		{
 			display_base->flags.on_select = 1;
 			display_base->action_code = -1;
-			display_base->screen_last = -1;
+			// display_base->screen_last = -1;
 		}
 
 		/* Press direction */
