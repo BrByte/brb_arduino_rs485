@@ -1,5 +1,5 @@
 /*
- * BrbServo.cpp
+ * BrbMCUServoBase.cpp
  *
  *  Created on: 2019-01-04
  *      Author: Luiz Fernando Souza Softov <softov@brbyte.com>
@@ -31,18 +31,24 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "BrbBase.h"
+#include "BrbMCUServoBase.h"
 
 /**********************************************************************************************************************/
-BrbServo *BrbServoGrabByID(BrbBase *brb_base, int servo_id)
+int BrbMCUServoBase_Init(BrbMCUServoBase *servo_base)
 {
-    BrbServo *servo;
+
+    return 0;
+}
+/**********************************************************************************************************************/
+BrbMCUServo *BrbMCUServoGrabByID(BrbMCUServoBase *servo_base, int servo_id)
+{
+    BrbMCUServo *servo;
 
     /* Sanity check */
     if (servo_id > MAX_SERVO)
         return NULL;
 
-    servo = &brb_base->servo.arr[servo_id];
+    servo = &servo_base->arr[servo_id];
 
     if (!servo->servo)
         servo->servo = new Servo();
@@ -50,9 +56,9 @@ BrbServo *BrbServoGrabByID(BrbBase *brb_base, int servo_id)
     return servo;
 }
 /**********************************************************************************************************************/
-BrbServo *BrbServoGrabFree(BrbBase *brb_base)
+BrbMCUServo *BrbMCUServoGrabFree(BrbMCUServoBase *servo_base)
 {
-    BrbServo *servo;
+    BrbMCUServo *servo;
     int i;
 
     servo = NULL;
@@ -60,21 +66,18 @@ BrbServo *BrbServoGrabFree(BrbBase *brb_base)
     /* Select a free timer slot from array */
     for (i = 0; i < MAX_SERVO; i++)
     {
-        if (brb_base->servo.arr[i].flags.active)
+        if (servo_base->arr[i].flags.active)
             continue;
             
         /* Fill up servo data */
-        servo              = (BrbServo *)&brb_base->servo.arr[i];
+        servo              = (BrbMCUServo *)&servo_base->arr[i];
         servo->servo_id   = i;
         break;
     }
 
     /* No more timers */
     if (!servo)
-    {
-        LOG_WARN(brb_base->log_base, "Failed Grab Servo\r\n");
         return NULL;
-    }
 
     if (!servo->servo)
         servo->servo = new Servo();
@@ -82,16 +85,16 @@ BrbServo *BrbServoGrabFree(BrbBase *brb_base)
     return servo;
 }
 /**********************************************************************************************************************/
-BrbServo *BrbServoGrabByPin(BrbBase *brb_base, int pin)
+BrbMCUServo *BrbMCUServoGrabByPin(BrbMCUServoBase *servo_base, int pin)
 {
-    BrbServo *servo = NULL;
+    BrbMCUServo *servo = NULL;
     int i;
 
     /* Select a free timer slot from array */
     for (i = 0; i < MAX_SERVO; i++)
     {            
         /* Fill up servo data */
-        servo              = (BrbServo *)&brb_base->servo.arr[i];
+        servo              = (BrbMCUServo *)&servo_base->arr[i];
         
         if (pin == servo->pin)
             return servo;
@@ -99,12 +102,10 @@ BrbServo *BrbServoGrabByPin(BrbBase *brb_base, int pin)
         continue;
     }
 
-    LOG_WARN(brb_base->log_base, "Failed Grab Servo - PIN [%d]\r\n", pin);
-
     return NULL;
 }
 /**********************************************************************************************************************/
-int BrbServoAttach(BrbBase *brb_base, BrbServo *servo, int pin)
+int BrbMCUServoAttach(BrbMCUServoBase *servo_base, BrbMCUServo *servo, int pin)
 {
     if (servo->flags.attached)
         return -1;
@@ -115,30 +116,26 @@ int BrbServoAttach(BrbBase *brb_base, BrbServo *servo, int pin)
 
     servo->pos_cur              = servo->servo->read();
 
-    LOG_DEBUG(brb_base->log_base, "Attach servo - Pin [%u] pos_cur [%u]\r\n", pin, servo->pos_cur);
-
     return servo->servo_id;
 }
 /**********************************************************************************************************************/
-BrbServo *BrbServoSetPosByPin(BrbBase *brb_base, int pin, int pos_set)
+BrbMCUServo *BrbMCUServoSetPosByPin(BrbMCUServoBase *servo_base, int pin, int pos_set)
 {
-    BrbServo *servo;
+    BrbMCUServo *servo;
 
-    servo           = BrbServoGrabByPin(brb_base, pin);
+    servo           = BrbMCUServoGrabByPin(servo_base, pin);
 
     if (!servo)
     {
-        servo       = BrbServoGrabFree(brb_base);
+        servo       = BrbMCUServoGrabFree(servo_base);
         
         if (!servo)
             return NULL;
     }
 
-    BrbServoAttach(brb_base, servo, pin);
+    BrbMCUServoAttach(servo_base, servo, pin);
 
     // servo->pos_cur      = servo->servo->read();
-
-    LOG_DEBUG(brb_base->log_base, "Servo [%u] - Pos [%u]->[%u]\r\n", servo->servo_id, servo->pos_cur, pos_set);
 
     if (pos_set > servo->pos_cur)
         while (pos_set > servo->pos_cur)
@@ -150,14 +147,12 @@ BrbServo *BrbServoSetPosByPin(BrbBase *brb_base, int pin, int pos_set)
     return servo;
 }
 /**********************************************************************************************************************/
-BrbServo *BrbServoSetPos(BrbBase *brb_base, BrbServo *servo, int pos_set)
+BrbMCUServo *BrbMCUServoSetPos(BrbMCUServoBase *servo_base, BrbMCUServo *servo, int pos_set)
 {
     if (!servo->flags.attached)
-        BrbServoAttach(brb_base, servo, servo->pin);
+        BrbMCUServoAttach(servo_base, servo, servo->pin);
 
     servo->pos_cur      = servo->servo->read();
-
-    LOG_DEBUG(brb_base->log_base, "Servo [%u] - Pos [%u]->[%u]\r\n", servo->servo_id, servo->pos_cur, pos_set);
 
     if (pos_set > servo->pos_cur)
         while (pos_set > servo->pos_cur)
@@ -167,8 +162,6 @@ BrbServo *BrbServoSetPos(BrbBase *brb_base, BrbServo *servo, int pos_set)
             servo->servo->write(--servo->pos_cur);
 
     servo->pos_cur      = servo->servo->read();
-
-    LOG_DEBUG(brb_base->log_base, "Servo [%u] - Pos [%u]\r\n", servo->servo_id, servo->pos_cur);
 
     return servo;
 }

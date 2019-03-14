@@ -364,53 +364,6 @@ BrbMicroScriptOPSetDig *BrbMicroScriptOPAddSetDig(BrbMicroScriptBase *script_bas
     return op_set_dig;
 };
 /**********************************************************************************************************************/
-// int BrbMicroScriptOPAddStepperAtDt(BrbMicroScriptBase *script_base, BrbMicroScript *script, uint8_t pin, uint8_t index, uint8_t atdt)
-// {
-//     BrbMicroScriptOP *op_hdr;
-//     BrbMicroScriptOPStepperAtDt *op_atdt;
-
-//     if (!script || (script->code.size + 1 + sizeof(BrbMicroScriptOPStepperAtDt)) > sizeof(script->code.arr))
-//         return -1;
-
-//     op_hdr              = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
-//     op_hdr->opcode      = SCRIPT_OPCODE_SERVO_ATDT;
-//     op_hdr->param_sz    = sizeof(BrbMicroScriptOPStepperAtDt);
-
-//     op_atdt             = (BrbMicroScriptOPStepperAtDt *)&script->code.arr[script->code.size];
-//     script->code.size   += op_hdr->param_sz;
-
-//     op_atdt->pin        = pin;
-//     op_atdt->index      = index;
-//     op_atdt->action     = atdt;
-
-//     return 0;
-// };
-/**********************************************************************************************************************/
-BrbMicroScriptOPServoPos *BrbMicroScriptOPAddServoPos(BrbMicroScriptBase *script_base, BrbMicroScript *script, uint8_t pin, uint8_t pos)
-{
-    BrbMicroScriptOP *op_hdr;
-    BrbMicroScriptOPServoPos *op_stepper_pos;
-
-    if (!script || (script->code.size + 1 + sizeof(BrbMicroScriptOPServoPos)) > sizeof(script->code.arr))
-    {
-        LOG_WARN(script_base->log_base, "No size avail [%d] [%d]\r\n", (script->code.size + 1 + sizeof(BrbMicroScriptOPServoPos)), sizeof(script->code.arr));
-
-        return NULL;
-    }
-
-    op_hdr = (BrbMicroScriptOP *)&script->code.arr[script->code.size++];
-    op_hdr->opcode = SCRIPT_OPCODE_SERVO_POS;
-    op_hdr->param_sz = sizeof(BrbMicroScriptOPServoPos);
-
-    op_stepper_pos = (BrbMicroScriptOPServoPos *)&script->code.arr[script->code.size];
-    script->code.size += op_hdr->param_sz;
-
-    op_stepper_pos->pin = pin;
-    op_stepper_pos->pos = pos;
-
-    return op_stepper_pos;
-};
-/**********************************************************************************************************************/
 int BrbMicroScriptCmpFunc(void *base_ptr, void *cb_data)
 {
     BrbMicroScriptBase *script_base = (BrbMicroScriptBase *)base_ptr;
@@ -450,21 +403,6 @@ int BrbMicroScriptSetDigitalFunc(void *base_ptr, void *cb_data)
         pinMode(op_set_dig->pin, INPUT_PULLUP);
     else if (op_set_dig->mode == INPUT)
         pinMode(op_set_dig->pin, INPUT);
-
-    return 0;
-}
-/**********************************************************************************************************************/
-int BrbMicroScriptServoPosFunc(void *base_ptr, void *cb_data)
-{
-    // BrbMicroScriptBase *script_base = (BrbMicroScriptBase *)base_ptr;
-    // BrbMicroScript *script = (BrbMicroScript *)cb_data;
-    // BrbMicroScriptOP *op_hdr                 = (BrbMicroScriptOP *)&script->code.arr[script->code.offt];
-    // BrbMicroScriptOPServoPos *op_servo_pos = (BrbMicroScriptOPServoPos *)&script->code.arr[script->code.offt + 1];
-
-    /* Copy param */
-    // memcpy(&param, &script->code.arr[script->code.offt + 1], sizeof(uint8_t));
-
-    // BrbServoSetPosByPin(script_base, op_servo_pos->pin, op_servo_pos->pos);
 
     return 0;
 }

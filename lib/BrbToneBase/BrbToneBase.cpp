@@ -43,7 +43,7 @@ int BrbToneBase_Init(BrbToneBase *tone_base)
         return -1;
 
     /* Current note has expired */
-    if (tone_base->duration > 0 || tone_base->pin < MIN_DIG_PIN || tone_base->pin > TOTAL_PINS)
+    if (tone_base->duration > 0 || tone_base->pin < 2 || tone_base->pin > NUM_DIGITAL_PINS)
         return -1;
 
     /* Enable pin */
@@ -60,13 +60,17 @@ int BrbToneBase_Init(BrbToneBase *tone_base)
 void BrbToneBase_Loop(BrbToneBase *tone_base)
 {
     /* Tone is disabled */
-    if (!tone_base->flags.enabled || tone_base->pin < MIN_DIG_PIN)
+    if (!tone_base->flags.enabled || tone_base->pin < 2 || tone_base->pin > NUM_DIGITAL_PINS)
         return;
 
     if (tone_base->index >= 0)
     {
+	    tone_base->ms_delta = (millis() - tone_base->ms_last);
+		tone_base->ms_last = millis();
+
         /* Update last duration */
-        tone_base->duration = (tone_base->duration - tone_base->brb_base->ms.delay);
+        tone_base->duration = (tone_base->duration - tone_base->ms_delta);
+        // tone_base->duration = (tone_base->duration - tone_base->brb_base->ms.delay);
 
         /* Current note has expired */
         if (tone_base->duration > 0)

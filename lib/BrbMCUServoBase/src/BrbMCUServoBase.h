@@ -1,5 +1,5 @@
 /*
- * BrbBase.h
+ * BrbMCUServoBase.h
  *
  *  Created on: 2018-10-01
  *      Author: Luiz Fernando Souza Softov <softov@brbyte.com>
@@ -31,17 +31,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BRB_BASE_H_
-#define BRB_BASE_H_
+#ifndef BRB_MCU_SERVO_BASE_H_
+#define BRB_MCU_SERVO_BASE_H_
 
 /**********************************************************************************************************************/
 #include "Arduino.h"
-#include <HardwareSerial.h>
-#include <SoftwareSerial.h>
-#include "Boards.h"
-#include "log/BrbLogBase.h"
-#include "data/BrbDLinkedList.h"
-#include "data/BrbMicroScript.h"
+#include "Servo.h"
+// #include "BrbBase.h"
 /**********************************************************************************************************************/
 /* DEFINES */
 /**********************************************************/
@@ -55,22 +51,7 @@
 //Code in here will only be compiled if an Arduino Leonardo is used.
 #endif
 
-#define MAX_TIMER 16
-#define MAX_SCRIPT 8
-
-#define MIN_ANA_PIN 0
-#define MAX_ANA_PIN NUM_ANALOG_INPUTS
-
-#define MIN_DIG_PIN 2
-
-// #define MAX_DIG_PIN NUM_DIGITAL_PINS
-#define MAX_DIG_PIN PIN_A0
-
-#define BRB_EEPROM_MAGIC 157
-#define BRB_EEPROM_MASK 137
-#define BRB_EEPROM_OFFSET 32
-
-#define BRB_COMPARE_NUM(a, b) (a > b) - (a < b)
+#define MAX_SERVO 4
 /**********************************************************************************************************************/
 /* ENUMS */
 /**********************************************************/
@@ -78,120 +59,40 @@
 /**********************************************************************************************************************/
 /* STRUCTS */
 /**********************************************************/
-typedef int BrbGenericCBH(void *, void *);
-/**********************************************************/
-typedef struct _BrbTimer
+typedef struct _BrbMCUServo
 {
-    int timer_id;
-    BrbGenericCBH *cb_func;
-    void *cb_data;
+    uint8_t pin;
+	uint8_t servo_id;
+	uint8_t pos_cur;
 
+    Servo *servo;
+    
     struct
     {
-      long when;
-      int delay;
-    } ms;
-
-    struct
-    {
-        unsigned int persist:1;
-        unsigned int active:1;
+    	uint16_t active:1;
+    	uint16_t attached:1;
     } flags;
-
-} BrbTimer;
+    
+} BrbMCUServo;
 /**********************************************************/
-typedef struct _BrbBasePinData
+typedef struct _BrbMCUServoBase
 {
-    uint8_t value;
-	uint8_t mode;
+    int count;
+    BrbMCUServo arr[MAX_SERVO];
 
-    uint8_t mask;
-    uint8_t persist:1;
-    uint8_t pad:7;
-
-} BrbBasePinData;
-/**********************************************************/
-typedef struct _BrbSensorVoltage
-{
-	double value;
-	int counter;
-	int pin;
-
-} BrbSensorVoltage;
-
-typedef struct _BrbZeroCross
-{
-	double value;
-	int counter;
-	int pin;
-
-} BrbZeroCross;
-/**********************************************************/
-typedef struct _BrbBase
-{
-	BrbLogBase *log_base;
-    BrbBasePinData pin_data[TOTAL_PINS];
-    BrbMicroScriptBase script_base;
-
-    struct
-    {
-        uint32_t loop_cnt;
-    } stats;
-
-    struct
-    {
-        long last;
-        long cur;
-        int delay;
-
-        long lifetime_delay;
-        long lifetime_sec;
-    } ms;
-
-    struct
-    {
-        long last;
-        long cur;
-        int delay;
-    } us;
-
-    struct
-    {
-        int count;
-        BrbTimer arr[MAX_TIMER];
-    } timer;
-
-    struct
-    {
-        long long lifetime_sec;
-        int upcount;
-    } data;
-
-} BrbBase;
+} BrbMCUServoBase;
 /**********************************************************************************************************************/
 /* PUBLIC FUNCTIONS */
 /**********************************************************/
-void BrbBaseInit(BrbBase *brb_base);
-void BrbBaseLoop(BrbBase *brb_base);
-
-void BrbBase_DataLoad(BrbBase *brb_base);
-void BrbBase_DataSave(BrbBase *brb_base);
-
-int BrbBase_FreeRAM(void);
+/* BrbMCUServo */
 /**********************************************************/
-/* BrbTimer */
-/**********************************************************/
-BrbTimer *BrbTimerGrabByID(BrbBase *brb_base, int timer_id);
-int BrbTimerAdd(BrbBase *brb_base, long delay_ms, int persist, BrbGenericCBH *cb_func, void *cb_data);
-void BrbTimerDispatch(BrbBase *brb_base);
-
-/**********************************************************/
-/* BrbBase */
-/**********************************************************/
-uint8_t BrbBase_PinGetMode(uint8_t pin);
-uint8_t BrbBase_PinGetAnalogPin(uint8_t pin);
-
-int BrbBase_EEPROMRead(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset);
-int BrbBase_EEPROMWrite(BrbBase *brb_base, uint8_t *data_ptr, uint8_t data_sz, uint8_t eeprom_offset);
+int BrbMCUServoBase_Init(BrbMCUServoBase *servo_base);
+BrbMCUServo *BrbMCUServoGrabByID(BrbMCUServoBase *servo_base, int servo_id);
+BrbMCUServo *BrbMCUServoGrabFree(BrbMCUServoBase *servo_base);
+BrbMCUServo *BrbMCUServoGrabByPin(BrbMCUServoBase *servo_base, int pin);
+int BrbMCUServoAttach(BrbMCUServoBase *servo_base, BrbMCUServo *servo, int pin);
+BrbMCUServo *BrbMCUServoSetPosByPin(BrbMCUServoBase *servo_base, int pin, int pos_set);
+BrbMCUServo *BrbMCUServoSetPos(BrbMCUServoBase *servo_base, BrbMCUServo *servo, int pos_set);
 /**********************************************************************************************************************/
+
 #endif /* BRB_BASE_H_ */

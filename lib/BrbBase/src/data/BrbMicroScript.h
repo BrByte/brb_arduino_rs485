@@ -64,9 +64,6 @@ typedef enum
     SCRIPT_OPCODE_JMP_NOT_LESSER,
     SCRIPT_OPCODE_SET_DIGITAL,
 
-    // SCRIPT_OPCODE_SERVO_ATDT,
-    SCRIPT_OPCODE_SERVO_POS,
-
     SCRIPT_OPCODE_LASTITEM
 } BrbMicroScriptOPCodeNum;
 /**********************************************************************************************************************/
@@ -104,12 +101,6 @@ typedef struct _BrbMicroScriptOPSetDig
 
 // } BrbMicroScriptOPStepperAtDt;
 
-typedef struct _BrbMicroScriptOPServoPos
-{
-    uint8_t pin;
-    uint8_t pos;
-
-} BrbMicroScriptOPServoPos;
 
 typedef struct _BrbMicroScriptOPCmp
 {
@@ -194,7 +185,6 @@ BrbMicroScriptOPDelay *BrbMicroScriptOPAddDelay(BrbMicroScriptBase *script_base,
 BrbMicroScriptOPCmp *BrbMicroScriptOPAddCmp(BrbMicroScriptBase *script_base, BrbMicroScript *script, uint8_t pin, uint16_t value);
 BrbMicroScriptOPIf *BrbMicroScriptOPAddIf(BrbMicroScriptBase *script_base, BrbMicroScript *script, uint8_t if_op, uint8_t else_offset, uint8_t end_offset);
 BrbMicroScriptOPSetDig *BrbMicroScriptOPAddSetDig(BrbMicroScriptBase *script_base, BrbMicroScript *script, uint8_t pin, uint8_t mode, uint8_t value);
-BrbMicroScriptOPServoPos *BrbMicroScriptOPAddServoPos(BrbMicroScriptBase *script_base, BrbMicroScript *script, uint8_t pin, uint8_t pos);
 
 BrbMicroScript *BrbMicroScriptGrabByID(BrbMicroScriptBase *script_base, int script_id);
 BrbMicroScript *BrbMicroScriptGrabFree(BrbMicroScriptBase *script_base);
@@ -211,7 +201,6 @@ BrbMicroScriptCBH BrbMicroScriptJmpNotGreaterFunc;
 BrbMicroScriptCBH BrbMicroScriptJmpLesserFunc;
 BrbMicroScriptCBH BrbMicroScriptJmpNotLesserFunc;
 BrbMicroScriptCBH BrbMicroScriptSetDigitalFunc;
-BrbMicroScriptCBH BrbMicroScriptServoPosFunc;
 
 static const BrbMicroScriptOPRunTime glob_script_runtime_arr[] =
     {
@@ -228,7 +217,6 @@ static const BrbMicroScriptOPRunTime glob_script_runtime_arr[] =
         {SCRIPT_OPCODE_JMP_NOT_LESSER, 1, BrbMicroScriptJmpNotLesserFunc},
 
         {SCRIPT_OPCODE_SET_DIGITAL, 1, BrbMicroScriptSetDigitalFunc},
-        {SCRIPT_OPCODE_SERVO_POS, 1, BrbMicroScriptServoPosFunc},
 
         {SCRIPT_OPCODE_LASTITEM, 0, NULL} /* NULL TERMINATOR */
 };

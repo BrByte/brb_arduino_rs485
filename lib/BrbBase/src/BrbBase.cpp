@@ -39,24 +39,21 @@ void BrbBaseInit(BrbBase *brb_base)
 {
     LOG_DEBUG(brb_base->log_base, "BRB - INITIALIZE\r\n");    
 
-    // /* Read pins from EEPROM */
-    // BrbBase_PinLoad(brb_base);
-
-    /* Check pins */
-    // BrbBase_PinCheck(brb_base);
-
     /* Load data */
     BrbBase_DataLoad(brb_base);
 
     /* Initialize Script Base */
     BrbMicroScriptBase_Init(&brb_base->script_base);
 
+    brb_base->stats.loop_cnt = 0;
+    brb_base->data.upcount = brb_base->data.upcount + 1;
+
     return;
 }
 /**********************************************************************************************************************/
 void BrbBaseLoop(BrbBase *brb_base)
 {
-    brb_base->stats.loop_cnt++;
+    brb_base->stats.loop_cnt = brb_base->stats.loop_cnt + 1;
 
     /* Update timer counts */
     brb_base->ms.last = brb_base->ms.cur;
@@ -118,41 +115,6 @@ void BrbBase_DataSave(BrbBase *brb_base)
     return;
 }
 /**********************************************************************************************************************/
-void BrbBase_PinLoad(BrbBase *brb_base)
-{
-    LOG_DEBUG(brb_base->log_base, "BRB - PIN LOAD\r\n");  
-
-    /* Read EEPROM */
-    // BrbBase_EEPROMRead(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_EEPROM_OFFSET);
-
-    return;
-}
-/**********************************************************************************************************************/
-void BrbBase_PinCheck(BrbBase *brb_base)
-{
-    // LOG_DEBUG(brb_base->log_base, "BRB - PIN CHECK\r\n");
-
-    // /* Reset pin state */
-    // BrbBasePinData *pin_data;
-    // int i;
-
-    // LOG_DEBUG(brb_base->log_base, "PINS A %u %u %u %u %u %u %u %u\r\n", A0, A1, A2, A3, A4, A5, A6, A7);
-
-    // for (i = MIN_DIG_PIN; i < TOTAL_PINS; i++)
-    // {
-    //     /* Grab pin data */
-    //     pin_data        = (BrbBasePinData *)&brb_base->pin_data[i];
-
-    //     /* Not a persist one */
-    //     if (!pin_data->persist || (pin_data->mask != BRB_EEPROM_MASK))
-    //         continue;
-
-    //     BrbBase_PinSet(brb_base, i, pin_data->mode, pin_data->value);
-    // }
-
-    return;
-}
-/**********************************************************************************************************************/
 // void BrbBase_PinSet(BrbBase *brb_base, int pin_num, int pin_mode, int pin_value)
 // {
 //     LOG_DEBUG(brb_base->log_base, "BRB - PIN SET\r\n");
@@ -183,16 +145,6 @@ void BrbBase_PinCheck(BrbBase *brb_base)
 
 //     return;
 // }
-/**********************************************************************************************************************/
-void BrbBase_PinSave(BrbBase *brb_base)
-{
-    // LOG_DEBUG(brb_base->log_base, "BRB - PIN SAVE\r\n");
-
-    // /* Read EEPROM */
-    // BrbBase_EEPROMWrite(brb_base, (uint8_t *)&brb_base->pin_data, sizeof(brb_base->pin_data), BRB_EEPROM_OFFSET);
-
-    return;
-}
 /**********************************************************************************************************************/
 uint8_t BrbBase_PinGetMode(uint8_t pin)
 {

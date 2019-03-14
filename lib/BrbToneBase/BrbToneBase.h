@@ -34,18 +34,59 @@
 #ifndef BRB_TONE_H_
 #define BRB_TONE_H_
 
-#include "BrbBase.h"
+#include "Arduino.h"
 
 /**********************************************************************************************************************/
-// Integer note frequencies for tone()
-// Lowest frequency on piano: 27.5 Hz
-// Highest frequency on piano: 4186.01 Hz
-// Middle C is C4
-// http://www.liutaiomottola.com/formulae/freqtab.htm
- 
-// The Arduino tone() function may not play
-// frequencies below NOTE_B2 (123 Hz)
- 
+/* DEFINES */
+/**********************************************************/
+// #define NOTE_SIZE ((9*12)+1)
+
+#ifndef TONE_NOTES_MAX
+#define TONE_NOTES_MAX      (32)
+#endif
+
+#ifndef TONE_TEMPO
+#define TONE_TEMPO          (120)
+#endif
+
+/* Convert TONE_TEMPO (BPM) to one millisecond ticks */
+#define TONE_TICKS   ((60.0 * 4.0 / TONE_TEMPO) * 1000)
+
+#define TONE_DUR_TICK(t)           (int)(TONE_TICKS / t + 0.1)
+
+/* Some predefined ticks */
+#define TONE_DUR_SIXTEENTH         (int)(TONE_TICKS / 4)
+#define TONE_DUR_EIGHTH            (int)(TONE_TICKS / 2)
+
+#define TONE_DUR_QUARTER           (int)(TONE_TICKS)
+#define TONE_DUR_DOTTED_QUARTER    (int)(TONE_TICKS + (TONE_TICKS / 2))
+#define TONE_DUR_HALF              (int)(TONE_TICKS * 2)
+#define TONE_DUR_DOTTED_HALF       (int)(TONE_TICKS * 3)
+#define TONE_DUR_WHOLE             (int)(TONE_TICKS * 4)
+/**********************************************************/
+/*
+ * Table of Musical Notes and Their Frequencies and Wavelengths
+ * 
+ * A number of calculations useful to builders of stringed musical instruments 
+ * require the frequency or wavelength of a note as input data. 
+ * 
+ * The following table presents the frequencies of all notes in ten octaves to 
+ * a thousandth of a hertz. Octaves are presented in the Scientific Pitch 
+ * Notation format, also commonly referred to as American Pitch Notation and 
+ * International Pitch Notation.
+ * 
+ * Integer note frequencies for tone()
+ * Lowest frequency on piano: 27.5 Hz
+ * Highest frequency on piano: 4186.01 Hz
+ * Middle C is C4
+ * http://www.liutaiomottola.com/formulae/freqtab.htm
+ * 
+ * The Arduino tone() function may not play frequencies below NOTE_B2 (123 Hz)
+ */
+
+#define NOTE_FINISH (-1)
+#define NOTE_REST    0
+
 #define NOTE_C0   16
 #define NOTE_Cs0  17
 #define NOTE_D0   18
@@ -164,29 +205,9 @@
 #define NOTE_B8   7902
  
 #define NOTE_C9   8372
- 
-#define NOTESIZE ((9*12)+1)
-
-/* The program must define TEMPO before including this file. TEMPO is specified in beats per minute (BPM) */
-#define TONE_TEMPO      (120)
-#define NOTE_REST       0
-#define NOTE_FINISH    -1
 /**********************************************************************************************************************/
-// Convert TEMPO (BPM) to one millisecond ticks.
-#define TONE_TICKS   ((60.0 * 4.0 / TONE_TEMPO) * 1000)
-// #define TONE_TICKS   (1000 * (60 * 4 / TONE_TEMPO))
- 
-#define TONE_DUR_SIXTEENTH         (int)(TONE_TICKS / 4)
-#define TONE_DUR_EIGHTH            (int)(TONE_TICKS / 2)
-
-#define TONE_DUR_QUARTER           (int)(TONE_TICKS)
-#define TONE_DUR_DOTTED_QUARTER    (int)(TONE_TICKS + (TONE_TICKS / 2))
-#define TONE_DUR_HALF              (int)(TONE_TICKS * 2)
-#define TONE_DUR_DOTTED_HALF       (int)(TONE_TICKS * 3)
-#define TONE_DUR_WHOLE             (int)(TONE_TICKS * 4)
-
-#define TONE_DUR_TICK(t)           (int)(TONE_TICKS / t + 0.1)
-/**********************************************************************************************************************/
+/* STRUCTS */
+/**********************************************************/
 typedef struct _BrbToneNote
 {
     int note;
@@ -196,8 +217,10 @@ typedef struct _BrbToneNote
 
 typedef struct _BrbToneBase
 {
-    BrbBase *brb_base;
-    BrbToneNote notes[32];
+    BrbToneNote notes[TONE_NOTES_MAX];
+
+    long ms_last;
+    long ms_delta;
 
     int index;
     int size;
@@ -215,6 +238,8 @@ typedef struct _BrbToneBase
 
 } BrbToneBase;
 /**********************************************************************************************************************/
+/* FUNCTIONS */
+/**********************************************************/
 int BrbToneBase_Init(BrbToneBase *tone_base);
 void BrbToneBase_Loop(BrbToneBase *tone_base);
 

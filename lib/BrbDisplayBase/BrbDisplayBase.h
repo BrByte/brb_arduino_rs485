@@ -48,9 +48,14 @@
 #include <fonts/Arial14.h>
 // #include <fonts/OpenSans36.h>
 // #include <fonts/Ubuntu36.h>
-#include <fonts/TrebuchetMS34.h>
-#include <fonts/Heydings_Controls_32pt.h>
-#include <fonts/Heydings_Icons_32pt.h>
+// #include <fonts/TrebuchetMS34.h>
+#include <fonts/Open_Sans_32pt.h>
+
+#include <fonts/IconWorks_32pt.h>
+#include <fonts/IconWorks_B_32pt.h>
+
+// #include <fonts/Heydings_Controls_32pt.h>
+// #include <fonts/Heydings_Icons_32pt.h>
 /**********************************************************************************************************************/
 /* DEFINES */
 /**********************************************************/
@@ -62,34 +67,60 @@
 #define DISPLAY_FONT_SCREEN_TITLE Arial_14
 
 #define DISPLAY_FONT_DEFAULT Arial_14
-#define DISPLAY_FONT_TITLE TrebuchetMS34
+#define DISPLAY_FONT_TITLE Open_Sans_32pt
 
-#define DISPLAY_FONT_ARC_VALUE TrebuchetMS34
+#define DISPLAY_FONT_ARC_VALUE Open_Sans_32pt
 #define DISPLAY_FONT_ARC_TICK Arial_14
 #define DISPLAY_FONT_ARC_SUB Arial_14
 
 #define DISPLAY_FONT_BOX_TITLE Arial_14
-#define DISPLAY_FONT_BOX_VALUE TrebuchetMS34
+#define DISPLAY_FONT_BOX_VALUE Open_Sans_32pt
 #define DISPLAY_FONT_BOX_SCALE 1
 #define DISPLAY_FONT_BOX_SUB Arial_14
 
-#define DISPLAY_FONT_ICON Heydings_Icons_32pt
-#define DISPLAY_FONT_ICON2 Heydings_Controls_32pt
 
-#define DISPLAY_FONT_ICON_INFO PSTR("i")
-#define DISPLAY_FONT_ICON_ALERT PSTR("!")
-#define DISPLAY_FONT_ICON_POWER PSTR("r")
+#define DISPLAY_FONT_ICON IconWorks_B_32pt
+#define DISPLAY_FONT_ICON2 IconWorks_B_32pt
+
+#define DISPLAY_FONT_ICON_INFO PSTR("m")
+#define DISPLAY_FONT_ICON_ALERT PSTR("\xF9")
+
+#define DISPLAY_FONT_ICON_POWER PSTR("\xCF")
 #define DISPLAY_FONT_ICON_AUX PSTR("4")
 
-#define DISPLAY_FONT_ICON_A2P PSTR("N")
-#define DISPLAY_FONT_ICON_P2A PSTR("@")
+#define DISPLAY_FONT_ICON_A2P PSTR("/")
+#define DISPLAY_FONT_ICON_P2A PSTR("0")
 
-#define DISPLAY_FONT_ICON_LAMP PSTR("l")
+#define DISPLAY_FONT_ICON_LAMP PSTR("r")
 
-#define DISPLAY_FONT_ICON_C_OFF PSTR("O")
+#define DISPLAY_FONT_ICON_ACTIVE PSTR("\xD9")
+#define DISPLAY_FONT_ICON_USER PSTR("P")
 
-#define DISPLAY_FONT_ICON_C_R PSTR("<")
-#define DISPLAY_FONT_ICON_C_L PSTR(">")
+#define DISPLAY_FONT_ICON_C_OFF PSTR("X")
+
+#define DISPLAY_FONT_ICON_C_R PSTR("w")
+#define DISPLAY_FONT_ICON_C_L PSTR("W")
+
+// #define DISPLAY_FONT_ICON Heydings_Icons_32pt
+// #define DISPLAY_FONT_ICON2 Heydings_Controls_32pt
+
+// #define DISPLAY_FONT_ICON_INFO PSTR("i")
+// #define DISPLAY_FONT_ICON_ALERT PSTR("!")
+// #define DISPLAY_FONT_ICON_POWER PSTR("r")
+// #define DISPLAY_FONT_ICON_AUX PSTR("4")
+
+// #define DISPLAY_FONT_ICON_A2P PSTR("N")
+// #define DISPLAY_FONT_ICON_P2A PSTR("@")
+
+// #define DISPLAY_FONT_ICON_LAMP PSTR("l")
+
+// #define DISPLAY_FONT_ICON_HANDON PSTR("8")
+// #define DISPLAY_FONT_ICON_USER PSTR("A")
+
+// #define DISPLAY_FONT_ICON_C_OFF PSTR("O")
+
+// #define DISPLAY_FONT_ICON_C_R PSTR("<")
+// #define DISPLAY_FONT_ICON_C_L PSTR(">")
 
 
 

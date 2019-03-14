@@ -40,6 +40,7 @@
 
 #include "BrbBtnBase.h"
 #include "BrbToneBase.h"
+#include "BrbMCUServoBase.h"
 
 #include <BrbDisplayBase.h>
 
@@ -323,6 +324,7 @@ extern BrbRS485Session glob_rs485_sess;
 extern BrbBtnBase glob_btn_base;
 extern BrbDisplayBase glob_display_base;
 extern BrbToneBase glob_tone_base;
+extern BrbMCUServoBase glob_servo_base;
 
 extern BrbPDUBase glob_pdu_base;
 /**********************************************************************************************************************/
