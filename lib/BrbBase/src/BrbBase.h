@@ -38,7 +38,7 @@
 #include "Arduino.h"
 #include <HardwareSerial.h>
 #include <SoftwareSerial.h>
-#include "Boards.h"
+// #include "boards.h"
 #include "log/BrbLogBase.h"
 #include "data/BrbDLinkedList.h"
 #include "data/BrbMicroScript.h"
@@ -71,6 +71,8 @@
 #define BRB_EEPROM_OFFSET 32
 
 #define BRB_COMPARE_NUM(a, b) (a > b) - (a < b)
+
+#define TOTAL_PINS 70 // 54 digital + 16 analog
 /**********************************************************************************************************************/
 /* ENUMS */
 /**********************************************************/

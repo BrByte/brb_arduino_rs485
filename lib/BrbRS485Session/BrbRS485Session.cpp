@@ -125,7 +125,7 @@ int BrbRS485Session_DataLoad(BrbRS485Session *rs485_sess)
 		changed = 1;
 	}
 
-	for (int i = 0; i < sizeof(rs485_sess->data.uuid); i++)
+	for (unsigned int i = 0; i < sizeof(rs485_sess->data.uuid); i++)
 	{
 		if (rs485_sess->data.uuid[i] == 0 || rs485_sess->data.uuid[i] == 255)
 		{
@@ -157,10 +157,10 @@ static int BrbRS485Session_TimerHandShakeCB(void *base_ptr, void *cb_data_ptr)
 
 	// LOG_INFO(rs485_sess->log_base, "TIMER: %d cb: 0x%02x\n", timer->timer_id, rs485_sess);
 
-	if ((rs485_sess->brb_base->ms.cur - rs485_sess->stats.ms.last_write) < (BRB_RS485_HANDSHAKE_TIME - 1000))
-	{
-		return 0;
-	}
+	// if ((rs485_sess->brb_base->ms.cur - rs485_sess->stats.ms.last_write) < (BRB_RS485_HANDSHAKE_TIME - 1000))
+	// {
+	// 	return 0;
+	// }
 
 	BrbRS485Session_SendHandShake(rs485_sess);
 

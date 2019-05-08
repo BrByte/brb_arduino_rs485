@@ -39,10 +39,10 @@
 #include <HardwareSerial.h>
 
 #define LOG_ENABLE 1
-#define LOG_DISABLE_INFO 1
+// #define LOG_DISABLE_INFO 1
 // #define LOG_DISABLE_NOTICE 1
 // #define LOG_DISABLE_WARN 1
-#define LOG_DISABLE_DEBUG 1
+// #define LOG_DISABLE_DEBUG 1
 
 #ifndef LOG_BAUDRATE
 // #define LOG_BAUDRATE 9600
