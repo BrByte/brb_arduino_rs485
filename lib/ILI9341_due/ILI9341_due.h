@@ -344,7 +344,7 @@ typedef enum
 typedef enum
 {
 	gTextEraseToEOL = 0x01,   /**< Erase From cursor to end of Line */
-	gTextEraseFromBOL = 0x02, /**< Erase From Begining of Line to Cursor*/
+	gTextEraseFromBOL = 0x02, /**< Erase From Beginning of Line to Cursor*/
 	gTextEraseFullLine = 0x03 /**< Erase Entire line */
 } gTextEraseLine;
 

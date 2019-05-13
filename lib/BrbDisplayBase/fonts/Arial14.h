@@ -47,7 +47,7 @@
 
 /*
  * added to allow fontname to match header file name. 
- * as well as keep the old name for backward compability
+ * as well as keep the old name for backward compatibility
  */
 
 #define Arial14 Arial_14 

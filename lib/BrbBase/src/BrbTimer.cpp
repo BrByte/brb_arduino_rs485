@@ -85,7 +85,7 @@ int BrbTimerAdd(BrbBase *brb_base, long delay_ms, int persist, BrbGenericCBH *cb
     /* No more timers */
     if (!timer)
     {
-        LOG_WARN(brb_base->log_base, "Failed adding timer - Table exausted\r\n");
+        LOG_WARN(brb_base->log_base, "Failed adding timer - Table exhausted\r\n");
         return -1;
     }
 
@@ -120,7 +120,7 @@ void BrbTimerDispatch(BrbBase *brb_base)
             if (timer->cb_func)
                 timer->cb_func(timer, timer->cb_data);
 
-            /* Readjust WHEN if timer is persistant */
+            /* Readjust WHEN if timer is persistent */
             if (timer->flags.persist)
             {
                 timer->ms.when = brb_base->ms.cur + timer->ms.delay;

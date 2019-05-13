@@ -67,7 +67,7 @@ int BrbCtlRS485_Setup(BrbBase *brb_base)
     // sprintf(buf, "%p %p %p", &Serial1, brb_base, brb_base->log_base);
     // Serial.println(buf);
 
-	// LOG_DEBUG(brb_base->log_base, "SETTED - [%p]\r\n", rs485_sess);
+	// LOG_DEBUG(brb_base->log_base, "SET - [%p]\r\n", rs485_sess);
 
     BrbRS485Session_SetEventCB(rs485_sess, RS485_PKT_TYPE_HANDSHAKE, BrbCtlRS485_SessionActionHandShakeCB, brb_base);
     BrbRS485Session_SetEventCB(rs485_sess, RS485_PKT_TYPE_CMD_GET_A, BrbCtlRS485_SessionActionGetAnalogCB, brb_base);
