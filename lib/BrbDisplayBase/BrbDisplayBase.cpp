@@ -114,7 +114,7 @@ int BrbDisplayBase_ScreenAction(BrbDisplayBase *display_base, int action_code)
 		}
 	}
 
-	/* Get first screen, with reseted info */
+	/* Get first screen, with reset info */
 	if (!screen_ptr)
 	{
 		display_base->flags.on_action = 0;

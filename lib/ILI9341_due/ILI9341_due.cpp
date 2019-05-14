@@ -1183,7 +1183,7 @@ void ILI9341_due::drawLineByAngle(int16_t x, int16_t y, int16_t angle, uint16_t 
 	endTransaction();
 }
 
-// Bresenham's algorithm - thx wikpedia
+// Bresenham's algorithm - thx wikipedia
 void ILI9341_due::drawLine_noTrans(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
 {
 	beginTransaction();
@@ -1830,7 +1830,7 @@ void ILI9341_due::specialChar(uint8_t c)
 			//#endif
 			//
 			//				/*
-			//				* forumula for pixels to scroll is:
+			//				* formula for pixels to scroll is:
 			//				*	(assumes "height" is one less than rendered height)
 			//				*
 			//				*		pixels = height - ((_area.y1 - _y)  - height) +1;
@@ -1990,7 +1990,7 @@ size_t ILI9341_due::write(uint8_t c)
 		* Calculate the offset of where the font data
 		* for our character starts.
 		* The index value from above has to be adjusted because
-		* there is potentialy more than 1 byte per column in the glyph,
+		* there is potentially more than 1 byte per column in the glyph,
 		* when the characgter is taller than 8 bits.
 		* To account for this, index has to be multiplied
 		* by the height in bytes because there is one byte of font
@@ -2009,7 +2009,7 @@ size_t ILI9341_due::write(uint8_t c)
 
 	//#ifndef GLCD_NODEFER_SCROLL
 	//	/*
-	//	* check for a defered scroll
+	//	* check for a deferred scroll
 	//	* If there is a deferred scroll,
 	//	* Fake a newline to complete it.
 	//	*/
@@ -2033,7 +2033,7 @@ size_t ILI9341_due::write(uint8_t c)
 	//		write('\n'); // fake a newline to cause wrap/scroll
 	//#ifndef GLCD_NODEFER_SCROLL
 	//		/*
-	//		* We can't defer a scroll at this point since we need to ouput
+	//		* We can't defer a scroll at this point since we need to output
 	//		* a character right now.
 	//		*/
 	//		if (_needScroll)
@@ -2090,7 +2090,7 @@ void ILI9341_due::drawSolidChar(char c, uint16_t index, uint16_t charWidth, uint
 
 	//#if SPI_MODE_DMA
 	//	if (_textScale > 1)
-	//		fillScanline16(_fontColor, numPixelsInOnePoint);	//pre-fill the scanline, we will be drawing different lenghts of it
+	//		fillScanline16(_fontColor, numPixelsInOnePoint);	//pre-fill the scanline, we will be drawing different lengths of it
 	//#endif
 
 	enableCS();
@@ -2127,7 +2127,7 @@ void ILI9341_due::drawSolidChar(char c, uint16_t index, uint16_t charWidth, uint
 				* to the GLCD. I believe that this was an initial oversight (bug)
 				* in Thieles font creator program. It is easily fixed
 				* in the font program but then creates a potential backward
-				* compatiblity problem.
+				* compatibility problem.
 				*	--- bperrybap
 				*/
 				if (charHeight > 8 && charHeight < (i + 1) * 8)	/* is it last byte of multibyte tall font? */
@@ -2247,7 +2247,7 @@ void ILI9341_due::drawTransparentChar(char c, uint16_t index, uint16_t charWidth
 	_isFirstChar = false;
 
 
-	fillScanline16(_fontColor);	//pre-fill the scanline, we will be drawing different lenghts of it
+	fillScanline16(_fontColor);	//pre-fill the scanline, we will be drawing different lengths of it
 
 
 	uint16_t charHeightInBytes = (charHeight + 7) / 8; /* calculates height in rounded up bytes */
@@ -2278,7 +2278,7 @@ void ILI9341_due::drawTransparentChar(char c, uint16_t index, uint16_t charWidth
 				* to the GLCD. I believe that this was an initial oversight (bug)
 				* in Thieles font creator program. It is easily fixed
 				* in the font program but then creates a potential backward
-				* compatiblity problem.
+				* compatibility problem.
 				*	--- bperrybap
 				*/
 				if (charHeight > 8 && charHeight < (i + 1) * 8)	/* is it last byte of multibyte tall font? */

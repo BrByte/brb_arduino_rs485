@@ -220,7 +220,7 @@ int BrbDisplayBase_DrawArcSeg(BrbDisplayBase *display_base, double value, int vm
 			else
 				tl = tick + 3;
 
-			// Recalculate coords incase tick lenght changed
+			// Recalculate coords in case tick length changed
 			x0 = sx * (r + tl) + x;
 			y0 = sy * (r + tl) + y;
 			x1 = sx * (r + 2) + x;
