@@ -378,7 +378,7 @@ int BrbMicroScriptCmpFunc(void *base_ptr, void *cb_data)
 
     script->cmp1 = BRB_COMPARE_NUM(pin_value, cmp_value);
 
-    LOG_DEBUG(script_base->log_base, "CMP [%d] [%d] - [%d] [%d]\r\n", op_cmp->pin, script->cmp1, pin_value, cmp_value);
+    LOG_INFO(script_base->log_base, "CMP [%d] [%d] - [%d] [%d]\r\n", op_cmp->pin, script->cmp1, pin_value, cmp_value);
 
     return 0;
 }
@@ -413,7 +413,7 @@ int BrbMicroScriptJmpEqualFunc(void *base_ptr, void *cb_data)
     BrbMicroScript *script = (BrbMicroScript *)cb_data;
     BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
 
-    // LOG_DEBUG(script_base->log_base, "EQ [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
+    // LOG_INFO(script_base->log_base, "EQ [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
 
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 == 0)
@@ -441,7 +441,7 @@ int BrbMicroScriptJmpNotEqualFunc(void *base_ptr, void *cb_data)
     BrbMicroScript *script = (BrbMicroScript *)cb_data;
     BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
 
-    LOG_DEBUG(script_base->log_base, "NEQ [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
+    LOG_INFO(script_base->log_base, "NEQ [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
 
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 != 0)
@@ -469,7 +469,7 @@ int BrbMicroScriptJmpGreaterFunc(void *base_ptr, void *cb_data)
     BrbMicroScript *script = (BrbMicroScript *)cb_data;
     BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
 
-    LOG_DEBUG(script_base->log_base, "GE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
+    LOG_INFO(script_base->log_base, "GE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
 
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 > 0)
@@ -497,7 +497,7 @@ int BrbMicroScriptJmpNotGreaterFunc(void *base_ptr, void *cb_data)
     BrbMicroScript *script = (BrbMicroScript *)cb_data;
     BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
 
-    LOG_DEBUG(script_base->log_base, "NGE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
+    LOG_INFO(script_base->log_base, "NGE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
 
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 <= 0)
@@ -525,7 +525,7 @@ int BrbMicroScriptJmpLesserFunc(void *base_ptr, void *cb_data)
     BrbMicroScript *script = (BrbMicroScript *)cb_data;
     BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
 
-    LOG_DEBUG(script_base->log_base, "LE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
+    LOG_INFO(script_base->log_base, "LE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
 
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 < 0)
@@ -553,7 +553,7 @@ int BrbMicroScriptJmpNotLesserFunc(void *base_ptr, void *cb_data)
     BrbMicroScript *script = (BrbMicroScript *)cb_data;
     BrbMicroScriptOPIf *op_if = (BrbMicroScriptOPIf *)&script->code.arr[script->code.offt + 1];
 
-    LOG_DEBUG(script_base->log_base, "NLE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
+    LOG_INFO(script_base->log_base, "NLE [%d] - el [%u] en [%u]\r\n", script->cmp1, op_if->else_offset, op_if->end_offset);
 
     /* check param [1 great] [0 equal] [-1 less] */
     if (script->cmp1 >= 0)
